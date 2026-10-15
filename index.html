@@ -180,6 +180,74 @@ button{font:inherit}
 .pin.future{border:1.5px dashed var(--ink)!important;background:#fff!important;color:var(--ink)!important}
 .lg[data-era="future"] .sw{border:1.5px dashed var(--ink);background:#fff!important}
 .futnote{margin-top:8px;padding:6px 8px;border:1px dashed var(--ink);font-size:12px;background:#fff}
+
+/* ================= MOBILE: map-first, draggable bottom sheets ================= */
+.grab{display:none}
+.lightcycle{display:none}
+@media (max-width:760px){
+  :root{--st:env(safe-area-inset-top,0px);--sb:env(safe-area-inset-bottom,0px);--top:calc(var(--st) + 60px)}
+  body{font-size:15px;overscroll-behavior:none}
+  .north{display:none}
+  /* top toolbar: one row, big targets, light presets folded into one cycle button */
+  .bar{top:calc(var(--st) + 10px);left:10px;right:10px;max-width:none;flex-wrap:nowrap;box-shadow:0 2px 10px rgba(20,33,46,.12)}
+  .bar button{flex:1 1 auto;min-height:42px;padding:0 10px;font-size:13.5px;white-space:nowrap}
+  .bar button[data-light]{display:none}
+  .bar .lightcycle{display:flex;align-items:center;justify-content:center;gap:6px;flex:0 0 auto;border-inline-start:1px solid var(--ink)!important;font-weight:700}
+  .bar .locbtn{justify-content:center;border-inline-start:none!important}
+  /* shared sheet mechanics */
+  .sheet,.plate{position:fixed;left:0;right:0;bottom:0;top:auto;width:auto;height:calc(100dvh - var(--top));border:1px solid var(--ink);border-width:1px 0 0;
+    box-shadow:0 -6px 24px rgba(20,33,46,.16);transition:transform .32s cubic-bezier(.2,.8,.2,1);will-change:transform;touch-action:pan-y}
+  .sheet.dragging,.plate.dragging{transition:none}
+  .grab{display:block;position:sticky;top:0;z-index:4;height:22px;background:var(--paper);cursor:grab;touch-action:none}
+  .grab::before{content:"";position:absolute;left:50%;top:8px;width:44px;height:5px;margin-left:-22px;border-radius:3px;background:var(--line)}
+  /* index sheet */
+  .sheet{z-index:2}
+  .sheet[data-snap="peek"]{transform:translateY(calc(100% - 128px - var(--sb)))}
+  .sheet[data-snap="half"]{transform:translateY(46%)}
+  .sheet[data-snap="full"]{transform:none}
+  .sheet header{padding:0 16px 8px;border-bottom:none;touch-action:none}
+  .sheet header .eyebrow,.sheet .sub span:first-child{display:none}
+  .sheet h1{font-size:24px;margin:0;display:inline}
+  .sheet .sub{display:inline-flex;margin-inline-start:10px;font-size:11px;vertical-align:middle}
+  .legend{display:flex;flex-wrap:nowrap;overflow-x:auto;gap:8px;padding:4px 16px 10px;border-bottom:1px solid var(--line);scrollbar-width:none;touch-action:pan-x}
+  .legend::-webkit-scrollbar{display:none}
+  .legend h3,.lg .rng{display:none}
+  .lg{flex:0 0 auto;border:1px solid var(--ink);padding:0 12px;min-height:36px;gap:8px;font-size:13px;background:var(--paper);white-space:nowrap}
+  .lg[aria-pressed="false"]{opacity:.4}
+  .lg .sw{width:14px;height:14px}
+  .tools{padding:10px 16px;gap:8px}
+  .search{min-height:44px;font-size:16px;padding:0 12px} /* 16px stops iOS zoom-on-focus */
+  .office{flex:0 0 42%}
+  .item{min-height:60px;padding:10px 16px;grid-template-columns:32px 1fr auto}
+  .item b{font-size:15px}
+  .list{padding-bottom:calc(var(--sb) + 16px);overscroll-behavior:contain}
+  .sheet footer{display:none}
+  body.plate-open .sheet{transform:translateY(100%)!important}
+  /* building plate */
+  .plate{z-index:3;overflow-y:auto;overscroll-behavior:contain;padding-bottom:var(--sb)}
+  .plate[data-snap="half"]{transform:translateY(38%)}
+  .plate[data-snap="full"]{transform:none}
+  .plate .grab{margin-bottom:-22px;background:transparent}
+  .plate .grab::before{background:rgba(255,255,255,.9);box-shadow:0 0 0 1px rgba(20,33,46,.25)}
+  .plate .close{position:sticky;top:10px;display:block;margin:10px auto -52px 10px;width:42px;height:42px;font-size:22px;z-index:5}
+  .plate .num{font-size:18px;padding:4px 10px}
+  .plate .photo{aspect-ratio:16/10}
+  .plate h2{font-size:28px}
+  .plate .body{padding:14px 16px 28px;gap:18px}
+  .ctx{grid-template-columns:1fr}
+  .circle-wrap{justify-items:start}
+  .circle{width:132px;height:132px}
+  .nav{width:44px;height:44px}
+  .thumbs{display:none}
+  .plate .photo .nav{opacity:.85}
+  .btn{min-height:44px;display:inline-flex;align-items:center;padding:0 14px}
+  .docs li{padding:12px 0}
+  .pin{width:28px;height:28px;font-size:11px}
+  .toast{left:12px;right:12px;max-width:none;bottom:calc(140px + var(--sb))}
+  .lightbox{padding:calc(var(--st) + 8px) 8px calc(var(--sb) + 8px)}
+  .lbtitle{font-size:20px}
+  .lbclose{width:44px;height:44px}
+}
 </style>
 </head>
 <body>
@@ -194,6 +262,7 @@ button{font:inherit}
 <div class="north">N ↑ · 32.08°N 34.78°E · TEL AVIV–YAFO</div>
 
 <aside class="sheet" aria-label="אינדקס מבנים">
+  <div class="grab" aria-hidden="true"></div>
   <header>
     <div class="eyebrow">STS ARCH · Architectural Atlas 01 · 1892–2024</div>
     <h1 class="disp">תל אביב אדריכלית</h1>
@@ -945,7 +1014,7 @@ function select(id){
   }
   stopOrbit();
   if(b.priv!=="none") map.flyTo({center:[b.lng,b.lat],zoom:b.priv?15.4:16.6,pitch:62,bearing:(map.getBearing()+35)%360,duration:reduceMotion?0:2200,essential:true,
-    padding:window.innerWidth>860?{left:440,right:380,top:40,bottom:40}:{bottom:window.innerHeight*0.7}});
+    padding:window.innerWidth>860?{left:440,right:380,top:40,bottom:40}:{bottom:Math.round(window.innerHeight*0.5),top:70}});
   render();
   const li=listEl.querySelector(`[data-id="${id}"]`); if(li) li.scrollIntoView({block:"nearest"});
 }
@@ -1102,6 +1171,88 @@ map.on("style.load",()=>{
   applyView();
 });
 
+
+/* ================= MOBILE behaviour ================= */
+(function(){
+  const mq=window.matchMedia("(max-width:760px)");
+  const sheet=document.querySelector(".sheet");
+  let lastSnap="peek";
+  const snaps=["peek","half","full"];
+  function setSnap(el,v){el.dataset.snap=v; if(el===sheet) lastSnap=v;}
+  function apply(){
+    if(mq.matches){ if(!sheet.dataset.snap) setSnap(sheet,"peek"); if(!plate.hidden&&!plate.dataset.snap) setSnap(plate,"half"); }
+    else { delete sheet.dataset.snap; delete plate.dataset.snap; document.body.classList.remove("plate-open"); }
+  }
+  mq.addEventListener?mq.addEventListener("change",apply):mq.addListener(apply); apply();
+
+  /* light presets folded into one cycle button */
+  const lights=[...bar.querySelectorAll("button[data-light]")];
+  const lc=document.createElement("button"); lc.type="button"; lc.className="lightcycle"; lc.setAttribute("aria-label","תאורה");
+  const LBL={dawn:"🌅 שחר",day:"☀︎ יום",dusk:"🌇 שקיעה",night:"☾ לילה"};
+  const curLight=()=>lights.find(x=>x.getAttribute("aria-pressed")==="true")||lights[1];
+  const syncLc=()=>{lc.textContent=LBL[curLight().dataset.light]||"☀︎";};
+  lc.addEventListener("click",()=>{const i=lights.indexOf(curLight()); lights[(i+1)%lights.length].click(); syncLc();});
+  bar.appendChild(lc); syncLc();
+
+  /* drag to snap */
+  function dragger(el,handles,states,onClose){
+    let y0=0,t0=0,base=0,h=0,moved=false;
+    const offsetOf=v=>{const m=getComputedStyle(el).transform; return m&&m!=="none"?new DOMMatrix(m).m42:0;};
+    handles.forEach(hd=>{
+      hd.addEventListener("pointerdown",e=>{ if(!mq.matches||e.target.closest("input,select,button:not(.grab)")) return;
+        y0=e.clientY;t0=performance.now();base=offsetOf();h=el.getBoundingClientRect().height;moved=false;
+        el.classList.add("dragging"); hd.setPointerCapture(e.pointerId); });
+      hd.addEventListener("pointermove",e=>{ if(!el.classList.contains("dragging")) return; const dy=e.clientY-y0; if(Math.abs(dy)>4) moved=true;
+        el.style.transform=`translateY(${Math.max(0,base+dy)}px)`; });
+      const end=e=>{ if(!el.classList.contains("dragging")) return; el.classList.remove("dragging"); el.style.transform="";
+        const dy=e.clientY-y0, v=dy/Math.max(1,performance.now()-t0), pos=base+dy;
+        if(!moved){ const i=states.indexOf(el.dataset.snap); setSnap(el,states[(i+1)%states.length]); return; }
+        if(onClose&&(pos>h*0.72||v>1.1&&el.dataset.snap===states[0])){ onClose(); return; }
+        if(v>0.5){ const i=states.indexOf(el.dataset.snap); setSnap(el,states[Math.max(0,i-1)]); return; }
+        if(v<-0.5){ const i=states.indexOf(el.dataset.snap); setSnap(el,states[Math.min(states.length-1,i+1)]); return; }
+        const targets={peek:h-128,half:h*0.46,full:0}; let best=states[0],bd=1e9;
+        states.forEach(s=>{const d=Math.abs(targets[s]-pos); if(d<bd){bd=d;best=s;}}); setSnap(el,best); };
+      hd.addEventListener("pointerup",end); hd.addEventListener("pointercancel",end);
+    });
+  }
+  dragger(sheet,[sheet.querySelector(".grab"),sheet.querySelector("header")],snaps);
+
+  /* search / filters open the sheet */
+  document.getElementById("search").addEventListener("focus",()=>{ if(mq.matches) setSnap(sheet,"full"); });
+  document.getElementById("office").addEventListener("change",()=>{ if(mq.matches&&sheet.dataset.snap==="peek") setSnap(sheet,"half"); });
+  locBtn.addEventListener("click",()=>{ if(mq.matches&&near.watch!=null) setTimeout(()=>setSnap(sheet,"half"),300); });
+  /* panning the map tucks the index away */
+  map.on("dragstart",()=>{ if(mq.matches&&plate.hidden&&sheet.dataset.snap!=="peek") setSnap(sheet,"peek"); });
+
+  /* plate as a sheet */
+  const _select=select, _close=closePlate;
+  select=function(id){
+    _select(id);
+    if(!mq.matches) return;
+    document.activeElement&&document.activeElement.blur&&document.activeElement.blur();
+    if(!plate.querySelector(".grab")) plate.insertAdjacentHTML("afterbegin",'<div class="grab" aria-hidden="true"></div>');
+    setSnap(plate,"half"); document.body.classList.add("plate-open");
+    if(!history.state||!history.state.plate) history.pushState({plate:id},"");
+    dragger2();
+  };
+  closePlate=function(){
+    _close(); delete plate.dataset.snap; document.body.classList.remove("plate-open");
+    if(mq.matches) setSnap(sheet,"peek");
+    if(history.state&&history.state.plate) history.back();
+  };
+  window.addEventListener("popstate",()=>{ if(!plate.hidden){ _close(); delete plate.dataset.snap; document.body.classList.remove("plate-open"); setSnap(sheet,"peek"); } });
+  /* rebind the plate's close button (it was wired to the old function when the plate was rendered) */
+  plate.addEventListener("click",e=>{ if(e.target.closest(".close")){ e.stopImmediatePropagation(); closePlate(); } },true);
+  /* scrolling the plate content expands it */
+  plate.addEventListener("scroll",()=>{ if(mq.matches&&plate.dataset.snap==="half"&&plate.scrollTop>8) setSnap(plate,"full"); },{passive:true});
+  /* swipe the photo to change image */
+  let sx=null;
+  plate.addEventListener("touchstart",e=>{ if(e.target.closest(".photo")) sx=e.touches[0].clientX; },{passive:true});
+  plate.addEventListener("touchend",e=>{ if(sx==null) return; const dx=e.changedTouches[0].clientX-sx; sx=null;
+    if(Math.abs(dx)>40){ const b=plate.querySelector(dx<0?".photo .next":".photo .prev"); b&&b.click(); } },{passive:true});
+  function dragger2(){ const g=plate.querySelector(".grab"); if(!g||g.dataset.w) return; g.dataset.w=1;
+    dragger(plate,[g],["half","full"],()=>closePlate()); }
+})();
 render();
 </script>
 </body>
