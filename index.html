@@ -1296,7 +1296,7 @@ const FPDATA = {"tachana":[[3,0,[6175,5877,6179,5871,6162,5863,6157,5869,6175,58
 })();
 /* ================= numbers only from neighbourhood zoom; coloured buildings are clickable ================= */
 (function(){
-  const LABEL_Z=14.6;
+  const LABEL_Z=14.2;
   const upd=()=>document.body.classList.toggle("zfar",map.getZoom()<LABEL_Z);
   map.on("zoom",upd); map.on("load",upd); upd();
   const lyr=()=>["base-ext","base-fill"].filter(l=>map.getLayer(l)&&map.getLayoutProperty(l,"visibility")!=="none");
