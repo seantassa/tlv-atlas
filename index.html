@@ -56,13 +56,22 @@ button{font:inherit}
 .search{flex:1;min-width:0;padding:7px 10px;border:1px solid var(--line);font:inherit;background:var(--paper);color:var(--ink)}
 .count{font-family:var(--mono);font-size:11px;color:var(--ink-soft);padding:8px 18px 4px}
 .list{list-style:none;margin:0;padding:0 0 10px;overflow:auto;flex:1}
-.places{list-style:none;margin:0;padding:0;border-bottom:1px solid var(--rule,#DDE3EA)}
-.places .ph{padding:8px 18px 4px;font:600 10px/1 "IBM Plex Mono",monospace;letter-spacing:.08em;color:var(--ink-soft,#6b7785)}
-.places .pl{display:grid;grid-template-columns:30px 1fr;gap:10px;align-items:center;padding:8px 18px;cursor:pointer;border-bottom:1px solid #EEF1F4}
-.places .pl:hover,.places .pl:focus{background:#F3F6F9;outline:none}
-.places .pl i{width:22px;height:22px;border:1.5px solid currentColor;border-radius:50% 50% 50% 0;transform:rotate(-45deg);justify-self:center;opacity:.55}
-.places .pl small{display:block;color:var(--ink-soft,#6b7785);font-size:11px;margin-top:2px}
-.searchpin{width:18px;height:18px;border-radius:50%;background:#E8432E;border:3px solid #fff;box-shadow:0 0 0 2px #E8432E,0 2px 8px rgba(0,0,0,.35)}
+.addrbtn{display:flex;align-items:center;justify-content:center;gap:6px}
+.addrbtn svg{width:16px;height:16px}
+.addrbtn[aria-pressed="true"]{background:var(--ink);color:#fff}
+.addrbox{position:absolute;z-index:9;top:62px;right:16px;width:340px;max-width:calc(100vw - 32px);background:var(--paper,#fff);border:1px solid var(--ink);box-shadow:0 6px 24px rgba(20,33,46,.18)}
+.addrbox[hidden]{display:none}
+.addrbox .row{display:flex;align-items:center;border-bottom:1px solid var(--line,#DDE3EA)}
+.addrbox input{flex:1;border:0;padding:12px 14px;font:inherit;font-size:16px;background:transparent;color:var(--ink);outline:none;min-width:0}
+.addrbox .x{border:0;background:none;padding:0 14px;font-size:20px;cursor:pointer;color:var(--ink-soft,#6b7785)}
+.addrbox ul{list-style:none;margin:0;padding:0;max-height:50vh;overflow:auto}
+.addrbox li{padding:10px 14px;cursor:pointer;border-bottom:1px solid #EEF1F4}
+.addrbox li:hover,.addrbox li:focus{background:#F3F6F9;outline:none}
+.addrbox li small{display:block;color:var(--ink-soft,#6b7785);font-size:11.5px;margin-top:2px}
+.addrbox .hint{padding:10px 14px;color:var(--ink-soft,#6b7785);font-size:12.5px}
+.me.addr{background:#E8432E!important;box-shadow:0 0 0 3px #fff,0 0 0 5px #E8432E!important}
+@media (max-width:760px){ .addrbox{top:calc(var(--st,0px) + 62px);left:10px;right:10px;width:auto;max-width:none;border-radius:14px;overflow:hidden;border:none}
+  .bar .addrbtn{flex:0 0 auto;padding:0 14px;border-inline-start:1px solid var(--ink)!important} .bar .addrbtn span{display:none} }
 .item{display:grid;grid-template-columns:30px 1fr auto;gap:10px;align-items:center;padding:9px 18px;cursor:pointer;border-bottom:1px solid #EEF1F4}
 .item:hover,.item.active{background:var(--board)}
 .item b{display:block;font-weight:500;font-size:14px}
@@ -382,8 +391,7 @@ body.zfar .pin:not(.active),.pin.crowd:not(.active){visibility:hidden!important;
     <div class="sub"><span>1:2500 · SITE PLAN & CONTEXT</span><span id="count"></span></div>
   </header>
   <div class="legend" id="legend"><h3>תקופה</h3></div>
-  <div class="tools"><input class="search" id="search" type="search" placeholder="חיפוש: מבנה, אדריכל, רחוב או מקום" aria-label="חיפוש"><select class="search office" id="office" aria-label="משרד אדריכלים"><option value="">כל המשרדים</option></select></div>
-  <ul class="places" id="places" hidden></ul>
+  <div class="tools"><input class="search" id="search" type="search" placeholder="חיפוש: מבנה, אדריכל, שכונה" aria-label="חיפוש"><select class="search office" id="office" aria-label="משרד אדריכלים"><option value="">כל המשרדים</option></select></div>
   <ul class="list" id="list"></ul>
   <footer><span>© STS ARCH · SEAN</span><span>CURATED ATLAS</span></footer>
 </aside>
@@ -1035,8 +1043,8 @@ function render(){
   let vis=BUILDINGS.filter(visible);
   const np=(typeof near!=="undefined")&&near.pos;
   if(np) vis=vis.map(b=>({b,d:b.lat&&b.priv!=="none"?distM(np,b):Infinity})).sort((x,y)=>x.d-y.d).map(x=>(x.b._d=x.d,x.b));
-  document.getElementById("count").textContent=np?`ממוין לפי מרחק ממך · ${vis.length}`:`${vis.length}/${BUILDINGS.length} BUILDINGS`;
-  listEl.innerHTML=(np?`<li class="nearhead">הכי קרובים אליך עכשיו</li>`:"")+vis.map(b=>`<li class="item${state.active===b.id?" active":""}" tabindex="0" data-id="${b.id}">
+  document.getElementById("count").textContent=np?`ממוין לפי מרחק ${near.addr?"מהכתובת":"ממך"} · ${vis.length}`:`${vis.length}/${BUILDINGS.length} BUILDINGS`;
+  listEl.innerHTML=(np?`<li class="nearhead">${near.addr?"הכי קרובים ל־"+esc(near.addr):"הכי קרובים אליך עכשיו"}</li>`:"")+vis.map(b=>`<li class="item${state.active===b.id?" active":""}" tabindex="0" data-id="${b.id}">
       <span class="tag" style="background:${ERAS[b.era].color};color:${ERAS[b.era].text}">${String(b.id).padStart(2,"0")}</span>
       <span><b>${esc(b.he)}</b><small>${esc(b.arch)}${b.priv?" · בית פרטי":""}</small></span>
       <span class="yr">${np&&isFinite(b._d)?`<span class="dist">${fmtD(b._d)}</span><small class="walk">${walk(b._d)}</small>`:(b.era==="future"?"עתידי":(b.year||"—"))}</span></li>`).join("");
@@ -1046,43 +1054,6 @@ function render(){
 listEl.addEventListener("click",e=>{const li=e.target.closest(".item"); if(li) select(+li.dataset.id);});
 listEl.addEventListener("keydown",e=>{if(e.key==="Enter"){const li=e.target.closest(".item"); if(li) select(+li.dataset.id);}});
 
-/* ===== street / place search (Mapbox Search Box) inside the main search field ===== */
-(function(){
-  const inp=document.getElementById("search"), box=document.getElementById("places");
-  let t=null, ctl=null, pin=null, last=[];
-  const sess=(crypto.randomUUID?crypto.randomUUID():String(Math.random()).slice(2));
-  const hide=()=>{box.hidden=true;box.innerHTML="";last=[];};
-  function go(f){
-    const [lng,lat]=f.geometry.coordinates;
-    if(pin) pin.remove();
-    const el=document.createElement("div"); el.className="searchpin";
-    pin=new mapboxgl.Marker({element:el}).setLngLat([lng,lat]).addTo(map);
-    const street=/street|address/.test(f.properties.feature_type);
-    map.flyTo({center:[lng,lat],zoom:street?17:16.2,pitch:55,speed:1.2});
-    if(window.matchMedia("(max-width:760px)").matches&&window.__SH) window.__SH.set("peek");
-  }
-  async function run(q){
-    if(ctl) ctl.abort(); ctl=new AbortController();
-    const u="https://api.mapbox.com/search/searchbox/v1/forward?q="+encodeURIComponent(q)+
-      "&language=he&limit=8&proximity=34.7818,32.0750&bbox=34.72,32.02,34.86,32.16&country=il&types=street,address,poi,neighborhood,place&access_token="+mapboxgl.accessToken;
-    try{
-      const j=await fetch(u,{signal:ctl.signal}).then(r=>r.json());
-      const seen=new Set();
-      last=(j.features||[]).filter(f=>{ if(!f.geometry) return false; const p=f.properties, c=p.context||{};
-        const city=(c.place&&c.place.name)||p.place_formatted||"";
-        if(city&&!/תל אביב|Tel Aviv|יפו|Jaffa/.test(city)) return false;
-        const key=p.name+"|"+p.feature_type; if(seen.has(key)) return false; seen.add(key); return true; });
-      if(!last.length||inp.value.trim().length<2){hide();return;}
-      box.innerHTML='<li class="ph">רחובות ומקומות במפה</li>'+last.slice(0,5).map((f,i)=>{const p=f.properties;
-        return `<li class="pl" tabindex="0" data-i="${i}"><i></i><span><b>${esc(p.name||"")}</b><small>${esc(({street:"רחוב",address:"כתובת",neighborhood:"שכונה",place:"עיר"}[p.feature_type]||(p.poi_category&&p.poi_category[0])||"מקום")+(p.feature_type==="poi"&&p.address?" · "+p.address:""))}</small></span></li>`;}).join("");
-      box.hidden=false;
-    }catch(e){ if(e.name!=="AbortError") hide(); }
-  }
-  inp.addEventListener("input",()=>{ clearTimeout(t); const q=inp.value.trim(); if(q.length<2){hide(); if(pin){pin.remove();pin=null;} return;} t=setTimeout(()=>run(q),280); });
-  inp.addEventListener("keydown",e=>{ if(e.key==="Enter"&&last.length&&!document.querySelector("#list .item")){ e.preventDefault(); go(last[0]); inp.blur(); } });
-  box.addEventListener("click",e=>{const li=e.target.closest(".pl"); if(li){ go(last[+li.dataset.i]); inp.blur(); }});
-  box.addEventListener("keydown",e=>{ if(e.key==="Enter"){const li=e.target.closest(".pl"); if(li) go(last[+li.dataset.i]);} });
-})();
 
 /* figure-ground circle (second map, plan view) */
 let mini=null;
@@ -1294,6 +1265,7 @@ function nearFlyTo(first){
   if(first) map.fitBounds([[bb[0],bb[1]],[bb[2],bb[3]]],{padding:innerWidth<=760?{top:90,bottom:200,left:40,right:40}:{top:90,bottom:60,left:60,right:Math.min(420,innerWidth*0.45)},pitch:55,maxZoom:16.5,duration:reduceMotion?0:2200});
 }
 function onPos(p){
+  if(near.addr){ near.addr=null; near.pos=null; if(near.marker){near.marker.remove();near.marker=null;} if(window.__addrOff) window.__addrOff(); }
   const first=!near.pos;
   near.pos={lat:p.coords.latitude,lng:p.coords.longitude,acc:p.coords.accuracy};
   if(!near.marker){const el=document.createElement("div");el.className="me";el.title="המיקום שלך";near.marker=new mapboxgl.Marker({element:el}).setLngLat([near.pos.lng,near.pos.lat]).addTo(map);}
@@ -1313,6 +1285,62 @@ locBtn.addEventListener("click",()=>{
     if(near.watch!=null) navigator.geolocation.clearWatch(near.watch); near.watch=null; locBtn.setAttribute("aria-pressed","false");
   },{enableHighAccuracy:true,maximumAge:15000,timeout:20000});
 });
+
+
+/* ================= "near an address": search a street / place, then sort the atlas by distance from it ================= */
+(function(){
+  const bar=document.querySelector(".bar");
+  const btn=document.createElement("button"); btn.type="button"; btn.className="addrbtn"; btn.setAttribute("aria-pressed","false");
+  btn.setAttribute("aria-label","מה יש ליד כתובת"); btn.title="מה יש ליד כתובת";
+  btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg><span>כתובת</span>';
+  locBtn.insertAdjacentElement("afterend",btn);
+  const box=document.createElement("div"); box.className="addrbox"; box.hidden=true;
+  box.innerHTML='<div class="row"><input type="search" enterkeyhint="search" placeholder="רחוב, כתובת או מקום בתל אביב" aria-label="חיפוש כתובת"><button class="x" type="button" aria-label="סגירה">×</button></div><ul></ul>';
+  document.body.appendChild(box);
+  const inp=box.querySelector("input"), ul=box.querySelector("ul");
+  let t=null, ctl=null, last=[];
+  const open=()=>{ box.hidden=false; setTimeout(()=>inp.focus(),30); if(!inp.value) ul.innerHTML='<li class="hint" tabindex="-1">לדוגמה: לבונטין 20, כיכר דיזנגוף, שוק הכרמל</li>'; };
+  const closeBox=()=>{ box.hidden=true; inp.blur(); };
+  function off(){ btn.setAttribute("aria-pressed","false"); }
+  window.__addrOff=off;
+  function clear(){ if(!near.addr) return; near.addr=null; near.pos=null; if(near.marker){near.marker.remove();near.marker=null;} off(); render(); }
+  function pick(f){
+    const [lng,lat]=f.geometry.coordinates;
+    if(near.watch!=null){ navigator.geolocation.clearWatch(near.watch); near.watch=null; locBtn.setAttribute("aria-pressed","false"); locBtn.querySelector(".dot").classList.remove("on"); }
+    near.addr=f.properties.name; near.pos={lat,lng,acc:0};
+    if(near.marker) near.marker.remove();
+    const el=document.createElement("div"); el.className="me addr"; el.title=near.addr;
+    near.marker=new mapboxgl.Marker({element:el}).setLngLat([lng,lat]).addTo(map);
+    btn.setAttribute("aria-pressed","true"); closeBox();
+    if(!document.getElementById("plate").hidden&&typeof closePlate==="function") closePlate();
+    render(); nearFlyTo(true);
+    if(window.matchMedia("(max-width:760px)").matches&&window.__SH) setTimeout(()=>window.__SH.set("peek"),60);
+    toast("ממוין לפי מרחק מ־"+near.addr);
+  }
+  async function run(q){
+    if(ctl) ctl.abort(); ctl=new AbortController();
+    const u="https://api.mapbox.com/search/searchbox/v1/forward?q="+encodeURIComponent(q)+
+      "&language=he&limit=10&proximity=34.7818,32.0750&bbox=34.72,32.02,34.86,32.16&country=il&types=street,address,poi,neighborhood&access_token="+mapboxgl.accessToken;
+    try{
+      const j=await fetch(u,{signal:ctl.signal}).then(r=>r.json()); const seen=new Set();
+      last=(j.features||[]).filter(f=>{ if(!f.geometry) return false; const p=f.properties,c=p.context||{};
+        const city=(c.place&&c.place.name)||p.place_formatted||""; if(city&&!/תל אביב|Tel Aviv|יפו|Jaffa/.test(city)) return false;
+        if(/תחבורה|אוטובוס|bus|transit/i.test((p.poi_category||[]).join(" "))) return false;
+        const k=p.name+"|"+p.feature_type; if(seen.has(k)) return false; seen.add(k); return true; }).slice(0,6);
+      ul.innerHTML=last.length?last.map((f,i)=>{const p=f.properties;
+        const kind={street:"רחוב",address:"כתובת",neighborhood:"שכונה"}[p.feature_type]||(p.poi_category&&p.poi_category[0])||"מקום";
+        return `<li tabindex="0" data-i="${i}"><b>${esc(p.name||"")}</b><small>${esc(kind+(p.feature_type==="poi"&&p.address?" · "+p.address:""))}</small></li>`;}).join("")
+        :'<li class="hint" tabindex="-1">לא נמצא מקום כזה בתל אביב־יפו</li>';
+    }catch(e){}
+  }
+  btn.addEventListener("click",()=>{ if(near.addr&&box.hidden){ clear(); return; } box.hidden?open():closeBox(); });
+  box.querySelector(".x").addEventListener("click",closeBox);
+  inp.addEventListener("input",()=>{ clearTimeout(t); const q=inp.value.trim(); if(q.length<2){ ul.innerHTML=""; last=[]; return; } t=setTimeout(()=>run(q),260); });
+  inp.addEventListener("keydown",e=>{ if(e.key==="Enter"&&last.length){ e.preventDefault(); pick(last[0]); } if(e.key==="Escape") closeBox(); });
+  ul.addEventListener("click",e=>{ const li=e.target.closest("li[data-i]"); if(li) pick(last[+li.dataset.i]); });
+  ul.addEventListener("keydown",e=>{ if(e.key==="Enter"){ const li=e.target.closest("li[data-i]"); if(li) pick(last[+li.dataset.i]); } });
+  document.addEventListener("pointerdown",e=>{ if(!box.hidden&&!box.contains(e.target)&&!btn.contains(e.target)) closeBox(); });
+})();
 
 /* ================= מעבר בין מוד מפה למוד תלת־ממד ================= */
 const viewBtn=document.createElement("button");
