@@ -381,7 +381,7 @@ body.zfar .pin:not(.active),.pin.crowd:not(.active){visibility:hidden!important;
 .igf::after{content:"טוען צילום מאינסטגרם…";position:absolute;left:0;right:0;top:42%;text-align:center;font-size:13px;color:var(--ink-soft);pointer-events:none}
 .igf.ok::after{display:none}
 </style>
-<script>/*BUILD*/window.__BUILD="1792442600";
+<script>/*BUILD*/window.__BUILD="1792443200";
 (function(){try{
   fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"}).then(r=>r.text()).then(t=>{
     const m=t.match(/window\.__BUILD="(\d+)"/); if(!m||m[1]===window.__BUILD) return;
@@ -389,6 +389,8 @@ body.zfar .pin:not(.active),.pin.crowd:not(.active){visibility:hidden!important;
     location.reload();
   }).catch(()=>{});
 }catch(e){}})();</script>
+<!-- מדידת כניסות אנונימית (GoatCounter): בלי עוגיות ובלי פרטים אישיים. לוח בקרה: https://stsarch-atlas.goatcounter.com -->
+<script data-goatcounter="https://stsarch-atlas.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
 </head>
 <body>
 <div id="map" aria-label="מודל תלת־ממדי של תל אביב"></div>
@@ -1169,8 +1171,12 @@ function heroMap(container,b){
 
 /* building plate */
 const plate=document.getElementById("plate");
+/* אירועים לסטטיסטיקה: איזה בניין נפתח, לחיצות על הארכיון, שימוש בחיפוש */
+function track(path,title){ try{ if(window.goatcounter&&goatcounter.count) goatcounter.count({path,title:title||path,event:true}); }catch(e){} }
+document.addEventListener("click",e=>{ const a=e.target.closest&&e.target.closest("a[href^='"+ARCH_URL+"']"); if(a&&state.active){ const b=BUILDINGS.find(x=>x.id===state.active); if(b) track("archive/"+b.k,"ארכיון · "+b.he); } },true);
 function select(id){
   const b=BUILDINGS.find(x=>x.id===id); if(!b) return;
+  if(state.active!==id) track("building/"+b.k,b.he);
   state.active=id;
   markers.forEach((m,k)=>m.el.classList.toggle("active",k===id));
   const e=ERAS[b.era], G=b.gal;
@@ -1400,6 +1406,7 @@ locBtn.addEventListener("click",()=>{
     toast("ממוין לפי מרחק מ־"+near.addr);
   }
   async function pick(r){
+    track("search/"+(r.type==="b"?"building":"place"),"חיפוש · "+(r.type==="b"?"בניין מהאטלס":"רחוב/מקום"));
     if(r.type==="b"){ closeBox(); const b=r.b; if(b.lng!=null) map.flyTo({center:[b.lng,b.lat],zoom:Math.max(map.getZoom(),16.5),duration:reduceMotion?0:900}); select(b.id); return; }
     if(r.lng!=null) return pickPoint(r.name,r.lng,r.lat);
     if(r.mapbox_id){ try{
