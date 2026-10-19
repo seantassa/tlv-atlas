@@ -64,11 +64,12 @@ button{font:inherit}
 .addrbox .row{display:flex;align-items:center;border-bottom:1px solid var(--line,#DDE3EA)}
 .addrbox input{flex:1;border:0;padding:12px 14px;font:inherit;font-size:16px;background:transparent;color:var(--ink);outline:none;min-width:0}
 .addrbox .x{border:0;background:none;padding:0 14px;font-size:20px;cursor:pointer;color:var(--ink-soft,#6b7785)}
-.talk .rate{display:flex;flex-direction:column;gap:8px;margin:4px 0 14px}
+.talk .rate-avg{margin:4px 0 12px}.talk .rate-lbl{font-size:13px;font-weight:600}.talk .rate-lbl small{font-weight:400;color:var(--ink-soft,#6b7785)}
+.talk .cmore summary{cursor:pointer;font-size:13px;color:var(--ink-soft,#6b7785);padding:6px 0}.talk .cmore[open]{display:flex;flex-direction:column;gap:6px}.talk .cmore[open] summary{margin-bottom:2px}
 .talk .rate-avg{display:flex;align-items:baseline;gap:8px}.talk .ravg{font-size:28px;line-height:1}.talk .rcount{color:var(--ink-soft,#6b7785);font-size:12px}
 .talk .rate-btns{display:grid;grid-template-columns:repeat(10,1fr);gap:4px;direction:ltr}
 .talk .rate-btns button{min-height:38px;border:1px solid var(--ink);background:transparent;color:var(--ink);font:inherit;font-size:14px;cursor:pointer;padding:0;touch-action:manipulation}
-.talk .rate-btns button[aria-pressed="true"]{background:var(--ink);color:var(--paper,#fff)}
+.talk .rate-btns button[aria-checked="true"]{background:var(--ink);color:var(--paper,#fff)}
 .talk .rate-msg,.talk .cmsg{color:var(--ink-soft,#6b7785);font-size:12px}
 .talk .cform{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
 .talk .cform input,.talk .cform textarea{font:inherit;font-size:16px;padding:9px 10px;border:1px solid var(--line,#DDE3EA);background:transparent;color:var(--ink);resize:vertical;width:100%;box-sizing:border-box}
@@ -394,7 +395,7 @@ body.zfar .pin:not(.active),.pin.crowd:not(.active){visibility:hidden!important;
 .igf::after{content:"טוען צילום מאינסטגרם…";position:absolute;left:0;right:0;top:42%;text-align:center;font-size:13px;color:var(--ink-soft);pointer-events:none}
 .igf.ok::after{display:none}
 </style>
-<script>/*BUILD*/window.__BUILD="1792446000";
+<script>/*BUILD*/window.__BUILD="1792447200";
 (function(){try{
   fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"}).then(r=>r.text()).then(t=>{
     const m=t.match(/window\.__BUILD="(\d+)"/); if(!m||m[1]===window.__BUILD) return;
@@ -1194,45 +1195,51 @@ const myRating=k=>{ try{ return +localStorage.getItem("atlas_rate_"+k)||0; }catc
 const fmtDate=s=>{ try{ return new Date(s).toLocaleDateString("he-IL",{day:"numeric",month:"short",year:"numeric"}); }catch(e){ return ""; } };
 const talkSec=b=>`<section class="sec talk" data-k="${esc(b.k)}">
   <h4>דירוג ותגובות</h4>
-  <div class="rate">
-    <div class="rate-avg"><b class="ravg">—</b><small class="rcount">עוד אין דירוגים</small></div>
-    <div class="rate-btns" role="group" aria-label="דרגו את הבניין מ־1 עד 10">${[1,2,3,4,5,6,7,8,9,10].map(n=>`<button type="button" data-s="${n}" aria-pressed="false">${n}</button>`).join("")}</div>
-    <small class="rate-msg">כמה הבניין הזה מדבר אליכם? 1 = בכלל לא, 10 = מאוד</small>
-  </div>
+  <div class="rate-avg"><b class="ravg">—</b><small class="rcount">עוד אין דירוגים</small></div>
   <form class="cform" novalidate>
-    <input name="name" maxlength="60" placeholder="שם (לא חובה)" autocomplete="nickname">
-    <textarea name="liked" maxlength="1000" rows="2" placeholder="מה אהבתי"></textarea>
-    <textarea name="disliked" maxlength="1000" rows="2" placeholder="מה פחות"></textarea>
-    <div class="crow"><button class="btn primary" type="submit">פרסום תגובה</button><small class="cmsg"></small></div>
+    <div class="rate-lbl">הדירוג שלי <small>(1 = בכלל לא, 10 = מאוד)</small></div>
+    <div class="rate-btns" role="radiogroup" aria-label="דירוג מ־1 עד 10">${[1,2,3,4,5,6,7,8,9,10].map(n=>`<button type="button" role="radio" data-s="${n}" aria-checked="false">${n}</button>`).join("")}</div>
+    <details class="cmore"><summary>רוצים להוסיף גם כמה מילים? (לא חובה)</summary>
+      <input name="name" maxlength="60" placeholder="שם (לא חובה)" autocomplete="nickname">
+      <textarea name="liked" maxlength="1000" rows="2" placeholder="מה אהבתי (לא חובה)"></textarea>
+      <textarea name="disliked" maxlength="1000" rows="2" placeholder="מה פחות (לא חובה)"></textarea>
+    </details>
+    <div class="crow"><button class="btn primary" type="submit">שליחה</button><small class="cmsg"></small></div>
   </form>
   <ul class="clist"><li class="cempty">טוען תגובות…</li></ul>
 </section>`;
+const SB_ERR=t=>/links are not allowed/.test(t)?"אי אפשר לשים קישורים בתגובה.":/too many/.test(t)?"נשלחו הרבה תגובות בדקות האחרונות. נסו שוב עוד מעט.":"";
 async function initTalk(b){
   const sec=plate.querySelector(".talk"); if(!sec) return;
-  const k=b.k, avgEl=sec.querySelector(".ravg"), cntEl=sec.querySelector(".rcount"), msg=sec.querySelector(".rate-msg");
-  const paintRate=()=>{ const r=(RATINGS||{})[k]; avgEl.textContent=r?r.avg.toFixed(1):"—"; cntEl.textContent=r?`${r.n} ${r.n===1?"דירוג":"דירוגים"}`:"עוד אין דירוגים";
-    const mine=myRating(k); sec.querySelectorAll(".rate-btns button").forEach(x=>x.setAttribute("aria-pressed",String(+x.dataset.s===mine))); };
-  loadRatings().then(paintRate);
-  sec.querySelector(".rate-btns").addEventListener("click",async e=>{ const x=e.target.closest("button[data-s]"); if(!x) return; const s=+x.dataset.s;
-    try{ localStorage.setItem("atlas_rate_"+k,s); }catch(_){}
-    paintRate(); msg.textContent="שומר…";
-    try{ const r=await fetch(SB_URL+"/rest/v1/rpc/atlas_rate",{method:"POST",headers:sbH(),body:JSON.stringify({p_building:k,p_voter:VOTER,p_score:s})}); if(!r.ok) throw 0;
-      await loadRatings(true); paintRate(); msg.textContent=`דירגת ${s}/10. תודה! אפשר לשנות בכל רגע.`; track("rate/"+k,"דירוג · "+b.he); }
-    catch(_){ msg.textContent="הדירוג לא נשמר. נסו שוב בעוד רגע."; } });
-  const ul=sec.querySelector(".clist");
-  const draw=rows=>{ window.__lastRows=rows; ul.innerHTML=rows.length?rows.map(c=>`<li><div class="chead"><b>${esc(c.name||"אורח/ת")}</b><small>${fmtDate(c.created_at)}</small></div>${c.liked?`<p><span class="plus">אהבתי</span>${esc(c.liked)}</p>`:""}${c.disliked?`<p><span class="minus">פחות</span>${esc(c.disliked)}</p>`:""}</li>`).join(""):'<li class="cempty">עוד אין תגובות. היו הראשונים לכתוב.</li>'; };
+  const k=b.k, avgEl=sec.querySelector(".ravg"), cntEl=sec.querySelector(".rcount");
+  const f=sec.querySelector(".cform"), cmsg=sec.querySelector(".cmsg"), ul=sec.querySelector(".clist");
+  let pick=myRating(k);
+  const paintBtns=()=>sec.querySelectorAll(".rate-btns button").forEach(x=>x.setAttribute("aria-checked",String(+x.dataset.s===pick)));
+  const paintAvg=()=>{ const r=(RATINGS||{})[k]; avgEl.textContent=r?r.avg.toFixed(1):"—"; cntEl.textContent=r?`ממוצע מתוך ${r.n} ${r.n===1?"דירוג":"דירוגים"}`:"עוד אין דירוגים"; };
+  paintBtns(); if(myRating(k)) cmsg.textContent=`דירגת ${myRating(k)}/10. אפשר לבחור מספר אחר וללחוץ שליחה כדי לשנות.`;
+  loadRatings().then(paintAvg);
+  sec.querySelector(".rate-btns").addEventListener("click",e=>{ const x=e.target.closest("button[data-s]"); if(!x) return; pick=+x.dataset.s; paintBtns(); cmsg.textContent=`נבחר ${pick}/10. לחצו "שליחה".`; });
+  const draw=rows=>{ window.__lastRows=rows; ul.innerHTML=rows.length?rows.map(c=>`<li><div class="chead"><b>${esc(c.name||"אורח/ת")}</b><small>${fmtDate(c.created_at)}</small></div>${c.liked?`<p><span class="plus">אהבתי</span>${esc(c.liked)}</p>`:""}${c.disliked?`<p><span class="minus">פחות</span>${esc(c.disliked)}</p>`:""}</li>`).join(""):'<li class="cempty">עוד אין תגובות כתובות.</li>'; };
   try{ const rows=await fetch(SB_URL+"/rest/v1/atlas_comments?select=name,liked,disliked,created_at&building=eq."+encodeURIComponent(k)+"&order=created_at.desc&limit=50",{headers:sbH()}).then(r=>r.json()); if(plate.querySelector(".talk")===sec) draw(Array.isArray(rows)?rows:[]); }
   catch(_){ ul.innerHTML='<li class="cempty">לא הצלחתי לטעון תגובות כרגע.</li>'; }
-  const f=sec.querySelector(".cform"), cmsg=sec.querySelector(".cmsg");
-  f.addEventListener("submit",async e=>{ e.preventDefault(); const d=Object.fromEntries(new FormData(f)); Object.keys(d).forEach(x=>d[x]=String(d[x]).trim());
-    if(!d.liked&&!d.disliked){ cmsg.textContent="כתבו מה אהבתם או מה פחות."; return; }
-    try{ if(+localStorage.getItem("atlas_last_c")>Date.now()-20000){ cmsg.textContent="רגע, אפשר לפרסם שוב בעוד כמה שניות."; return; } }catch(_){}
-    const btn=f.querySelector("button"); btn.disabled=true; cmsg.textContent="מפרסם…";
-    try{ const r=await fetch(SB_URL+"/rest/v1/atlas_comments",{method:"POST",headers:sbH({Prefer:"return=representation"}),body:JSON.stringify({building:k,name:d.name||null,liked:d.liked||null,disliked:d.disliked||null})});
-      if(!r.ok) throw 0; const [row]=await r.json(); try{ localStorage.setItem("atlas_last_c",Date.now()); }catch(_){}
-      const cur=[...ul.querySelectorAll("li:not(.cempty)")].length; if(!cur) ul.innerHTML=""; ul.insertAdjacentHTML("afterbegin",""); draw([row].concat(window.__lastRows||[]));
-      f.reset(); cmsg.textContent="פורסם. תודה!"; track("comment/"+k,"תגובה · "+b.he); }
-    catch(_){ cmsg.textContent="התגובה לא נשמרה. נסו שוב."; }
+  f.addEventListener("submit",async e=>{ e.preventDefault();
+    const d=Object.fromEntries(new FormData(f)); Object.keys(d).forEach(x=>d[x]=String(d[x]).trim());
+    const hasText=!!(d.liked||d.disliked), newRate=pick&&pick!==myRating(k);
+    if(!pick&&!hasText){ cmsg.textContent="בחרו דירוג מ־1 עד 10 (ואם בא לכם, גם כמה מילים)."; return; }
+    if(!newRate&&!hasText){ cmsg.textContent=`הדירוג שלך (${pick}/10) כבר נשמר.`; return; }
+    if(hasText){ try{ if(+localStorage.getItem("atlas_last_c")>Date.now()-20000){ cmsg.textContent="רגע, אפשר לשלוח שוב בעוד כמה שניות."; return; } }catch(_){} }
+    const btn=f.querySelector("button[type=submit]"); btn.disabled=true; cmsg.textContent="שולח…";
+    const done=[];
+    try{
+      if(newRate){ const r=await fetch(SB_URL+"/rest/v1/rpc/atlas_rate",{method:"POST",headers:sbH(),body:JSON.stringify({p_building:k,p_voter:VOTER,p_score:pick})});
+        if(!r.ok) throw new Error(SB_ERR(await r.text())||"הדירוג לא נשמר. נסו שוב.");
+        try{ localStorage.setItem("atlas_rate_"+k,pick); }catch(_){} await loadRatings(true); paintAvg(); done.push(`הדירוג ${pick}/10 נשמר`); track("rate/"+k,"דירוג · "+b.he); }
+      if(hasText){ const r=await fetch(SB_URL+"/rest/v1/atlas_comments",{method:"POST",headers:sbH({Prefer:"return=representation"}),body:JSON.stringify({building:k,name:d.name||null,liked:d.liked||null,disliked:d.disliked||null})});
+        if(!r.ok) throw new Error(SB_ERR(await r.text())||"התגובה לא נשמרה. נסו שוב.");
+        const [row]=await r.json(); try{ localStorage.setItem("atlas_last_c",Date.now()); }catch(_){}
+        draw([row].concat((window.__lastRows||[]))); ["name","liked","disliked"].forEach(n=>f.elements[n].value=""); done.push("התגובה פורסמה"); track("comment/"+k,"תגובה · "+b.he); }
+      cmsg.textContent=done.join(" ו")+". תודה!";
+    }catch(err){ cmsg.textContent=(done.length?done.join(" ו")+", אבל ":"")+(err.message||"משהו השתבש. נסו שוב."); }
     btn.disabled=false; });
 }
 
