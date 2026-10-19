@@ -1064,13 +1064,17 @@ listEl.addEventListener("keydown",e=>{if(e.key==="Enter"){const li=e.target.clos
   async function run(q){
     if(ctl) ctl.abort(); ctl=new AbortController();
     const u="https://api.mapbox.com/search/searchbox/v1/forward?q="+encodeURIComponent(q)+
-      "&language=he&limit=5&proximity=34.7818,32.0750&bbox=34.72,32.02,34.86,32.16&country=il&types=street,address,poi,neighborhood,place&access_token="+mapboxgl.accessToken;
+      "&language=he&limit=8&proximity=34.7818,32.0750&bbox=34.72,32.02,34.86,32.16&country=il&types=street,address,poi,neighborhood,place&access_token="+mapboxgl.accessToken;
     try{
       const j=await fetch(u,{signal:ctl.signal}).then(r=>r.json());
-      last=(j.features||[]).filter(f=>f.geometry);
+      const seen=new Set();
+      last=(j.features||[]).filter(f=>{ if(!f.geometry) return false; const p=f.properties, c=p.context||{};
+        const city=(c.place&&c.place.name)||p.place_formatted||"";
+        if(city&&!/תל אביב|Tel Aviv|יפו|Jaffa/.test(city)) return false;
+        const key=p.name+"|"+p.feature_type; if(seen.has(key)) return false; seen.add(key); return true; });
       if(!last.length||inp.value.trim().length<2){hide();return;}
-      box.innerHTML='<li class="ph">רחובות ומקומות במפה</li>'+last.map((f,i)=>{const p=f.properties;
-        return `<li class="pl" tabindex="0" data-i="${i}"><i></i><span><b>${esc(p.name||"")}</b><small>${esc(p.place_formatted||p.full_address||"")}</small></span></li>`;}).join("");
+      box.innerHTML='<li class="ph">רחובות ומקומות במפה</li>'+last.slice(0,5).map((f,i)=>{const p=f.properties;
+        return `<li class="pl" tabindex="0" data-i="${i}"><i></i><span><b>${esc(p.name||"")}</b><small>${esc(({street:"רחוב",address:"כתובת",neighborhood:"שכונה",place:"עיר"}[p.feature_type]||(p.poi_category&&p.poi_category[0])||"מקום")+(p.feature_type==="poi"&&p.address?" · "+p.address:""))}</small></span></li>`;}).join("");
       box.hidden=false;
     }catch(e){ if(e.name!=="AbortError") hide(); }
   }
