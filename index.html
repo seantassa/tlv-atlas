@@ -381,7 +381,7 @@ body.zfar .pin:not(.active),.pin.crowd:not(.active){visibility:hidden!important;
 .igf::after{content:"טוען צילום מאינסטגרם…";position:absolute;left:0;right:0;top:42%;text-align:center;font-size:13px;color:var(--ink-soft);pointer-events:none}
 .igf.ok::after{display:none}
 </style>
-<script>/*BUILD*/window.__BUILD="1792442000";
+<script>/*BUILD*/window.__BUILD="1792442600";
 (function(){try{
   fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"}).then(r=>r.text()).then(t=>{
     const m=t.match(/window\.__BUILD="(\d+)"/); if(!m||m[1]===window.__BUILD) return;
@@ -1429,7 +1429,7 @@ locBtn.addEventListener("click",()=>{
     const variants=[q]; if(!/^(שדרות|שד׳|רחוב|דרך|כיכר)\s/.test(q)) variants.push("שדרות "+q);
     const jobs=[
       fetch("https://api.mapbox.com/search/searchbox/v1/suggest?q="+encodeURIComponent(q)+prox+"&limit=10&types=poi,address,street,neighborhood,place&session_token="+SESSION+"&access_token="+tok,{signal}).then(r=>r.json()).catch(()=>({})),
-      ...variants.map(v=>fetch("https://api.mapbox.com/search/geocode/v6/forward?q="+encodeURIComponent(v+" תל אביב")+prox+"&limit=6&autocomplete=true&types=street,address,neighborhood&access_token="+tok,{signal}).then(r=>r.json()).catch(()=>({})))
+      ...variants.map(v=>fetch("https://api.mapbox.com/search/geocode/v6/forward?q="+encodeURIComponent(v)+prox+"&limit=6&autocomplete=true&types=street,address,neighborhood&access_token="+tok,{signal}).then(r=>r.json()).catch(()=>({})))
     ];
     const [sg,...gcs]=await Promise.all(jobs);
     const out=[];
@@ -1440,9 +1440,12 @@ locBtn.addEventListener("click",()=>{
       const kind=KIND[s.feature_type]||(s.poi_category&&s.poi_category[0])||"מקום";
       out.push({name:s.name,sub:kind+(s.feature_type==="poi"&&s.address?" · "+s.address:" · "+(s.place_formatted||"")),mapbox_id:s.mapbox_id,ft:s.feature_type}); });
     /* streets & exact addresses first, then places; drop duplicates */
+    /* keep only results whose name actually contains what was typed */
+    const qw=N(q).split(" ").filter(w=>w.length>1&&!/^\d+$/.test(w));
+    const rel=r=>{ const n=N(r.name); return !qw.length||qw.some(w=>n.includes(w)); };
     const rank={address:0,street:1,poi:2,neighborhood:3};
     const seen=new Set();
-    return out.sort((a,b)=>(rank[a.ft]??4)-(rank[b.ft]??4)).filter(r=>{ const k=N(r.name)+"|"+(r.ft==="poi"?r.sub:r.ft); if(seen.has(k)) return false; seen.add(k); return true; }).slice(0,7);
+    return out.filter(rel).sort((a,b)=>(rank[a.ft]??4)-(rank[b.ft]??4)).filter(r=>{ const k=N(r.name)+"|"+(r.ft==="poi"?r.sub:r.ft); if(seen.has(k)) return false; seen.add(k); return true; }).slice(0,7);
   }
   const li=(r,i)=>`<li tabindex="0" role="option" data-i="${i}" class="${r.type==="b"?"bhit":""}"><b>${esc(r.name||"")}</b><small>${esc(r.sub||"")}</small></li>`;
   function draw(rs,pending){
