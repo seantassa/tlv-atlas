@@ -1501,7 +1501,7 @@ const FPDATA = {"tachana":[[3,0,[6175,5877,6179,5871,6162,5863,6157,5869,6175,58
       const hit=kept.some(q=>{const dx=q.x-p.x,dy=q.y-p.y; return dx*dx+dy*dy<r2;});
       m.el.classList.toggle("crowd",hit); if(!hit) kept.push(p); });
   }
-  const sched=()=>{ if(!raf) raf=requestAnimationFrame(run); };
+  const sched=()=>{ if(!raf) raf=setTimeout(run,60); };
   ["moveend","zoomend","rotateend","pitchend","load"].forEach(ev=>map.on(ev,sched));
   const _r=render; render=function(){ _r(); sched(); };
   sched();
