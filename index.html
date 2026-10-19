@@ -56,6 +56,13 @@ button{font:inherit}
 .search{flex:1;min-width:0;padding:7px 10px;border:1px solid var(--line);font:inherit;background:var(--paper);color:var(--ink)}
 .count{font-family:var(--mono);font-size:11px;color:var(--ink-soft);padding:8px 18px 4px}
 .list{list-style:none;margin:0;padding:0 0 10px;overflow:auto;flex:1}
+.places{list-style:none;margin:0;padding:0;border-bottom:1px solid var(--rule,#DDE3EA)}
+.places .ph{padding:8px 18px 4px;font:600 10px/1 "IBM Plex Mono",monospace;letter-spacing:.08em;color:var(--ink-soft,#6b7785)}
+.places .pl{display:grid;grid-template-columns:30px 1fr;gap:10px;align-items:center;padding:8px 18px;cursor:pointer;border-bottom:1px solid #EEF1F4}
+.places .pl:hover,.places .pl:focus{background:#F3F6F9;outline:none}
+.places .pl i{width:22px;height:22px;border:1.5px solid currentColor;border-radius:50% 50% 50% 0;transform:rotate(-45deg);justify-self:center;opacity:.55}
+.places .pl small{display:block;color:var(--ink-soft,#6b7785);font-size:11px;margin-top:2px}
+.searchpin{width:18px;height:18px;border-radius:50%;background:#E8432E;border:3px solid #fff;box-shadow:0 0 0 2px #E8432E,0 2px 8px rgba(0,0,0,.35)}
 .item{display:grid;grid-template-columns:30px 1fr auto;gap:10px;align-items:center;padding:9px 18px;cursor:pointer;border-bottom:1px solid #EEF1F4}
 .item:hover,.item.active{background:var(--board)}
 .item b{display:block;font-weight:500;font-size:14px}
@@ -375,7 +382,8 @@ body.zfar .pin:not(.active),.pin.crowd:not(.active){visibility:hidden!important;
     <div class="sub"><span>1:2500 · SITE PLAN & CONTEXT</span><span id="count"></span></div>
   </header>
   <div class="legend" id="legend"><h3>תקופה</h3></div>
-  <div class="tools"><input class="search" id="search" type="search" placeholder="חיפוש: מבנה, אדריכל, שכונה" aria-label="חיפוש"><select class="search office" id="office" aria-label="משרד אדריכלים"><option value="">כל המשרדים</option></select></div>
+  <div class="tools"><input class="search" id="search" type="search" placeholder="חיפוש: מבנה, אדריכל, רחוב או מקום" aria-label="חיפוש"><select class="search office" id="office" aria-label="משרד אדריכלים"><option value="">כל המשרדים</option></select></div>
+  <ul class="places" id="places" hidden></ul>
   <ul class="list" id="list"></ul>
   <footer><span>© STS ARCH · SEAN</span><span>CURATED ATLAS</span></footer>
 </aside>
@@ -1038,6 +1046,40 @@ function render(){
 listEl.addEventListener("click",e=>{const li=e.target.closest(".item"); if(li) select(+li.dataset.id);});
 listEl.addEventListener("keydown",e=>{if(e.key==="Enter"){const li=e.target.closest(".item"); if(li) select(+li.dataset.id);}});
 
+/* ===== street / place search (Mapbox Search Box) inside the main search field ===== */
+(function(){
+  const inp=document.getElementById("search"), box=document.getElementById("places");
+  let t=null, ctl=null, pin=null, last=[];
+  const sess=(crypto.randomUUID?crypto.randomUUID():String(Math.random()).slice(2));
+  const hide=()=>{box.hidden=true;box.innerHTML="";last=[];};
+  function go(f){
+    const [lng,lat]=f.geometry.coordinates;
+    if(pin) pin.remove();
+    const el=document.createElement("div"); el.className="searchpin";
+    pin=new mapboxgl.Marker({element:el}).setLngLat([lng,lat]).addTo(map);
+    const street=/street|address/.test(f.properties.feature_type);
+    map.flyTo({center:[lng,lat],zoom:street?17:16.2,pitch:55,speed:1.2});
+    if(window.matchMedia("(max-width:760px)").matches&&window.__SH) window.__SH.set("peek");
+  }
+  async function run(q){
+    if(ctl) ctl.abort(); ctl=new AbortController();
+    const u="https://api.mapbox.com/search/searchbox/v1/forward?q="+encodeURIComponent(q)+
+      "&language=he&limit=5&proximity=34.7818,32.0750&bbox=34.72,32.02,34.86,32.16&country=il&types=street,address,poi,neighborhood,place&access_token="+mapboxgl.accessToken;
+    try{
+      const j=await fetch(u,{signal:ctl.signal}).then(r=>r.json());
+      last=(j.features||[]).filter(f=>f.geometry);
+      if(!last.length||inp.value.trim().length<2){hide();return;}
+      box.innerHTML='<li class="ph">רחובות ומקומות במפה</li>'+last.map((f,i)=>{const p=f.properties;
+        return `<li class="pl" tabindex="0" data-i="${i}"><i></i><span><b>${esc(p.name||"")}</b><small>${esc(p.place_formatted||p.full_address||"")}</small></span></li>`;}).join("");
+      box.hidden=false;
+    }catch(e){ if(e.name!=="AbortError") hide(); }
+  }
+  inp.addEventListener("input",()=>{ clearTimeout(t); const q=inp.value.trim(); if(q.length<2){hide(); if(pin){pin.remove();pin=null;} return;} t=setTimeout(()=>run(q),280); });
+  inp.addEventListener("keydown",e=>{ if(e.key==="Enter"&&last.length&&!document.querySelector("#list .item")){ e.preventDefault(); go(last[0]); inp.blur(); } });
+  box.addEventListener("click",e=>{const li=e.target.closest(".pl"); if(li){ go(last[+li.dataset.i]); inp.blur(); }});
+  box.addEventListener("keydown",e=>{ if(e.key==="Enter"){const li=e.target.closest(".pl"); if(li) go(last[+li.dataset.i]);} });
+})();
+
 /* figure-ground circle (second map, plan view) */
 let mini=null;
 function miniMap(container,b){
@@ -1348,7 +1390,7 @@ map.on("style.load",()=>{
     return S;
   }
 
-  const SH=Sheet(sheet,{snaps:["peek","half","full"],half:0.45,scroller:()=>listEl});
+  const SH=Sheet(sheet,{snaps:["peek","half","full"],half:0.45,scroller:()=>listEl}); window.__SH=SH;
   const PL=window.__PL=Sheet(plate,{snaps:["half","full"],half:0.40,scroller:()=>plate,onClose:()=>closePlate()});
   /* header area of the index also toggles on tap */
   sheet.querySelector("header").addEventListener("click",()=>{ if(mq.matches&&SH.snap==="peek") SH.set("half"); });
