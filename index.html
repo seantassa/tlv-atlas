@@ -64,6 +64,19 @@ button{font:inherit}
 .addrbox .row{display:flex;align-items:center;border-bottom:1px solid var(--line,#DDE3EA)}
 .addrbox input{flex:1;border:0;padding:12px 14px;font:inherit;font-size:16px;background:transparent;color:var(--ink);outline:none;min-width:0}
 .addrbox .x{border:0;background:none;padding:0 14px;font-size:20px;cursor:pointer;color:var(--ink-soft,#6b7785)}
+.talk .rate{display:flex;flex-direction:column;gap:8px;margin:4px 0 14px}
+.talk .rate-avg{display:flex;align-items:baseline;gap:8px}.talk .ravg{font-size:28px;line-height:1}.talk .rcount{color:var(--ink-soft,#6b7785);font-size:12px}
+.talk .rate-btns{display:grid;grid-template-columns:repeat(10,1fr);gap:4px;direction:ltr}
+.talk .rate-btns button{min-height:38px;border:1px solid var(--ink);background:transparent;color:var(--ink);font:inherit;font-size:14px;cursor:pointer;padding:0;touch-action:manipulation}
+.talk .rate-btns button[aria-pressed="true"]{background:var(--ink);color:var(--paper,#fff)}
+.talk .rate-msg,.talk .cmsg{color:var(--ink-soft,#6b7785);font-size:12px}
+.talk .cform{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.talk .cform input,.talk .cform textarea{font:inherit;font-size:16px;padding:9px 10px;border:1px solid var(--line,#DDE3EA);background:transparent;color:var(--ink);resize:vertical;width:100%;box-sizing:border-box}
+.talk .crow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.talk .clist{list-style:none;margin:0;padding:0}.talk .clist li{padding:10px 0;border-top:1px solid var(--line,#DDE3EA)}
+.talk .chead{display:flex;justify-content:space-between;gap:8px;margin-bottom:4px}.talk .chead small{color:var(--ink-soft,#6b7785);font-size:11.5px}
+.talk .clist p{margin:2px 0;font-size:14px;line-height:1.55}.talk .plus,.talk .minus{display:inline-block;font-size:11px;padding:1px 6px;margin-inline-end:6px;border:1px solid currentColor}
+.talk .plus{color:#2E7D4F}.talk .minus{color:#B4462E}.talk .cempty{color:var(--ink-soft,#6b7785);font-size:13px}
 /* smoother touch scrolling on phones */
 #list,.plate,.pc,.addrbox ul{overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
 .pin{will-change:transform}
@@ -381,7 +394,7 @@ body.zfar .pin:not(.active),.pin.crowd:not(.active){visibility:hidden!important;
 .igf::after{content:"טוען צילום מאינסטגרם…";position:absolute;left:0;right:0;top:42%;text-align:center;font-size:13px;color:var(--ink-soft);pointer-events:none}
 .igf.ok::after{display:none}
 </style>
-<script>/*BUILD*/window.__BUILD="1792444700";
+<script>/*BUILD*/window.__BUILD="1792446000";
 (function(){try{
   fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"}).then(r=>r.text()).then(t=>{
     const m=t.match(/window\.__BUILD="(\d+)"/); if(!m||m[1]===window.__BUILD) return;
@@ -1171,6 +1184,58 @@ function heroMap(container,b){
 
 /* building plate */
 const plate=document.getElementById("plate");
+/* ================= תגובות ודירוג 1–10 (Supabase) ================= */
+const SB_URL="https://dqfugymflgtvnkwgqzso.supabase.co", SB_KEY="sb_publishable_0Iqk4W2y2aPzJKpBMYvXYg_lcDZBT5M";
+const sbH=(extra)=>Object.assign({apikey:SB_KEY,"Content-Type":"application/json"},extra||{});
+const VOTER=(()=>{ try{ let v=localStorage.getItem("atlas_voter"); if(!v){ v=(crypto.randomUUID?crypto.randomUUID():"10000000-1000-4000-8000-100000000000".replace(/[018]/g,c=>(c^crypto.getRandomValues(new Uint8Array(1))[0]&15>>c/4).toString(16))); localStorage.setItem("atlas_voter",v); } return v; }catch(e){ return crypto.randomUUID?crypto.randomUUID():"00000000-0000-4000-8000-000000000000"; } })();
+let RATINGS=null;
+async function loadRatings(force){ if(RATINGS&&!force) return RATINGS; try{ const j=await fetch(SB_URL+"/rest/v1/rpc/atlas_rating_stats",{method:"POST",headers:sbH(),body:"{}"}).then(r=>r.json()); RATINGS={}; (Array.isArray(j)?j:[]).forEach(r=>RATINGS[r.building]={avg:+r.avg,n:r.n}); }catch(e){ RATINGS=RATINGS||{}; } return RATINGS; }
+const myRating=k=>{ try{ return +localStorage.getItem("atlas_rate_"+k)||0; }catch(e){ return 0; } };
+const fmtDate=s=>{ try{ return new Date(s).toLocaleDateString("he-IL",{day:"numeric",month:"short",year:"numeric"}); }catch(e){ return ""; } };
+const talkSec=b=>`<section class="sec talk" data-k="${esc(b.k)}">
+  <h4>דירוג ותגובות</h4>
+  <div class="rate">
+    <div class="rate-avg"><b class="ravg">—</b><small class="rcount">עוד אין דירוגים</small></div>
+    <div class="rate-btns" role="group" aria-label="דרגו את הבניין מ־1 עד 10">${[1,2,3,4,5,6,7,8,9,10].map(n=>`<button type="button" data-s="${n}" aria-pressed="false">${n}</button>`).join("")}</div>
+    <small class="rate-msg">כמה הבניין הזה מדבר אליכם? 1 = בכלל לא, 10 = מאוד</small>
+  </div>
+  <form class="cform" novalidate>
+    <input name="name" maxlength="60" placeholder="שם (לא חובה)" autocomplete="nickname">
+    <textarea name="liked" maxlength="1000" rows="2" placeholder="מה אהבתי"></textarea>
+    <textarea name="disliked" maxlength="1000" rows="2" placeholder="מה פחות"></textarea>
+    <div class="crow"><button class="btn primary" type="submit">פרסום תגובה</button><small class="cmsg"></small></div>
+  </form>
+  <ul class="clist"><li class="cempty">טוען תגובות…</li></ul>
+</section>`;
+async function initTalk(b){
+  const sec=plate.querySelector(".talk"); if(!sec) return;
+  const k=b.k, avgEl=sec.querySelector(".ravg"), cntEl=sec.querySelector(".rcount"), msg=sec.querySelector(".rate-msg");
+  const paintRate=()=>{ const r=(RATINGS||{})[k]; avgEl.textContent=r?r.avg.toFixed(1):"—"; cntEl.textContent=r?`${r.n} ${r.n===1?"דירוג":"דירוגים"}`:"עוד אין דירוגים";
+    const mine=myRating(k); sec.querySelectorAll(".rate-btns button").forEach(x=>x.setAttribute("aria-pressed",String(+x.dataset.s===mine))); };
+  loadRatings().then(paintRate);
+  sec.querySelector(".rate-btns").addEventListener("click",async e=>{ const x=e.target.closest("button[data-s]"); if(!x) return; const s=+x.dataset.s;
+    try{ localStorage.setItem("atlas_rate_"+k,s); }catch(_){}
+    paintRate(); msg.textContent="שומר…";
+    try{ const r=await fetch(SB_URL+"/rest/v1/rpc/atlas_rate",{method:"POST",headers:sbH(),body:JSON.stringify({p_building:k,p_voter:VOTER,p_score:s})}); if(!r.ok) throw 0;
+      await loadRatings(true); paintRate(); msg.textContent=`דירגת ${s}/10. תודה! אפשר לשנות בכל רגע.`; track("rate/"+k,"דירוג · "+b.he); }
+    catch(_){ msg.textContent="הדירוג לא נשמר. נסו שוב בעוד רגע."; } });
+  const ul=sec.querySelector(".clist");
+  const draw=rows=>{ window.__lastRows=rows; ul.innerHTML=rows.length?rows.map(c=>`<li><div class="chead"><b>${esc(c.name||"אורח/ת")}</b><small>${fmtDate(c.created_at)}</small></div>${c.liked?`<p><span class="plus">אהבתי</span>${esc(c.liked)}</p>`:""}${c.disliked?`<p><span class="minus">פחות</span>${esc(c.disliked)}</p>`:""}</li>`).join(""):'<li class="cempty">עוד אין תגובות. היו הראשונים לכתוב.</li>'; };
+  try{ const rows=await fetch(SB_URL+"/rest/v1/atlas_comments?select=name,liked,disliked,created_at&building=eq."+encodeURIComponent(k)+"&order=created_at.desc&limit=50",{headers:sbH()}).then(r=>r.json()); if(plate.querySelector(".talk")===sec) draw(Array.isArray(rows)?rows:[]); }
+  catch(_){ ul.innerHTML='<li class="cempty">לא הצלחתי לטעון תגובות כרגע.</li>'; }
+  const f=sec.querySelector(".cform"), cmsg=sec.querySelector(".cmsg");
+  f.addEventListener("submit",async e=>{ e.preventDefault(); const d=Object.fromEntries(new FormData(f)); Object.keys(d).forEach(x=>d[x]=String(d[x]).trim());
+    if(!d.liked&&!d.disliked){ cmsg.textContent="כתבו מה אהבתם או מה פחות."; return; }
+    try{ if(+localStorage.getItem("atlas_last_c")>Date.now()-20000){ cmsg.textContent="רגע, אפשר לפרסם שוב בעוד כמה שניות."; return; } }catch(_){}
+    const btn=f.querySelector("button"); btn.disabled=true; cmsg.textContent="מפרסם…";
+    try{ const r=await fetch(SB_URL+"/rest/v1/atlas_comments",{method:"POST",headers:sbH({Prefer:"return=representation"}),body:JSON.stringify({building:k,name:d.name||null,liked:d.liked||null,disliked:d.disliked||null})});
+      if(!r.ok) throw 0; const [row]=await r.json(); try{ localStorage.setItem("atlas_last_c",Date.now()); }catch(_){}
+      const cur=[...ul.querySelectorAll("li:not(.cempty)")].length; if(!cur) ul.innerHTML=""; ul.insertAdjacentHTML("afterbegin",""); draw([row].concat(window.__lastRows||[]));
+      f.reset(); cmsg.textContent="פורסם. תודה!"; track("comment/"+k,"תגובה · "+b.he); }
+    catch(_){ cmsg.textContent="התגובה לא נשמרה. נסו שוב."; }
+    btn.disabled=false; });
+}
+
 /* אירועים לסטטיסטיקה: איזה בניין נפתח, לחיצות על הארכיון, שימוש בחיפוש */
 function track(path,title){ try{ if(window.goatcounter&&goatcounter.count) goatcounter.count({path,title:title||path,event:true}); }catch(e){} }
 document.addEventListener("click",e=>{ const a=e.target.closest&&e.target.closest("a[href^='"+ARCH_URL+"']"); if(a&&state.active){ const b=BUILDINGS.find(x=>x.id===state.active); if(b) track("archive/"+b.k,"ארכיון · "+b.he); } },true);
@@ -1212,6 +1277,7 @@ function select(id){
       <section class="sec"><h4>מה לחפש במקום</h4><ul class="look">${b.look.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></section>
       ${(b.ig||[]).length&&G.length?igSec(b):""}
       ${docSec(b)}
+      ${b.priv==="none"?"":talkSec(b)}
       ${b.note?`<section class="sec"><h4>הערת האדריכל</h4><p>${esc(b.note)}</p></section>`:""}
       ${b.priv?"":`<div class="actions">
         <button class="btn primary" data-orbit>סיבוב סביב המבנה</button>
@@ -1222,6 +1288,7 @@ function select(id){
   plate.hidden=false; plate.scrollTop=0;
   { const sl=plate.querySelector(".igslot"); if(sl) IGPOOL.attach(sl.dataset.c,sl,b); else IGPOOL.detach(); }
   plate.querySelector(".close").onclick=closePlate;
+  initTalk(b);
   const ob=plate.querySelector("[data-orbit]"); if(ob) ob.onclick=()=>orbit(b);
   if(b.priv!=="none") miniMap(document.getElementById("mm"),b);
   if(!G.length && b.priv!=="none") heroMap(document.getElementById("hero"),b);
