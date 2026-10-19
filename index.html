@@ -72,6 +72,10 @@ button{font:inherit}
 .me.addr{background:#E8432E!important;box-shadow:0 0 0 3px #fff,0 0 0 5px #E8432E!important}
 @media (max-width:760px){ .addrbox{top:calc(var(--st,0px) + 62px);left:10px;right:10px;width:auto;max-width:none;border-radius:14px;overflow:hidden;border:none}
   .bar .addrbtn{flex:0 0 auto;padding:0 14px;border-inline-start:1px solid var(--ink)!important} .bar .addrbtn span{display:none} }
+.igpool{position:absolute;top:0;left:0;width:0;height:0;overflow:visible;z-index:2}
+.igpool iframe{position:absolute;top:0;left:0;width:320px;height:420px;visibility:hidden;pointer-events:none;border:1px solid var(--line);background:#fff}
+.igpool iframe.on{visibility:visible;pointer-events:auto}
+.igslot{width:100%;aspect-ratio:1/1.32}
 .item{display:grid;grid-template-columns:30px 1fr auto;gap:10px;align-items:center;padding:9px 18px;cursor:pointer;border-bottom:1px solid #EEF1F4}
 .item:hover,.item.active{background:var(--board)}
 .item b{display:block;font-weight:500;font-size:14px}
@@ -430,9 +434,11 @@ const IG = {};IGP.forEach(([k,c,by,t])=>{(IG[k]=IG[k]||{p:[],d:[]})[t==="d"?"d":
 const OFFICE_SITES=[["HQ","https://www.hqa.co.il"],["פיצו קדם","https://www.pitsou.com"],["קימל אשכולות","https://www.kimmel.co.il"],["יניב פרדו","https://www.yanivpardo.com"],["בר אוריין","https://barorian.com"],["AVT","https://www.avt-arch.com"]];
 const IS_PHONE_IG=window.matchMedia("(max-width:760px)").matches;
 const igEmbed=(x,i)=>`<figure class="igf"><iframe class="igfr" src="${esc(x.u)}embed/" loading="${i<(IS_PHONE_IG?1:2)?"eager":"lazy"}" onload="this.classList.add('ok');this.parentNode.classList.add('ok')" frameborder="0" scrolling="no" allowtransparency="true" referrerpolicy="strict-origin-when-cross-origin" title="Instagram ${esc(x.by)}"></iframe><figcaption class="mono"><a href="${esc(x.u)}" target="_blank" rel="noopener">${esc(x.by)} ↗</a></figcaption></figure>`;
+const igCode=u=>(String(u).match(/\/p\/([^/]+)/)||[])[1];
+const igSlot=x=>`<figure class="igf"><div class="igfr igslot" data-c="${esc(igCode(x.u))}"></div><figcaption class="mono"><a href="${esc(x.u)}" target="_blank" rel="noopener">${esc(x.by)} ↗</a></figcaption></figure>`;
 /* גובה מדויק להטמעות: אינסטגרם שולח הודעת MEASURE מתוך ה־iframe */
-window.addEventListener("message",e=>{if(!/instagram\.com$/.test(new URL(e.origin).hostname))return;let d=e.data;try{if(typeof d==="string")d=JSON.parse(d);}catch(_){return;}if(d&&d.type==="MEASURE"&&d.details&&d.details.height){document.querySelectorAll("iframe.igfr").forEach(f=>{if(f.contentWindow===e.source)f.style.height=d.details.height+"px",f.style.aspectRatio="auto";});}});
-const igSec=b=>{const by=[...new Set(b.ig.map(x=>x.by))];return `<section class="sec igsec"><h4>צילומים · ${b.ig.length} פוסטים מאינסטגרם</h4><p class="ignote">פוסטים רשמיים מוטמעים מהחשבונות של ${by.map(x=>`<span class="mono" style="direction:ltr;unicode-bidi:isolate">${esc(x)}</span>`).join(", ")}. בכל פוסט אפשר לדפדף בין התמונות (פנים וחוץ), והקרדיט לצלם נשמר.</p><div class="igwrap">${b.ig.map(igEmbed).join("")}</div></section>`;};
+window.addEventListener("message",e=>{if(!/instagram\.com$/.test(new URL(e.origin).hostname))return;let d=e.data;try{if(typeof d==="string")d=JSON.parse(d);}catch(_){return;}if(d&&d.type==="MEASURE"&&d.details&&d.details.height){if(window.IGPOOL&&IGPOOL.measure(e.source,d.details.height))return;document.querySelectorAll("iframe.igfr").forEach(f=>{if(f.contentWindow===e.source)f.style.height=d.details.height+"px",f.style.aspectRatio="auto";});}});
+const igSec=b=>{const by=[...new Set(b.ig.map(x=>x.by))];return `<section class="sec igsec"><h4>צילומים · ${b.ig.length} פוסטים מאינסטגרם</h4><p class="ignote">פוסטים רשמיים מוטמעים מהחשבונות של ${by.map(x=>`<span class="mono" style="direction:ltr;unicode-bidi:isolate">${esc(x)}</span>`).join(", ")}. בכל פוסט אפשר לדפדף בין התמונות (פנים וחוץ), והקרדיט לצלם נשמר.</p><div class="igwrap">${b.ig.map((x,i)=>i===0?igSlot(x):igEmbed(x,i)).join("")}</div></section>`;};
 const docSec=b=>{
   const site=OFFICE_SITES.find(([n])=>String(b.arch).includes(n));
   const docs=[];
@@ -1032,7 +1038,7 @@ BUILDINGS.forEach(b=>{
   if(b.priv==="area") el.classList.add("area");
   el.classList.add("pin"); if(b.era==="future") el.classList.add("future"); el.textContent=String(b.id).padStart(2,"0");
   if(b.priv!=="area"){ el.style.background=ERAS[b.era].color; el.style.color=ERAS[b.era].text; }
-  el.setAttribute("role","button"); el.setAttribute("aria-label",b.he); el.title=b.he;
+  el.setAttribute("role","button"); el.setAttribute("aria-label",b.he); el.title=b.he; el.dataset.id=b.id;
   el.addEventListener("click",ev=>{ev.stopPropagation();select(b.id);});
   markers.set(b.id,{el,marker:new mapboxgl.Marker({element:el}).setLngLat([b.lng,b.lat]).addTo(map)});
 });
@@ -1096,7 +1102,8 @@ function select(id){
   state.active=id;
   markers.forEach((m,k)=>m.el.classList.toggle("active",k===id));
   const e=ERAS[b.era], G=b.gal;
-  plate.innerHTML=`
+  let pc=plate.querySelector(":scope > .pc"); if(!pc){ pc=document.createElement("div"); pc.className="pc"; plate.appendChild(pc); }
+  pc.innerHTML=`
     <button class="close" aria-label="סגירה">×</button>
     <div class="photo">${G.length?`<img id="gimg" alt="${esc(b.he)}">`:(b.priv==="none"?`<div class="noimg"><span>בית פרטי · המיקום אינו מפורסם</span><span>PHOTO · STS ARCH</span></div>`:`<div class="hero" id="hero"></div><span class="herotag mono">3D MODEL${(b.ig||[]).length?" · צילומים מקוריים למטה ↓":""}</span>`)}
       <span class="num">${String(b.id).padStart(2,"0")}</span>
@@ -1135,6 +1142,7 @@ function select(id){
       <div class="sig">STS ARCH · TEL AVIV ATLAS · ${String(b.id).padStart(2,"0")}/${BUILDINGS.length}</div>
     </div>`;
   plate.hidden=false; plate.scrollTop=0;
+  { const sl=plate.querySelector(".igslot"); if(sl) IGPOOL.attach(sl.dataset.c,sl,b); else IGPOOL.detach(); }
   plate.querySelector(".close").onclick=closePlate;
   const ob=plate.querySelector("[data-orbit]"); if(ob) ob.onclick=()=>orbit(b);
   if(b.priv!=="none") miniMap(document.getElementById("mm"),b);
@@ -1162,7 +1170,7 @@ function select(id){
   render();
   const li=listEl.querySelector(`[data-id="${id}"]`); if(li) li.scrollIntoView({block:"nearest"});
 }
-function closePlate(){ plate.hidden=true; state.active=null; if(typeof paintFootprints==="function") paintFootprints(); stopOrbit(); if(mini){mini.remove();mini=null;} if(hero){hero.remove();hero=null;} markers.forEach(m=>m.el.classList.remove("active")); render(); }
+function closePlate(){ if(window.IGPOOL) IGPOOL.detach(); plate.hidden=true; state.active=null; if(typeof paintFootprints==="function") paintFootprints(); stopOrbit(); if(mini){mini.remove();mini=null;} if(hero){hero.remove();hero=null;} markers.forEach(m=>m.el.classList.remove("active")); render(); }
 /* lightbox */
 const lb=document.getElementById("lightbox");
 let lbG=[],lbI=0;
@@ -1529,6 +1537,59 @@ const FPDATA = {"tachana":[[3,0,[6175,5877,6179,5871,6162,5863,6157,5869,6175,58
   const any=pt=>hit(pt)||(window.__atlasHit&&window.__atlasHit(pt));
   map.on("click",e=>{ const id=any(e.point); if(id) select(id); });
   map.on("mousemove",e=>{ map.getCanvas().style.cursor=any(e.point)?"pointer":""; });
+})();
+
+
+/* ===== Instagram pool: embeds are preloaded ahead of the tap and live inside the card permanently.
+   Instagram serves embeds as no-store and moving an iframe reloads it, so the card never moves them:
+   each one is absolutely positioned over its slot and only shown/hidden. ===== */
+window.IGPOOL=(function(){
+  const CAP=IS_PHONE_IG?5:8, pool=new Map();
+  let host=null, active=null, slot=null, ro=null, curB=null;
+  const hostEl=()=>{ if(host&&host.parentNode===plate) return host; host=document.createElement("div"); host.className="igpool"; plate.appendChild(host); return host; };
+  function evict(){ if(pool.size<=CAP) return; [...pool.values()].filter(o=>o!==active).sort((a,b)=>a.t-b.t).slice(0,pool.size-CAP).forEach(o=>{ o.f.remove(); pool.delete(o.c); }); }
+  function get(c){ let o=pool.get(c); if(o){ o.t=Date.now(); return o; }
+    const f=document.createElement("iframe"); f.className="igfr"; f.title="Instagram";
+    f.setAttribute("frameborder","0"); f.setAttribute("scrolling","no"); f.setAttribute("allowtransparency","true"); f.referrerPolicy="strict-origin-when-cross-origin";
+    o={c,f,t:Date.now(),h:0,ok:false};
+    f.onload=()=>{ o.ok=true; f.classList.add("ok"); if(o===active&&slot){ slot.classList.add("ok"); slot.parentNode.classList.add("ok"); neighbours(); } };
+    f.src="https://www.instagram.com/p/"+c+"/embed/";
+    hostEl().appendChild(f); pool.set(c,o); evict(); return o; }
+  function place(){ if(!active||!slot||!slot.isConnected) return;
+    const pr=plate.getBoundingClientRect(), sr=slot.getBoundingClientRect(), st=active.f.style;
+    st.top=(sr.top-pr.top+plate.scrollTop-plate.clientTop)+"px"; st.left=(sr.left-pr.left+plate.scrollLeft-plate.clientLeft)+"px";
+    st.width=sr.width+"px"; st.height=sr.height+"px"; }
+  function attach(c,el,b){ if(active) active.f.classList.remove("on");
+    slot=el; curB=b; active=get(c); hostEl(); active.f.classList.add("on");
+    if(active.h){ el.style.height=active.h+"px"; el.style.aspectRatio="auto"; }
+    if(active.ok){ el.classList.add("ok"); el.parentNode.classList.add("ok"); setTimeout(neighbours,400); }
+    place(); requestAnimationFrame(place);
+    if(!ro&&"ResizeObserver" in window) ro=new ResizeObserver(()=>place());
+    if(ro){ ro.disconnect(); const pc=plate.querySelector(":scope > .pc"); if(pc) ro.observe(pc); ro.observe(el); } }
+  function detach(){ if(active) active.f.classList.remove("on"); active=null; slot=null; curB=null; if(ro) ro.disconnect(); }
+  function measure(src,h){ for(const o of pool.values()) if(o.f.contentWindow===src){ o.h=h; if(o===active&&slot){ slot.style.height=h+"px"; slot.style.aspectRatio="auto"; place(); } return true; } return false; }
+  const first=b=>b&&b.ig&&b.ig.length?igCode(b.ig[0].u):null;
+  function pre(b){ const c=first(b); if(c) get(c); }
+  /* after the card's photo is in, quietly load the closest neighbour: people tend to walk to the next building */
+  function neighbours(){ if(!curB||!curB.lat) return; const me=curB;
+    const n=BUILDINGS.filter(x=>x!==me&&x.ig&&x.ig.length&&x.lat&&x.priv!=="none"&&visible(x)).map(x=>({x,d:distM(me,x)})).sort((a,b)=>a.d-b.d).slice(0,IS_PHONE_IG?1:2);
+    n.forEach(({x})=>pre(x)); }
+  return {attach,detach,measure,place,pre,get};
+})();
+/* when to preload: hovering / touching a pin or a row, the buildings nearest the middle of a close-up view, and the near-me strip */
+(function(){
+  const byId=id=>BUILDINGS.find(x=>x.id===+id);
+  const hit=e=>{ const p=e.target.closest&&e.target.closest(".pin[data-id],.item[data-id],.nearrow button[data-id]"); if(p) IGPOOL.pre(byId(p.dataset.id)); };
+  document.addEventListener("pointerover",hit,{passive:true});
+  document.addEventListener("touchstart",hit,{passive:true});
+  let t=null;
+  map.on("moveend",()=>{ clearTimeout(t); t=setTimeout(()=>{
+    if(map.getZoom()<(IS_PHONE_IG?15.6:14.2)) return;
+    const c=map.getCenter(), ctr={lat:c.lat,lng:c.lng}, bounds=map.getBounds();
+    BUILDINGS.filter(b=>b.ig&&b.ig.length&&b.lat&&b.priv!=="none"&&visible(b)&&bounds.contains([b.lng,b.lat]))
+      .map(b=>({b,d:distM(ctr,b)})).sort((x,y)=>x.d-y.d).slice(0,2).forEach(({b})=>IGPOOL.pre(b));
+  },700); });
+  const _r=render; render=function(){ _r(); if(typeof near!=="undefined"&&near.pos){ BUILDINGS.filter(b=>b.ig&&b.ig.length&&b.lat&&b.priv!=="none"&&visible(b)).map(b=>({b,d:distM(near.pos,b)})).sort((x,y)=>x.d-y.d).slice(0,2).forEach(({b})=>IGPOOL.pre(b)); } };
 })();
 
 /* warm Instagram's embed bundle once the map is idle, so the first building opens with photos fast */
