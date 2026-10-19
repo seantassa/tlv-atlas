@@ -6,6 +6,9 @@
 <title>תל אביב אדריכלית | STS ARCH</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700;900&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://www.instagram.com">
+<link rel="preconnect" href="https://static.cdninstagram.com" crossorigin>
+<link rel="preconnect" href="https://scontent.cdninstagram.com" crossorigin>
 <link href="https://api.mapbox.com/mapbox-gl-js/v3.9.4/mapbox-gl.css" rel="stylesheet">
 <script src="https://api.mapbox.com/mapbox-gl-js/v3.9.4/mapbox-gl.js"></script>
 <style>
@@ -189,47 +192,112 @@ button{font:inherit}
   body{font-size:15px;overscroll-behavior:none}
   .north{display:none}
   /* top toolbar: one row, big targets, light presets folded into one cycle button */
-  .bar{top:calc(var(--st) + 10px);left:10px;right:10px;max-width:none;flex-wrap:nowrap;box-shadow:0 2px 10px rgba(20,33,46,.12)}
+  .bar{top:calc(var(--st) + 10px);left:10px;right:10px;max-width:none;flex-wrap:nowrap;box-shadow:0 2px 12px rgba(20,33,46,.16);border:none;border-radius:14px;overflow:hidden}
   .bar button{flex:1 1 auto;min-height:42px;padding:0 10px;font-size:13.5px;white-space:nowrap}
   .bar button[data-light]{display:none}
   .bar .lightcycle{display:flex;align-items:center;justify-content:center;gap:6px;flex:0 0 auto;border-inline-start:1px solid var(--ink)!important;font-weight:700}
   .bar .locbtn{justify-content:center;border-inline-start:none!important}
-  /* shared sheet mechanics */
-  .sheet,.plate{position:fixed;left:0;right:0;bottom:0;top:auto;width:auto;height:calc(100dvh - var(--top));border:1px solid var(--ink);border-width:1px 0 0;
-    box-shadow:0 -6px 24px rgba(20,33,46,.16);transition:transform .32s cubic-bezier(.2,.8,.2,1);will-change:transform;touch-action:pan-y}
-  .sheet.dragging,.plate.dragging{transition:none}
-  .grab{display:block;position:sticky;top:0;z-index:4;height:22px;background:var(--paper);cursor:grab;touch-action:none}
-  .grab::before{content:"";position:absolute;left:50%;top:8px;width:44px;height:5px;margin-left:-22px;border-radius:3px;background:var(--line)}
+  /* shared sheet mechanics: position is driven by JS through --y (px) */
+  .sheet,.plate{position:fixed;left:0;right:0;bottom:0;top:auto;width:auto;height:calc(100dvh - var(--top));border:none;border-radius:18px 18px 0 0;
+    box-shadow:0 -4px 28px rgba(20,33,46,.22);transform:translate3d(0,var(--y,100%),0);will-change:transform;overflow:hidden;
+    -webkit-tap-highlight-color:transparent}
+  .sheet.anim,.plate.anim{transition:transform .38s cubic-bezier(.22,.9,.24,1)}
+  .grab{display:block;position:sticky;top:0;z-index:6;height:26px;cursor:grab;touch-action:none}
+  .grab::before{content:"";position:absolute;left:50%;top:9px;width:42px;height:5px;margin-left:-21px;border-radius:3px;background:#B9C3CC}
+  /* index sheet */
+  .sheet{z-index:2}
+  .sheet{display:flex;flex-direction:column;background:var(--paper)}
+  .sheet .grab{flex:0 0 26px;background:var(--paper)}
+  .sheet header{padding:12px 16px 10px}.sheet h1{font-size:30px}
+  .legend{display:flex;flex-wrap:nowrap;overflow-x:auto;gap:14px;padding:8px 16px}.legend h3{display:none}.lg .rng{display:none}
+  .sheet footer{display:none}
+  .plate{top:auto;left:0;right:0;bottom:0;width:auto;height:78vh;border-width:1px 0 0}
+  .plate h2{font-size:30px}
+  .ctx{grid-template-columns:120px 1fr}.circle{width:120px;height:120px}
+  .bar{left:8px;top:8px}.bar button{padding:6px 9px;font-size:12px}
+  .north{display:none}
+}
+@media (prefers-reduced-motion:reduce){.pin{transition:none}}
+
+.bar .locbtn{display:flex;align-items:center;gap:7px;border-inline-start:1px solid var(--ink)!important;font-weight:700}
+.bar .locbtn[aria-pressed="true"]{background:#2F80ED;color:#fff}
+.locbtn .dot{width:9px;height:9px;border-radius:50%;border:1.5px solid currentColor}
+.locbtn .dot.on{background:#2F80ED;border-color:#fff;box-shadow:0 0 0 3px rgba(47,128,237,.35)}
+.me{width:16px;height:16px;border-radius:50%;background:#2F80ED;border:3px solid #fff;box-shadow:0 0 0 0 rgba(47,128,237,.5);animation:mepulse 2s infinite}
+@keyframes mepulse{0%{box-shadow:0 0 0 0 rgba(47,128,237,.5)}70%{box-shadow:0 0 0 18px rgba(47,128,237,0)}100%{box-shadow:0 0 0 0 rgba(47,128,237,0)}}
+@media (prefers-reduced-motion:reduce){.me{animation:none}}
+.nearhead{list-style:none;font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;color:var(--ink-soft);padding:8px 2px 4px;border-bottom:1px solid var(--ink)}
+.yr .dist{display:block;font-family:var(--mono);font-weight:700;color:var(--ink)}
+.yr .walk{display:block;font-size:10px;color:var(--ink-soft)}
+.toast{position:fixed;bottom:56px;left:16px;z-index:5;max-width:min(360px,calc(100vw - 32px));background:var(--ink);color:#fff;padding:10px 14px;font-size:13px;opacity:0;transform:translateY(8px);transition:.25s;pointer-events:none}
+.toast.show{opacity:1;transform:none}
+
+.igwrap{display:grid;grid-template-columns:1fr;gap:10px}
+.igf{margin:0}.igfr{display:block;width:100%;aspect-ratio:1/1.32;border:1px solid var(--line);background:#fff}.igf figcaption a{color:var(--ink-soft);text-decoration:none}.igf figcaption{font-size:10px;color:var(--ink-soft);direction:ltr;text-align:left;padding-top:2px}
+.docs{list-style:none;margin:8px 0 0;padding:0;border-top:1px solid var(--line)}
+.docs li{padding:8px 0;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:2px}
+.docs a{color:var(--ink);font-weight:700;text-decoration:none}.docs a:hover{text-decoration:underline}
+.docs a::after{content:" ↗";font-weight:400}
+.docs small{font-size:11px;color:var(--ink-soft)}
+@media (max-width:760px){.bar{flex-wrap:wrap;max-width:calc(100vw - 16px)}}
+.bar .viewbtn{border-inline-start:1px solid var(--ink)!important;font-weight:700}
+.bar .viewbtn[aria-pressed="true"]{background:var(--ink);color:#fff}
+.pin.future{border:1.5px dashed var(--ink)!important;background:#fff!important;color:var(--ink)!important}
+.lg[data-era="future"] .sw{border:1.5px dashed var(--ink);background:#fff!important}
+.futnote{margin-top:8px;padding:6px 8px;border:1px dashed var(--ink);font-size:12px;background:#fff}
+
+/* ================= MOBILE: map-first, draggable bottom sheets ================= */
+.grab{display:none}
+.lightcycle{display:none}
+@media (max-width:760px){
+  :root{--st:env(safe-area-inset-top,0px);--sb:env(safe-area-inset-bottom,0px);--top:calc(var(--st) + 60px)}
+  body{font-size:15px;overscroll-behavior:none}
+  .north{display:none}
+  /* top toolbar: one row, big targets, light presets folded into one cycle button */
+  .bar{top:calc(var(--st) + 10px);left:10px;right:10px;max-width:none;flex-wrap:nowrap;box-shadow:0 2px 12px rgba(20,33,46,.16);border:none;border-radius:14px;overflow:hidden}
+  .bar button{flex:1 1 auto;min-height:42px;padding:0 10px;font-size:13.5px;white-space:nowrap}
+  .bar button[data-light]{display:none}
+  .bar .lightcycle{display:flex;align-items:center;justify-content:center;gap:6px;flex:0 0 auto;border-inline-start:1px solid var(--ink)!important;font-weight:700}
+  .bar .locbtn{justify-content:center;border-inline-start:none!important}
+  /* shared sheet mechanics: position is driven by JS through --y (px) */
+  .sheet,.plate{position:fixed;left:0;right:0;bottom:0;top:auto;width:auto;height:calc(100dvh - var(--top));border:none;border-radius:18px 18px 0 0;
+    box-shadow:0 -4px 28px rgba(20,33,46,.22);transform:translate3d(0,var(--y,100%),0);will-change:transform;overflow:hidden;
+    -webkit-tap-highlight-color:transparent}
+  .sheet.anim,.plate.anim{transition:transform .38s cubic-bezier(.22,.9,.24,1)}
+  .grab{display:block;position:sticky;top:0;z-index:6;height:26px;cursor:grab;touch-action:none}
+  .grab::before{content:"";position:absolute;left:50%;top:9px;width:42px;height:5px;margin-left:-21px;border-radius:3px;background:#B9C3CC}
   /* index sheet */
   .sheet{z-index:2}
   .sheet[data-snap="peek"]{transform:translateY(calc(100% - 128px - var(--sb)))}
   .sheet[data-snap="half"]{transform:translateY(46%)}
   .sheet[data-snap="full"]{transform:none}
-  .sheet header{padding:0 16px 8px;border-bottom:none;touch-action:none}
+  .sheet header{padding:0 16px 8px;border-bottom:none;user-select:none;-webkit-user-select:none}
   .sheet header .eyebrow,.sheet .sub span:first-child{display:none}
   .sheet h1{font-size:24px;margin:0;display:inline}
   .sheet .sub{display:inline-flex;margin-inline-start:10px;font-size:11px;vertical-align:middle}
   .legend{display:flex;flex-wrap:nowrap;overflow-x:auto;gap:8px;padding:4px 16px 10px;border-bottom:1px solid var(--line);scrollbar-width:none;touch-action:pan-x}
   .legend::-webkit-scrollbar{display:none}
   .legend h3,.lg .rng{display:none}
-  .lg{flex:0 0 auto;border:1px solid var(--ink);padding:0 12px;min-height:36px;gap:8px;font-size:13px;background:var(--paper);white-space:nowrap}
+  .lg{flex:0 0 auto;border:1px solid var(--ink);border-radius:18px;padding:0 12px;min-height:36px;gap:8px;font-size:13px;background:var(--paper);white-space:nowrap}
   .lg[aria-pressed="false"]{opacity:.4}
   .lg .sw{width:14px;height:14px}
   .tools{padding:10px 16px;gap:8px}
-  .search{min-height:44px;font-size:16px;padding:0 12px} /* 16px stops iOS zoom-on-focus */
+  .search{min-height:44px;font-size:16px;padding:0 12px;border-radius:10px} /* 16px stops iOS zoom-on-focus */
   .office{flex:0 0 42%}
   .item{min-height:60px;padding:10px 16px;grid-template-columns:32px 1fr auto}
   .item b{font-size:15px}
-  .list{padding-bottom:calc(var(--sb) + 16px);overscroll-behavior:contain}
+  .list{padding-bottom:calc(var(--sb) + 16px);overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+  .sheet:not([data-snap="full"]) .list{overflow:hidden}
+  .item:active{background:var(--board)}
   .sheet footer{display:none}
-  body.plate-open .sheet{transform:translateY(100%)!important}
+  body.plate-open .sheet{--y:100%!important}
   /* building plate */
-  .plate{z-index:3;overflow-y:auto;overscroll-behavior:contain;padding-bottom:var(--sb)}
-  .plate[data-snap="half"]{transform:translateY(38%)}
-  .plate[data-snap="full"]{transform:none}
-  .plate .grab{margin-bottom:-22px;background:transparent}
-  .plate .grab::before{background:rgba(255,255,255,.9);box-shadow:0 0 0 1px rgba(20,33,46,.25)}
-  .plate .close{position:sticky;top:10px;display:block;margin:10px auto -52px 10px;width:42px;height:42px;font-size:22px;z-index:5}
+  .plate{z-index:3;overflow-y:auto;overscroll-behavior:contain;padding-bottom:var(--sb);background:var(--paper)}
+  .plate:not([data-snap="full"]){overflow-y:hidden}
+  .plate .grab{margin-bottom:-26px;background:transparent}
+  .plate .grab::before{background:rgba(255,255,255,.95);box-shadow:0 1px 4px rgba(20,33,46,.35)}
+  .plate .close{position:sticky;top:10px;display:block;margin:10px auto -52px 10px;width:40px;height:40px;font-size:20px;z-index:7;border-radius:50%;border:none;background:rgba(20,33,46,.78);backdrop-filter:blur(6px)}
+  .plate .photo{border-radius:18px 18px 0 0}
   .plate .num{font-size:18px;padding:4px 10px}
   .plate .photo{aspect-ratio:16/10}
   .plate h2{font-size:28px}
@@ -239,7 +307,8 @@ button{font:inherit}
   .circle{width:132px;height:132px}
   .nav{width:44px;height:44px}
   .thumbs{display:none}
-  .plate .photo .nav{opacity:.85}
+  .plate .photo .nav{border:none;border-radius:50%;width:38px;height:38px;background:rgba(255,255,255,.82);box-shadow:0 1px 6px rgba(20,33,46,.25)}
+  .plate .num{border-radius:0 0 0 10px}
   .btn{min-height:44px;display:inline-flex;align-items:center;padding:0 14px}
   .docs li{padding:12px 0}
   .pin{width:28px;height:28px;font-size:11px}
@@ -253,6 +322,14 @@ button{font:inherit}
 .pin{transition:transform .15s,opacity .3s}
 body.zfar .pin:not(.active){visibility:hidden!important;pointer-events:none!important}
 @media (prefers-reduced-motion:reduce){.pin{transition:none}}
+
+/* Instagram embeds: skeleton while loading, fade in when ready */
+.igf{position:relative}
+.igfr{background:linear-gradient(100deg,#EEF1F4 30%,#F7F9FA 50%,#EEF1F4 70%) 0 0/300% 100%;animation:igsk 1.3s linear infinite;opacity:.999}
+.igfr.ok{animation:none;background:#fff}
+@keyframes igsk{to{background-position:-150% 0}}
+@media (prefers-reduced-motion:reduce){.igfr{animation:none}}
+@media (max-width:760px){.ignote{display:none}.igwrap{gap:14px}}
 </style>
 </head>
 <body>
@@ -311,7 +388,7 @@ const ERAS = {
 const IGP = [["fein","CX1PrrNtoiP","hqarchitects","p"],["fein","CfEdlLBtOb9","hqarchitects","p"],["fein","CS7C6C8t9ZV","hqarchitects","p"],["harugei","CvXZj9voU67","hqarchitects","p"],["harugei","CtyTL_ooPYz","hqarchitects","p"],["ahadhaam13","DAN9S4wOjFK","pitsou_kedem_architect","p"],["ahadhaam13","DBWYpZbMDf9","pitsou_kedem_architect","p"],["oldjaffa4","B00K-O6BE-I","pitsou_kedem_architect","p"],["oldjaffa4","CkyTL9IM6X1","pitsou_kedem_architect","p"],["oldjaffa4","B6268kyHsU2","amitgeronphotographer","p"],["oldjaffa4","B624Z2jnmlf","amitgeronphotographer","p"],["pavilion","BlPbHOJjXzm","pitsou_kedem_architect","p"],["pavilion","Bl0nbR3jehT","pitsou_kedem_architect","p"],["floathouse","B3l_vxShHLp","pitsou_kedem_architect","p"],["floathouse","BwygPcWBc9_","pitsou_kedem_architect","p"],["sbhouse","BrdCg6kha0u","pitsou_kedem_architect","p"],["allenby52","ChzSYwmobUS","kimmel.eshkolot.architects","p"],["allenby52","Ch60O_iIB0O","kimmel.eshkolot.architects","p"],["allenby52","CCsW9QNH3Zr","kimmel.eshkolot.architects","p"],["mandelshtam8","Cr0YnQOIVtB","kimmel.eshkolot.architects","p"],["mandelshtam8","CvfM-xvoOJ6","kimmel.eshkolot.architects","p"],["l28","BoUUCZQh_y3","kimmel.eshkolot.architects","p"],["l28","BnGCPsFBFeB","kimmel.eshkolot.architects","p"],["l28","BsnPqwPHPyB","kimmel.eshkolot.architects","p"],["lorenz","BaQLE7HgQKE","kimmel.eshkolot.architects","p"],["lorenz","BaIdvEeh4A9","kimmel.eshkolot.architects","p"],["americancolony","BT60FtAgmwr","kimmel.eshkolot.architects","p"],["hayarkon81","BZTRqn6A60Z","kimmel.eshkolot.architects","p"],["hayarkon81","BZEH1BvAqAI","kimmel.eshkolot.architects","p"],["checkpoint","CGMnBwsHHW8","kimmel.eshkolot.architects","p"],["checkpoint","CGReqX8nuSm","kimmel.eshkolot.architects","p"],["steinhardt","B5ZpVk2Hpfj","kimmel.eshkolot.architects","p"],["steinhardt","B5R8TKdH2yY","kimmel.eshkolot.architects","p"],["montefiore22","C1zrwmBImZ0","yaniv_pardo_arch","p"],["montefiore22","C1hnK2WosRC","yaniv_pardo_arch","p"],["montefiore22","DbwMqMlCDUf","yaniv_pardo_arch","p"],["shvat42","CTb2lChok2q","yaniv_pardo_arch","p"],["jaggendorf","Bq9-QtyHAUF","yaniv_pardo_arch","p"],["jaggendorf","BGRE2KyOOLF","yaniv_pardo_arch","p"],["phil","CiKl7KUoNEz","barorian.arch","p"],["phil","CpHgaRtIlG6","barorian.arch","p"],["mapu5","B6qUnHenPOO","barorian.arch","p"],["mapu5","CSldap3otF7","barorian.arch","p"],["mapu5","B1q_8rlneC8","barorian.arch","p"],["brenner","CHrwEiXHemU","barorian.arch","p"],["brenner","B-eKrSLHSEz","barorian.arch","p"],["farmers","B7UckLFnUSK","amitgeronphotographer","p"],["farmers","B7Ubg-fnj7o","amitgeronphotographer","p"],["farmers","B7Ua1YVnK54","amitgeronphotographer","p"],["amir","BbcUVIHnr30","amitgeronphotographer","p"],["amir","BbcUEeIHniN","amitgeronphotographer","p"],["amir","BbcT_xunOot","amitgeronphotographer","p"],["amir","BbcTPXdHmh6","amitgeronphotographer","p"],["peres","Ba-AdRWH5yG","amitgeronphotographer","p"],["peres","Ba9-mlNH4ly","amitgeronphotographer","p"],["peres","Ba9-eUFHa2C","amitgeronphotographer","p"],["greatsyn","DXzPEugsdlI","projecttlv","p"],["amudim","DXSH2PpsVDU","projecttlv","p"],["palatin","DJ3yxcAM3ld","projecttlv","p"],["ismailov","C7orGacoMN9","projecttlv","p"],["shalom","DTx-HkJjQRB","projecttlv","p"],["azrielisarona","BdCi5LNnWRe","amitgeronphotographer","p"],["azrielisarona","Bc8EWStnNeo","amitgeronphotographer","p"],["azrielisarona","Bc8Dt4CHE6J","amitgeronphotographer","p"],["yehudit","CB5CHfRnLtf","amitgeronphotographer","p"],["yehudit","CB46BM8HkbK","amitgeronphotographer","p"],["shtibel","CQDZ1QNHGFW","muhlbauer.arch","p"],["ganei","CQDYpVkHSXV","muhlbauer.arch","p"],["ganei","CQDXcfdHSr7","muhlbauer.arch","p"],["arc","DX1Ku__Dclm","amnonbaror_talgazit_arch","p"],["arc","DX1Kw1LjZrC","amnonbaror_talgazit_arch","p"],["arc","DX1JkmaDVVs","amnonbaror_talgazit_arch","p"],["reisfeld","DZhVVwhDeKV","amnonbaror_talgazit_arch","p"],["reisfeld","DZhV2_7DXk4","amnonbaror_talgazit_arch","p"],["reisfeld","DZhUsQMjSRz","amnonbaror_talgazit_arch","p"],["avt_natan86","Dcv-WWViDze","avt.arch","p"],["avt_natan86","Dcv-NymiCwa","avt.arch","p"],["avt_natan86","Dcv9WVCiPNU","avt.arch","p"],["avt_natan86","DVOlf0XCE4a","avt.arch","p"],["avt_kamuel","DaLFfRFiD8X","avt.arch","p"],["avt_kamuel","DaLFY3Qo28c","avt.arch","p"],["avt_kamuel","DaLEZAsoxZA","avt.arch","p"],["avt_kamuel","CYrQZi5tLF8","avt.arch","p"],["avt_hashmonaim62","DZXnrjJiKsi","avt.arch","p"],["avt_hashmonaim62","DZXm2McIviB","avt.arch","p"],["avt_hashmonaim62","DZXmfnjITzS","avt.arch","p"],["avt_reich8","DYCtGqPiKwP","avt.arch","p"],["avt_reich8","DYCtCx4iOYi","avt.arch","p"],["avt_reich8","DYCs8UdCAnv","avt.arch","p"],["avt_hayarkon124","DU8oNA7iFDv","avt.arch","p"],["avt_hayarkon124","DU8oGVxCA0X","avt.arch","p"],["avt_hayarkon124","DU8luPAiD11","avt.arch","d"],["avt_levinsky10","DTXoptPiJj2","avt.arch","p"],["avt_levinsky10","DTXog1WiHDW","avt.arch","p"],["avt_levinsky10","DTXmoIIiEG4","avt.arch","p"],["avt_gordon23","DSIVvY6CDu7","avt.arch","p"],["avt_gordon23","DSIVoBeiDju","avt.arch","p"],["avt_gordon23","DSIVXBviMe8","avt.arch","p"],["avt_einharod13","DNDhkSLIrG-","avt.arch","p"],["avt_einharod13","CW_DUN-tJPj","avt.arch","p"],["avt_einharod13","CW_DRK_NmW4","avt.arch","p"],["avt_ravkook14","DDb2YehI6_M","avt.arch","p"],["avt_ravkook14","ChrpirkIT1l","avt.arch","p"],["avt_ravkook14","ChrpYd_ohC6","avt.arch","p"],["avt_arlozorov76","CuE88ANovpz","avt.arch","p"],["avt_arlozorov76","CuE80gwIOHQ","avt.arch","p"],["avt_arlozorov76","CuE8rd8oJaY","avt.arch","p"],["avt_benyehuda65","CrisZkLoJpS","avt.arch","p"],["avt_benyehuda65","Ciz47VuoUWp","avt.arch","p"],["avt_benyehuda65","CrisVMqIOpD","avt.arch","p"],["avt_frishman62","CXjC43wtHom","avt.arch","p"],["avt_frishman62","CXjCvGktbe8","avt.arch","p"],["avt_frishman62","CXjCpbxtpQN","avt.arch","p"],["avt_matityahu7","CX1IA5otDGR","avt.arch","p"],["avt_matityahu7","CX1H_VZtJki","avt.arch","p"],["avt_matityahu7","CX1H0vPtjg1","avt.arch","p"],["avt_etsel25","CXRIi3vqHyN","avt.arch","p"],["avt_etsel25","CXRIdwPK_Ja","avt.arch","p"],["avt_etsel25","CXRIYVgKlI2","avt.arch","p"],["yp_allenby45","DdsAUPOHSYf","yaniv_pardo_arch","p"],["yp_bilu4","Dd-7yIbFyKJ","yaniv_pardo_arch","p"],["mu_bensaruk","DbazYESiGv8","muhlbauer.arch","p"],["mu_antigonus","DOd0FW2iM-E","muhlbauer.arch","p"],["mu_ravtzair","C4uwL2WIBOO","muhlbauer.arch","p"],["mu_ravtzair","C4uvngfokny","muhlbauer.arch","p"],["mu_ravtzair","C4uvLACI0Wt","muhlbauer.arch","p"],["bo_lilian","DZFqUCwjKCT","barorian.arch","p"],["bo_hayarkon72","DXUT2MtDKJ0","barorian.arch","p"],["bo_hayarkon29","B9mWQH6npca","barorian.arch","p"],["bo_karlnetter","DSHPxfyDJZn","barorian.arch","p"],["bo_ahadhaam41","BoTLT1IgBU4","barorian.arch","p"],["bo_melchett23","BsBQ9OIH9XR","barorian.arch","p"],["bo_hagolan1","B5FGqtGHlXN","barorian.arch","p"],["pl_yk","CknwW4KM_1i","paritzkiliani","p"],["pl_yk","CkMKV8MMIum","paritzkiliani","p"],["pl_yk","CkYWWzKM68o","paritzkiliani","p"],["gm_pinkas","DXB8i2MjO1e","galmaromarchitects","p"],["gm_pinkas","DSphp9ajABQ","galmaromarchitects","p"],["gm_pinkas","DUGcsTsCKAc","galmaromarchitects","p"],["gm_pinkas","DQRMEPHCN7R","galmaromarchitects","p"],["gm_sharet36","DKt5-E5M55c","galmaromarchitects","p"],["gm_sharet36","DLO_qo8xvLu","galmaromarchitects","p"],["gm_sanhedrin13","DRPbYiWDC50","galmaromarchitects","p"],["gm_katznelson7","DV_RNZgjIYc","galmaromarchitects","p"],["gm_nesstziona3","DBo7BIxsckU","galmaromarchitects","p"],["toha","DQ9qtnNjReL","yashararchitects","p"],["ys_landmark","C5oL-FWsvkG","yashararchitects","p"],["ys_landmark","DFp-6CeMztD","yashararchitects","p"],["ys_landmark","DKe_-Lmom76","yashararchitects","p"],["ys_landmark","C0wkqgYIFay","yashararchitects","p"],["ys_davinci","C8KTbIeiFj1","yashararchitects","p"],["ys_davinci","C3iOIixom42","yashararchitects","p"],["ys_davinci","C-SzszvCnaP","yashararchitects","p"],["ys_rothschild1","DbLK8jAtMOj","yashararchitects","p"],["ys_rothschild1","DEFGioxslNz","yashararchitects","p"],["ys_rothschild17","DU3Zd39j9Dm","yashararchitects","p"],["ys_rothschild17","CwSuSCvM63f","yashararchitects","p"],["fg_setai","CEQ97QdnuW9","feiginarch","p"],["fg_setai","C0v2hBYo5nS","feiginarch","p"],["fg_rothschild22","BvZkXMRgMMJ","feiginarch","p"],["toha","DB8WRXuIOZQ","yashararchitects","p"],["toha","DCzP5aeMzig","yashararchitects","p"],["toha","DHq2nKYMxHb","yashararchitects","p"],["mp_hashuk34","DFSrIsjtXSK","mparch","p"],["mp_hashuk34","DFX6LtBNiCn","mparch","p"],["mp_bilu12","DOGj0XQiLRY","mparch","p"],["mp_bilu12","DM-cxRzIS6H","mparch","p"],["mp_bilu12","DHiyhl6tUss","mparch","p"],["wtower","C6Nwpm2sffy","yashararchitects","p"],["beinleumi","Ba7V3pAnmj4","amitgeronphotographer","p"],["beinleumi","Ba7VsoHnV1m","amitgeronphotographer","p"],["sheikhmurad","C7L37ajoFsm","projecttlv","p"],["engineering","Dbpk1GMDY10","studio_pez","p"],["engineering","DZEizZmDW0B","studio_pez","p"],["engineering","DP0cKqzDUSP","studio_pez","p"],["engineering","DLmzdRUtSze","studio_pez","p"],["engineering","DHDg61IMNLC","studio_pez","p"],["bo_levontin26","C-hxMu9oPF3","barorian.arch","p"],["bo_levontin26","CEYshkxnvc4","barorian.arch","p"],["bo_levontin24","CkNbelRIeqp","barorian.arch","p"],["bo_levlevontin","CKddHBHHg2g","barorian.arch","p"],["bo_levlevontin","CAR7yBvHwqa","barorian.arch","p"],["bo_levlevontin","CLJQKiDHU09","barorian.arch","p"],["bo_phenix","BynB4zNH9Jw","barorian.arch","p"],["bo_phenix","BjpP08EHDXX","barorian.arch","p"],["bo_harakevet20","CkNbelRIeqp","barorian.arch","p"],["bo_bialik2","DN2z5x5WFI0","barorian.arch","p"],["bo_bialik2","DN20cd8WNju","barorian.arch","p"],["bo_bialik2","CZWhbvxsazM","barorian.arch","p"],["bo_bialik2","ClnfdFgocl2","barorian.arch","p"],["bo_bialik9","C-Iip4WIEH6","barorian.arch","p"],["bo_rothschild80","DVp3ZKDjPwK","barorian.arch","p"],["bo_rothschild80","DVp3ypIjFiL","barorian.arch","p"],["bo_rothschild80","CSMmFuYIzx5","barorian.arch","p"],["bo_rothschild82","CSMmFuYIzx5","barorian.arch","p"],["bo_engel9","CxKbyRXoew8","barorian.arch","p"],["bo_engel9","Ci2it9NIDnE","barorian.arch","p"],["bo_engel9","Cchh4Nmof4-","barorian.arch","p"],["bo_shulamit","DXeohZrDLMG","barorian.arch","p"],["bo_modigliani17","Dbin7-JDJBp","barorian.arch","p"],["bo_modigliani17","ChrRbGDIfEp","barorian.arch","p"],["bo_goldberg5","DADn9fkIFSU","barorian.arch","p"],["bo_mohliver21","DG_eqFlMQ8D","barorian.arch","p"],["bo_remez19","DExYmI4s3jn","barorian.arch","p"],["bo_eilat4","DRNDC6jDOmc","barorian.arch","p"],["bo_eilat4","ClL9-CLIfNG","barorian.arch","p"],["bo_eilat4","CircC6zIygq","barorian.arch","p"],["bo_ganani","C4OE-pHI8LR","barorian.arch","p"],["bo_ganani","DJRS4FLsdXS","barorian.arch","p"],["bo_micha24","C12MGQXIB8Y","barorian.arch","p"],["bo_balfour46","Cr8Eq4zojFK","barorian.arch","p"],["bo_balfour46","C1Y9SezIHia","barorian.arch","p"],["bo_ahadhaam110","CvMvHI_ojWl","barorian.arch","p"],["bo_ahadhaam110","BkRlhksFJXS","barorian.arch","p"],["bo_pitman","Cu4fvHwoAFa","barorian.arch","p"],["bo_pitman","B4r6xA0ntfb","barorian.arch","p"],["bo_pitman","ByiEKHkHso5","barorian.arch","p"],["bo_pitman","B1vX--HH4Ph","barorian.arch","p"],["bo_elkonin","CsYgrYto8RW","barorian.arch","p"],["bo_elkonin","ChUbfNdImP6","barorian.arch","p"],["bo_elkonin","CLovR7sHFvz","barorian.arch","p"],["bo_cube","CsD6qNPoOu9","barorian.arch","p"],["bo_villarothschild","CqAcqWqI1MB","barorian.arch","p"],["bo_villarothschild","B_UHyUFHrpq","barorian.arch","p"],["bo_villarothschild","CZgeWcntFjP","barorian.arch","p"],["bo_yehudahayamit","DciuZqujC4a","barorian.arch","p"],["bo_yehudahayamit","CmD21L5obj5","barorian.arch","p"],["bo_lilienblum8","Cl5qXS0IZix","barorian.arch","p"],["bo_lilienblum8","Cbe2zi8NLHF","barorian.arch","p"],["bo_haavoda8","ClWAOjNobCm","barorian.arch","p"],["bo_haavoda8","CUZZgDEoC0f","barorian.arch","p"],["bo_maze57","CkFz_vpID4T","barorian.arch","p"],["bo_balfour7","Cgt5I66IsbM","barorian.arch","p"],["bo_davidyellin20","CgG_ApWolzQ","barorian.arch","p"],["bo_vitkin20","Cf6geqDo9_E","barorian.arch","p"],["bo_zlatopolsky29","CZwK1z5tulj","barorian.arch","p"],["bo_moma","DWlCQKUDK3U","barorian.arch","p"],["bo_moma","CY1GtGHIHFr","barorian.arch","p"],["bo_moma","Bsdp2--nZXu","barorian.arch","p"],["bo_dizengoff94","CXoGj9wovLw","barorian.arch","p"],["bo_dizengoff94","CG8AVlJn0rF","barorian.arch","p"],["bo_dizengoff94","B1rBFoznttT","barorian.arch","p"],["bo_dizengoff94","Bk2BKtlAuQg","barorian.arch","p"],["bo_achva24","CVunsVKIm_N","barorian.arch","p"],["bo_lodz66","CURl8VdIN4L","barorian.arch","p"],["bo_frug2","CTcQGaFoUvT","barorian.arch","p"],["bo_frug2","By1wnBFHc63","barorian.arch","p"],["bo_strauss3","CSvx0oLoF8r","barorian.arch","p"],["bo_strauss3","Bz_XYK2Ho1e","barorian.arch","p"],["bo_strauss3","BudzIGIn6Vr","barorian.arch","p"],["bo_nissan","CR3FemHHGre","barorian.arch","p"],["bo_pichman","CJamtkKH98G","barorian.arch","p"],["bo_lapin","CJBq1XAnfH_","barorian.arch","p"],["bo_lapin","BvRu3gfnygM","barorian.arch","p"],["bo_lapin","BuY_MuCnyLW","barorian.arch","p"],["bo_yehudahalevi2","CIVgjNDnoNi","barorian.arch","p"],["bo_yehudahalevi2","BrK2CufnKyc","barorian.arch","p"],["bo_yehudahalevi2","BjxCgoQHvCK","barorian.arch","p"],["bo_yehudahalevi16","Bv_Mdg3nfyA","barorian.arch","p"],["bo_yehudahalevi16","B1l44cpn-B7","barorian.arch","p"],["bo_yehudahalevi16","Bu69Hd6FkyS","barorian.arch","p"],["bo_masaryk15","CFFDKuTHrxl","barorian.arch","p"],["bo_masaryk15","B34vr4WHCvh","barorian.arch","p"],["bo_trumpeldor","B4AHUpKHGXK","barorian.arch","p"],["bo_trumpeldor","B7TuSLbn8vr","barorian.arch","p"],["bo_trumpeldor","CBNfyfgH6fC","barorian.arch","p"],["bo_trumpeldor","B1vX5QLnizc","barorian.arch","p"],["bo_benyair2","CBunYIOHdmW","barorian.arch","p"],["bo_ahadhaam84","CAZoUijHXLE","barorian.arch","p"],["bo_ahadhaam84","BvJlfNFHTny","barorian.arch","p"],["bo_ahadhaam84","CONuDQyHKBd","barorian.arch","p"],["bo_elifelet26","CAUl8m_nXFQ","barorian.arch","p"],["bo_elifelet26","BzgBHyPnhgf","barorian.arch","p"],["bo_benyehuda24","B_unD-UHZc1","barorian.arch","p"],["bo_benyehuda24","Bmls7mtAJKa","barorian.arch","p"],["bo_kia","B_JykSonWMv","barorian.arch","p"],["bo_kia","COU5FC3nozc","barorian.arch","p"],["bo_kia","Bjpn-K6nZ2y","barorian.arch","p"],["bo_hazanovich","B-3zERRniSY","barorian.arch","p"],["bo_hazanovich","B3KNf1EHYTR","barorian.arch","p"],["bo_rothschild79","B8MSoeqnddg","barorian.arch","p"],["bo_rothschild79","ByXeyeHnUBL","barorian.arch","p"],["bo_keren","DNANfypNH8w","barorian.arch","p"],["bo_keren","B1l6Jl2nQU9","barorian.arch","p"],["bo_maan","B8_MsaHH7Xb","barorian.arch","p"],["bo_maan","C9Z6yduIAGZ","barorian.arch","p"],["bo_maan","Bjpl0j3HG1y","barorian.arch","p"],["bo_jerusalemhotel","BwKC6yUnveC","barorian.arch","p"],["bo_jerusalemhotel","BuDSCB5H92G","barorian.arch","p"],["bo_jerusalemhotel","BoBQjUKA5rf","barorian.arch","p"],["bo_hayarkon96","Bj1WG8XH1TV","barorian.arch","p"],["bo_hayarkon36","CJSx21tH6mT","barorian.arch","p"],["bo_hayarkon36","BuoRQRJndHe","barorian.arch","p"],["bo_einvered3","Bul4n2TH1TB","barorian.arch","p"],["bo_maharal","BxFdpROnm3K","barorian.arch","p"],["bo_maharal","Bp5XBFzncbf","barorian.arch","p"],["bo_maharal","B-_jOegHyiL","barorian.arch","p"],["bo_benyehuda174","Bq1vd35n4zp","barorian.arch","p"],["bo_ahadhaam96","BqxQ3Aqnobp","barorian.arch","p"],["bo_tzvishapira13","BmbMRzSAVAh","barorian.arch","p"],["bo_allenby29","BlnksM0Azav","barorian.arch","p"],["bo_balfour6","B215bORHW-U","barorian.arch","p"],["bo_balfour6","BjsSfZcnlts","barorian.arch","p"],["bo_chen38","Bysk1d8HUOs","barorian.arch","p"],["bo_gnessin6","ByDJVqvH5BM","barorian.arch","p"],["bo_gnessin6","CRtHHgqHJQD","barorian.arch","p"],["bo_yavne22","Bzc5fGSHauZ","barorian.arch","p"],["bo_yavne22","Bjrju1YnQUC","barorian.arch","p"],["bo_gordon5","BzbNlQ3H8CQ","barorian.arch","p"],["bo_rothschild85","BxaCZqkHF98","barorian.arch","p"],["bo_najara14","BjpkoCDHdDr","barorian.arch","p"],["bo_najara14","B7Y9bUHHE1T","barorian.arch","p"],["bo_hashuk45","BjpiURKnZcM","barorian.arch","p"],["bo_shoftim","BrNjS0BnSAC","barorian.arch","p"],["bo_shoftim","B4AHyeDn4SM","barorian.arch","p"],["bo_shoftim","BjqAvQEH5ye","barorian.arch","p"],["bo_readingbridge","B6Qqs7FHXmI","barorian.arch","p"],["bo_readingbridge","Bj_nb_XnhRX","barorian.arch","p"],["bo_exhibitionbridge","DYlyZWeDNJV","barorian.arch","p"],["bo_exhibitionbridge","Bjp_3STHQJp","barorian.arch","p"],["bo_allenby100","DHoNfGtomap","barorian.arch","p"],["bo_kimbel","DKPPI2LtqIz","barorian.arch","p"],["bo_kimbel","BlNTTCqAenM","barorian.arch","p"],["bo_gilboa","CJnaOTsntSG","barorian.arch","p"],["bo_gilboa","CD-rdcrn2V2","barorian.arch","p"],["bo_hayarkon90","BnGjXZegt4z","barorian.arch","p"],["bo_geula14","B6GQdleHqDs","barorian.arch","p"],["engel","B1l6uKqn4Jk","barorian.arch","p"],["engel","B-9BzDjHLFi","barorian.arch","p"],["engel","CFbmqNMnMVu","barorian.arch","p"],["engel","BuVYQpjHIZ2","barorian.arch","p"],["zamenhof","CLEDT-_H4u_","barorian.arch","p"],["zamenhof","B-oWtgpnz4Z","barorian.arch","p"],["zamenhof","CcVbzyut6Y8","barorian.arch","p"],["zamenhof","Bu_kFzSnt2W","barorian.arch","p"],["zamenhof","BsVzEG2HcFt","barorian.arch","p"],["recanati","BvMTdZQH-z1","barorian.arch","p"],["recanati","BxNHiSInOUX","barorian.arch","p"],["farmers","CFw8fE4pNZU","barorian.arch","p"],["farmers","DDMqQ9KsZSn","barorian.arch","p"],["farmers","B3UTj8wHHES","barorian.arch","p"],["farmers","Bu8kXaKnY9z","barorian.arch","p"],["brenner","BvRRt8Mn68l","barorian.arch","p"],["brenner","Bl0EMGAAnlf","barorian.arch","p"],["bo_karlnetter","CC77htkn_QS","barorian.arch","p"],["bo_lilian","C92NQL5ovM5","barorian.arch","p"],["bo_hagolan1","BuA0T8SnVSq","barorian.arch","p"],["bo_melchett23","Bmso0TgA4wk","barorian.arch","p"],["um_brz14","DW1MH9KDVHS","milic_architects","p"],["um_brz14","ClEGOuHIhyI","milic_architects","p"],["um_brz14","ClEF8hbIwAL","milic_architects","p"],["um_harzion","DUZ_Ne3iHm6","milic_architects","p"],["um_harzion","DUVG-TTDe3I","milic_architects","p"],["um_l81","DJ1F8n6oOSq","milic_architects","p"],["um_l81","DJqkC5GoYxx","milic_architects","p"],["um_l81","DJmC75MI6pn","milic_architects","p"],["um_zhouse","Cw4ebgPIxOH","milic_architects","p"],["um_zhouse","Cw4eAsGI9Hb","milic_architects","p"],["um_zhouse","Cw4dmW-Iao1","milic_architects","p"],["um_zhouse","CaCkB0tNqyu","milic_architects","p"],["um_zhouse","CYGlyGioFCm","milic_architects","p"],["um_dhouse","Cr2wLVGIN0j","milic_architects","p"],["um_dhouse","CrX6Oq_IpXr","milic_architects","p"],["um_dhouse","CrQdsK1I985","milic_architects","p"],["um_dhouse","DAS_4u9ome3","milic_architects","p"],["um_ahouse","DI0YhUNo3Gg","milic_architects","p"],["um_ahouse","DIf_1zmoM53","milic_architects","p"],["um_ahouse","DIavcmCobFe","milic_architects","p"],["pl_chagall","CRB7u06MAdV","paritzkiliani","p"],["pl_chagall","CREh72RsFiV","paritzkiliani","p"],["pl_chagall","CRMWIUXMll3","paritzkiliani","p"],["pl_chagall","BqcqbJsnWqr","paritzkiliani","p"],["pl_kg4","CgHbBLVM4YE","paritzkiliani","p"],["pl_kg4","C1CMCwKIMdf","paritzkiliani","p"],["pl_kg4","C1CLg_ao5xw","paritzkiliani","p"],["pl_eucalyptus","BublkkNnmPS","paritzkiliani","p"],["pl_eucalyptus","BuWnHt3nNeN","paritzkiliani","p"],["pl_eucalyptus","BuGzWBVHKtz","paritzkiliani","p"],["chelouche7","B7YF2vPHEaS","kimmel.eshkolot.architects","p"],["nitzana11","BT60FtAgmwr","kimmel.eshkolot.architects","p"],["nitzana11","BT8LjNAgnP8","kimmel.eshkolot.architects","p"],["nitzana11","BT5fg7AADaj","kimmel.eshkolot.architects","p"],["allenby52","CCkqO10nHqB","kimmel.eshkolot.architects","p"],["allenby52","B75TBernWUi","kimmel.eshkolot.architects","p"],["checkpoint","BxzC12eHN-C","kimmel.eshkolot.architects","p"],["steinhardt","Bn8De0ZBgTL","kimmel.eshkolot.architects","p"],["steinhardt","B-6QO4UneyJ","kimmel.eshkolot.architects","p"],["l28","Bon1-b9hMqp","kimmel.eshkolot.architects","p"],["l28","B0AiX94HpiZ","kimmel.eshkolot.architects","p"],["l28","CU5BwutoCNv","kimmel.eshkolot.architects","p"],["ke_sylvanadams","DTYAFCdiP5A","kimmel.eshkolot.architects","p"],["ke_sylvanadams","DHapScvoMIS","kimmel.eshkolot.architects","p"],["ke_sylvanadams","C84SMKQIwi4","kimmel.eshkolot.architects","p"],["ke_muza","Cw5RVknIrS0","kimmel.eshkolot.architects","p"],["ke_muza","CoZ4j-goHke","kimmel.eshkolot.architects","p"],["ke_muza","DaTD6EgCOSP","kimmel.eshkolot.architects","p"],["ajami","CoKuMwisbUh","pitsou_kedem_architect","p"],["ajami","CLFK1q1BtWs","pitsou_kedem_architect","p"],["ahadhaam13","C6CDC1ss5BK","pitsou_kedem_architect","p"],["pk_maze39","C3HzG2rMftP","pitsou_kedem_architect","p"],["pk_maze39","C7LnlWRsuc7","pitsou_kedem_architect","p"],["pk_zlatopolsky23","Ctf0CkWIR5w","pitsou_kedem_architect","p"],["pk_zlatopolsky23","Cf8IGRTDJiQ","pitsou_kedem_architect","p"],["pk_davidhamelech27","DE5RGcHI-am","pitsou_kedem_architect","p"],["pk_davidhamelech27","ClDI5vljO1Y","pitsou_kedem_architect","p"],["harugei","Cc8IatZt-vt","hqarchitects","p"],["harugei","Cdddu2Ytj4k","hqarchitects","p"],["fein","ClynK7hoxDc","hqarchitects","p"],["nano","DazUaHLgPTm","michelremonassocies","p"],["nano","DdmFCVetYxC","michelremonassocies","p"]];
 const IG = {};IGP.forEach(([k,c,by,t])=>{(IG[k]=IG[k]||{p:[],d:[]})[t==="d"?"d":"p"].push({u:"https://www.instagram.com/p/"+c+"/",by:"@"+by});});
 const OFFICE_SITES=[["HQ","https://www.hqa.co.il"],["פיצו קדם","https://www.pitsou.com"],["קימל אשכולות","https://www.kimmel.co.il"],["יניב פרדו","https://www.yanivpardo.com"],["בר אוריין","https://barorian.com"],["AVT","https://www.avt-arch.com"]];
-const igEmbed=x=>`<figure class="igf"><iframe class="igfr" src="${esc(x.u)}embed/" loading="lazy" frameborder="0" scrolling="no" allowtransparency="true" referrerpolicy="strict-origin-when-cross-origin" title="Instagram ${esc(x.by)}"></iframe><figcaption class="mono"><a href="${esc(x.u)}" target="_blank" rel="noopener">${esc(x.by)} ↗</a></figcaption></figure>`;
+const igEmbed=(x,i)=>`<figure class="igf"><iframe class="igfr" src="${esc(x.u)}embed/" loading="${i<2?"eager":"lazy"}" onload="this.classList.add('ok')" frameborder="0" scrolling="no" allowtransparency="true" referrerpolicy="strict-origin-when-cross-origin" title="Instagram ${esc(x.by)}"></iframe><figcaption class="mono"><a href="${esc(x.u)}" target="_blank" rel="noopener">${esc(x.by)} ↗</a></figcaption></figure>`;
 /* גובה מדויק להטמעות: אינסטגרם שולח הודעת MEASURE מתוך ה־iframe */
 window.addEventListener("message",e=>{if(!/instagram\.com$/.test(new URL(e.origin).hostname))return;let d=e.data;try{if(typeof d==="string")d=JSON.parse(d);}catch(_){return;}if(d&&d.type==="MEASURE"&&d.details&&d.details.height){document.querySelectorAll("iframe.igfr").forEach(f=>{if(f.contentWindow===e.source)f.style.height=d.details.height+"px",f.style.aspectRatio="auto";});}});
 const igSec=b=>{const by=[...new Set(b.ig.map(x=>x.by))];return `<section class="sec igsec"><h4>צילומים · ${b.ig.length} פוסטים מאינסטגרם</h4><p class="ignote">פוסטים רשמיים מוטמעים מהחשבונות של ${by.map(x=>`<span class="mono" style="direction:ltr;unicode-bidi:isolate">${esc(x)}</span>`).join(", ")}. בכל פוסט אפשר לדפדף בין התמונות (פנים וחוץ), והקרדיט לצלם נשמר.</p><div class="igwrap">${b.ig.map(igEmbed).join("")}</div></section>`;};
@@ -850,7 +927,8 @@ if(mapboxgl.getRTLTextPluginStatus()==="unavailable") mapboxgl.setRTLTextPlugin(
 const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 const esc = s => String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
-const map = new mapboxgl.Map({container:"map",style:STYLE_URL,center:[34.7872,32.0790],zoom:13.4,pitch:60,bearing:71,antialias:true});
+const IS_PHONE=window.matchMedia("(max-width:760px)").matches;
+const map = new mapboxgl.Map({container:"map",style:STYLE_URL,center:[34.7872,32.0790],zoom:13.4,pitch:60,bearing:71,antialias:!IS_PHONE});
 map.addControl(new mapboxgl.NavigationControl({visualizePitch:true}),"bottom-right");
 map.addControl(new mapboxgl.ScaleControl({unit:"metric"}),"bottom-right");
 function setCfg(m,key,val){ try{ m.setConfigProperty("basemap",key,val); }catch(e){} }
@@ -1177,18 +1255,11 @@ map.on("style.load",()=>{
 });
 
 
-/* ================= MOBILE behaviour ================= */
+/* ================= MOBILE behaviour: native-feeling bottom sheets ================= */
 (function(){
   const mq=window.matchMedia("(max-width:760px)");
   const sheet=document.querySelector(".sheet");
-  let lastSnap="peek";
-  const snaps=["peek","half","full"];
-  function setSnap(el,v){el.dataset.snap=v; if(el===sheet) lastSnap=v;}
-  function apply(){
-    if(mq.matches){ if(!sheet.dataset.snap) setSnap(sheet,"peek"); if(!plate.hidden&&!plate.dataset.snap) setSnap(plate,"half"); }
-    else { delete sheet.dataset.snap; delete plate.dataset.snap; document.body.classList.remove("plate-open"); }
-  }
-  mq.addEventListener?mq.addEventListener("change",apply):mq.addListener(apply); apply();
+  const PEEK=128;
 
   /* light presets folded into one cycle button */
   const lights=[...bar.querySelectorAll("button[data-light]")];
@@ -1199,64 +1270,98 @@ map.on("style.load",()=>{
   lc.addEventListener("click",()=>{const i=lights.indexOf(curLight()); lights[(i+1)%lights.length].click(); syncLc();});
   bar.appendChild(lc); syncLc();
 
-  /* drag to snap */
-  function dragger(el,handles,states,onClose){
-    let y0=0,t0=0,base=0,h=0,moved=false;
-    const offsetOf=v=>{const m=getComputedStyle(el).transform; return m&&m!=="none"?new DOMMatrix(m).m42:0;};
-    handles.forEach(hd=>{
-      hd.addEventListener("pointerdown",e=>{ if(!mq.matches||e.target.closest("input,select,button:not(.grab)")) return;
-        y0=e.clientY;t0=performance.now();base=offsetOf();h=el.getBoundingClientRect().height;moved=false;
-        el.classList.add("dragging"); hd.setPointerCapture(e.pointerId); });
-      hd.addEventListener("pointermove",e=>{ if(!el.classList.contains("dragging")) return; const dy=e.clientY-y0; if(Math.abs(dy)>4) moved=true;
-        el.style.transform=`translateY(${Math.max(0,base+dy)}px)`; });
-      const end=e=>{ if(!el.classList.contains("dragging")) return; el.classList.remove("dragging"); el.style.transform="";
-        const dy=e.clientY-y0, v=dy/Math.max(1,performance.now()-t0), pos=base+dy;
-        if(!moved){ const i=states.indexOf(el.dataset.snap); setSnap(el,states[(i+1)%states.length]); return; }
-        if(onClose&&(pos>h*0.72||v>1.1&&el.dataset.snap===states[0])){ onClose(); return; }
-        if(v>0.5){ const i=states.indexOf(el.dataset.snap); setSnap(el,states[Math.max(0,i-1)]); return; }
-        if(v<-0.5){ const i=states.indexOf(el.dataset.snap); setSnap(el,states[Math.min(states.length-1,i+1)]); return; }
-        const targets={peek:h-128,half:h*0.46,full:0}; let best=states[0],bd=1e9;
-        states.forEach(s=>{const d=Math.abs(targets[s]-pos); if(d<bd){bd=d;best=s;}}); setSnap(el,best); };
-      hd.addEventListener("pointerup",end); hd.addEventListener("pointercancel",end);
-    });
+  /* ---- generic sheet: snap points in px, touch drag with axis lock, velocity flick ---- */
+  function Sheet(el,o){
+    const S={el,snap:null};
+    const H=()=>el.offsetHeight||window.innerHeight*0.9;
+    const pos=n=>({full:0,half:Math.round(H()*o.half),peek:H()-PEEK-(parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--sb"))||0),closed:H()+40}[n]);
+    let cur=0;
+    S.set=(n,anim=true)=>{ S.snap=n; el.dataset.snap=n; cur=pos(n); el.classList.toggle("anim",anim); el.style.setProperty("--y",cur+"px");
+      if(n!=="full"&&o.scroller&&o.scroller()) o.scroller().scrollTop=0; o.onSnap&&o.onSnap(n); };
+    S.reset=()=>{ el.classList.remove("anim"); el.style.removeProperty("--y"); delete el.dataset.snap; S.snap=null; };
+    let x0,y0,t0,start,axis,drag,lastY,lastT,vel;
+    el.addEventListener("touchstart",e=>{ if(!mq.matches||!S.snap) return; const t=e.touches[0];
+      if(e.target.closest("input,select,textarea")){ axis="n"; return; }
+      x0=t.clientX;y0=lastY=t.clientY;t0=lastT=performance.now();start=cur;axis=null;drag=false;vel=0; },{passive:true});
+    el.addEventListener("touchmove",e=>{ if(!mq.matches||!S.snap||axis==="n") return; const t=e.touches[0],dx=t.clientX-x0,dy=t.clientY-y0;
+      if(axis==null){ if(Math.abs(dx)<6&&Math.abs(dy)<6) return; axis=Math.abs(dy)>Math.abs(dx)?"y":"x"; }
+      if(axis!=="y") return;
+      if(!drag){ const sc=o.scroller&&o.scroller(); const atTop=!sc||sc.scrollTop<=0;
+        drag = S.snap!=="full" || (atTop&&dy>0);
+        if(!drag){ axis="n"; return; } el.classList.remove("anim"); }
+      e.preventDefault();
+      let y=start+dy; if(y<0) y=y/3;            /* rubber-band above the top */
+      cur=y; el.style.setProperty("--y",y+"px");
+      const now=performance.now(); vel=(t.clientY-lastY)/Math.max(1,now-lastT); lastY=t.clientY; lastT=now; },{passive:false});
+    el.addEventListener("touchend",()=>{ if(!drag){ return; } drag=false;
+      const order=o.snaps; const idx=order.indexOf(S.snap);
+      if(vel>0.55){ if(idx===0&&o.onClose){ o.onClose(); return; } S.set(order[Math.max(0,idx-1)]); return; }
+      if(vel<-0.55){ S.set(order[Math.min(order.length-1,idx+1)]); return; }
+      if(o.onClose&&cur>pos(order[0])+H()*0.18){ o.onClose(); return; }
+      let best=order[0],bd=1e9; order.forEach(n=>{const d=Math.abs(pos(n)-cur); if(d<bd){bd=d;best=n;}}); S.set(best); });
+    /* tapping the handle cycles */
+    el.addEventListener("click",e=>{ if(!mq.matches||!e.target.closest(".grab")) return; const i=o.snaps.indexOf(S.snap); S.set(o.snaps[(i+1)%o.snaps.length]); });
+    return S;
   }
-  dragger(sheet,[sheet.querySelector(".grab"),sheet.querySelector("header")],snaps);
 
-  /* search / filters open the sheet */
-  document.getElementById("search").addEventListener("focus",()=>{ if(mq.matches) setSnap(sheet,"full"); });
-  document.getElementById("office").addEventListener("change",()=>{ if(mq.matches&&sheet.dataset.snap==="peek") setSnap(sheet,"half"); });
-  locBtn.addEventListener("click",()=>{ if(mq.matches&&near.watch!=null) setTimeout(()=>setSnap(sheet,"half"),300); });
-  /* panning the map tucks the index away */
-  map.on("dragstart",()=>{ if(mq.matches&&plate.hidden&&sheet.dataset.snap!=="peek") setSnap(sheet,"peek"); });
+  const SH=Sheet(sheet,{snaps:["peek","half","full"],half:0.45,scroller:()=>listEl});
+  const PL=Sheet(plate,{snaps:["half","full"],half:0.40,scroller:()=>plate,onClose:()=>closePlate()});
+  /* header area of the index also toggles on tap */
+  sheet.querySelector("header").addEventListener("click",()=>{ if(mq.matches&&SH.snap==="peek") SH.set("half"); });
+
+  function apply(){
+    if(mq.matches){ if(!SH.snap) SH.set("peek",false); if(!plate.hidden&&!PL.snap) PL.set("half",false); }
+    else { SH.reset(); PL.reset(); document.body.classList.remove("plate-open"); }
+  }
+  mq.addEventListener?mq.addEventListener("change",apply):mq.addListener(apply); apply();
+  window.addEventListener("resize",()=>{ if(mq.matches){ SH.snap&&SH.set(SH.snap,false); PL.snap&&!plate.hidden&&PL.set(PL.snap,false); } });
+
+  /* search / filters / near-me open the index */
+  document.getElementById("search").addEventListener("focus",()=>{ if(mq.matches) SH.set("full"); });
+  document.getElementById("office").addEventListener("change",()=>{ if(mq.matches&&SH.snap==="peek") SH.set("half"); });
+  document.getElementById("legend").addEventListener("click",()=>{ if(mq.matches&&SH.snap==="full") SH.set("half"); });
+  locBtn.addEventListener("click",()=>{ if(mq.matches&&near.watch!=null){ if(!plate.hidden) closePlate(); setTimeout(()=>SH.set("half"),300);} });
+  /* touching the map tucks the index away */
+  map.on("dragstart",()=>{ if(mq.matches&&plate.hidden&&SH.snap!=="peek") SH.set("peek"); });
+  map.on("click",()=>{ if(mq.matches&&plate.hidden&&SH.snap!=="peek") setTimeout(()=>{ if(plate.hidden) SH.set("peek"); },0); });
+  map.on("dragstart",()=>{ if(mq.matches&&!plate.hidden&&PL.snap==="full") PL.set("half"); });
 
   /* plate as a sheet */
-  const _select=select, _close=closePlate;
+  const _select=select, _close=closePlate; let closeT=null;
   select=function(id){
+    if(closeT){ clearTimeout(closeT); closeT=null; }
     _select(id);
     if(!mq.matches) return;
     document.activeElement&&document.activeElement.blur&&document.activeElement.blur();
     if(!plate.querySelector(".grab")) plate.insertAdjacentHTML("afterbegin",'<div class="grab" aria-hidden="true"></div>');
-    setSnap(plate,"half"); document.body.classList.add("plate-open");
+    document.body.classList.add("plate-open");
+    if(!PL.snap){ PL.set("closed",false); void plate.offsetHeight; }
+    PL.set("half"); plate.scrollTop=0;
     if(!history.state||!history.state.plate) history.pushState({plate:id},"");
-    dragger2();
   };
+  function hideMobilePlate(){ if(PL.snap){ PL.set("closed"); setTimeout(()=>{ if(PL.snap==="closed"&&!closeT){ PL.reset(); } },380); } document.body.classList.remove("plate-open"); }
   closePlate=function(){
-    _close(); delete plate.dataset.snap; document.body.classList.remove("plate-open");
-    if(mq.matches) setSnap(sheet,"peek");
+    if(mq.matches&&!plate.hidden&&PL.snap&&PL.snap!=="closed"){ PL.set("closed"); closeT=setTimeout(()=>{ closeT=null; _close(); PL.reset(); },330); }
+    else _close();
+    document.body.classList.remove("plate-open");
+    if(mq.matches) SH.set("peek");
     if(history.state&&history.state.plate) history.back();
   };
-  window.addEventListener("popstate",()=>{ if(!plate.hidden){ _close(); delete plate.dataset.snap; document.body.classList.remove("plate-open"); setSnap(sheet,"peek"); } });
-  /* rebind the plate's close button (it was wired to the old function when the plate was rendered) */
+  window.addEventListener("popstate",()=>{ if(!plate.hidden){ hideMobilePlate(); closeT=setTimeout(()=>{closeT=null;_close();},330); if(mq.matches) SH.set("peek"); } });
   plate.addEventListener("click",e=>{ if(e.target.closest(".close")){ e.stopImmediatePropagation(); closePlate(); } },true);
-  /* scrolling the plate content expands it */
-  plate.addEventListener("scroll",()=>{ if(mq.matches&&plate.dataset.snap==="half"&&plate.scrollTop>8) setSnap(plate,"full"); },{passive:true});
+
   /* swipe the photo to change image */
-  let sx=null;
-  plate.addEventListener("touchstart",e=>{ if(e.target.closest(".photo")) sx=e.touches[0].clientX; },{passive:true});
-  plate.addEventListener("touchend",e=>{ if(sx==null) return; const dx=e.changedTouches[0].clientX-sx; sx=null;
-    if(Math.abs(dx)>40){ const b=plate.querySelector(dx<0?".photo .next":".photo .prev"); b&&b.click(); } },{passive:true});
-  function dragger2(){ const g=plate.querySelector(".grab"); if(!g||g.dataset.w) return; g.dataset.w=1;
-    dragger(plate,[g],["half","full"],()=>closePlate()); }
+  let sx=null,sy=null;
+  plate.addEventListener("touchstart",e=>{ if(e.target.closest(".photo")){ sx=e.touches[0].clientX; sy=e.touches[0].clientY; } },{passive:true});
+  plate.addEventListener("touchend",e=>{ if(sx==null) return; const dx=e.changedTouches[0].clientX-sx, dy=e.changedTouches[0].clientY-sy; sx=null;
+    if(Math.abs(dx)>40&&Math.abs(dx)>Math.abs(dy)*1.3){ const b=plate.querySelector(dx<0?".photo .next":".photo .prev"); b&&b.click(); } },{passive:true});
+
+  /* phones: light static previews instead of two extra live 3D maps per building */
+  const T=()=>mapboxgl.accessToken;
+  const stat=(b,z,br,p,w,h,pin)=>`https://api.mapbox.com/styles/v1/mapbox/light-v11/static/${pin?`pin-s+14212e(${b.lng},${b.lat})/`:""}${b.lng},${b.lat},${z},${br},${p}/${w}x${h}@2x?access_token=${T()}&logo=false&attribution=false`;
+  const _mini=miniMap, _hero=heroMap;
+  miniMap=function(c,b){ if(!IS_PHONE) return _mini(c,b); if(!c) return; c.innerHTML=`<img alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover;filter:grayscale(1) contrast(1.1)" src="${stat(b,16.2,0,0,300,300,false)}">`; };
+  heroMap=function(c,b){ if(!IS_PHONE) return _hero(c,b); if(!c) return; c.innerHTML=`<img alt="" style="width:100%;height:100%;object-fit:cover" src="${stat(b,b.priv?15.8:16.8,(b.id*47)%360,55,640,400,!b.priv)}">`; };
 })();
 
 
@@ -1306,6 +1411,21 @@ const FPDATA = {"tachana":[[3,0,[6175,5877,6179,5871,6162,5863,6157,5869,6175,58
   const any=pt=>hit(pt)||(window.__atlasHit&&window.__atlasHit(pt));
   map.on("click",e=>{ const id=any(e.point); if(id) select(id); });
   map.on("mousemove",e=>{ map.getCanvas().style.cursor=any(e.point)?"pointer":""; });
+})();
+
+/* warm Instagram's embed bundle once the map is idle, so the first building opens with photos fast */
+(function(){
+  let done=false;
+  const warm=()=>{ if(done||!IGP.length) return; done=true;
+    const f=document.createElement("iframe"); f.src="https://www.instagram.com/p/"+IGP[0][1]+"/embed/"; f.setAttribute("aria-hidden","true"); f.tabIndex=-1;
+    f.style.cssText="position:absolute;width:1px;height:1px;left:-9999px;top:0;border:0;opacity:0;pointer-events:none";
+    f.onload=()=>setTimeout(()=>f.remove(),4000); document.body.appendChild(f); };
+  map.on("idle",()=>setTimeout(warm,1500)); setTimeout(warm,9000);
+  /* touching a list row or a pin starts the connection before the tap even finishes */
+  const pre=new Set(); const preload=id=>{ const b=BUILDINGS[id-1]; if(!b||!b.ig||!b.ig.length||pre.has(id)) return; pre.add(id);
+    const l=document.createElement("link"); l.rel="prefetch"; l.href=b.ig[0].u+"embed/"; document.head.appendChild(l); };
+  listEl.addEventListener("touchstart",e=>{ const li=e.target.closest(".item"); if(li) preload(+li.dataset.id); },{passive:true});
+  listEl.addEventListener("mouseover",e=>{ const li=e.target.closest(".item"); if(li) preload(+li.dataset.id); });
 })();
 render();
 </script>
