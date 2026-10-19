@@ -248,6 +248,11 @@ button{font:inherit}
   .lbtitle{font-size:20px}
   .lbclose{width:44px;height:44px}
 }
+
+/* zoomed out: numbers hide, only the coloured buildings remain */
+.pin{transition:transform .15s,opacity .3s}
+body.zfar .pin:not(.active){opacity:0;pointer-events:none;transform:scale(.4)}
+@media (prefers-reduced-motion:reduce){.pin{transition:none}}
 </style>
 </head>
 <body>
@@ -1252,6 +1257,19 @@ map.on("style.load",()=>{
     if(Math.abs(dx)>40){ const b=plate.querySelector(dx<0?".photo .next":".photo .prev"); b&&b.click(); } },{passive:true});
   function dragger2(){ const g=plate.querySelector(".grab"); if(!g||g.dataset.w) return; g.dataset.w=1;
     dragger(plate,[g],["half","full"],()=>closePlate()); }
+})();
+
+/* ================= numbers only from neighbourhood zoom; coloured buildings are clickable ================= */
+(function(){
+  const LABEL_Z=14.6;
+  const upd=()=>document.body.classList.toggle("zfar",map.getZoom()<LABEL_Z);
+  map.on("zoom",upd); map.on("load",upd); upd();
+  const lyr=()=>["base-ext","base-fill"].filter(l=>map.getLayer(l)&&map.getLayoutProperty(l,"visibility")!=="none");
+  const hit=pt=>{ const L=lyr(); if(!L.length) return null; let fs; try{fs=map.queryRenderedFeatures(pt,{layers:L});}catch(e){return null;}
+    if(!fs.length) return null; const m=new Map(); FS.forEach((ids,id)=>ids.forEach(f=>m.set(f,id)));
+    for(const f of fs){ const id=m.get(f.id); if(id&&visible(BUILDINGS[id-1])) return id; } return null; };
+  map.on("click",e=>{ const id=hit(e.point); if(id) select(id); });
+  map.on("mousemove",e=>{ map.getCanvas().style.cursor=hit(e.point)?"pointer":""; });
 })();
 render();
 </script>
