@@ -251,7 +251,7 @@ button{font:inherit}
 
 /* zoomed out: numbers hide, only the coloured buildings remain */
 .pin{transition:transform .15s,opacity .3s}
-body.zfar .pin:not(.active){opacity:0;pointer-events:none;transform:scale(.4)}
+body.zfar .pin:not(.active){visibility:hidden!important;pointer-events:none!important}
 @media (prefers-reduced-motion:reduce){.pin{transition:none}}
 </style>
 </head>
@@ -1277,7 +1277,7 @@ const FPDATA = {"tachana":[[3,0,[6175,5877,6179,5871,6162,5863,6157,5869,6175,58
     if(!feats.length||map.getSource("atlas-fp")) return;
     map.addSource("atlas-fp",{type:"geojson",data:{type:"FeatureCollection",features:feats}});
     map.addLayer({id:"atlas-ext",type:"fill-extrusion",source:"atlas-fp",maxzoom:FAR_Z,filter:filt(),
-      paint:{"fill-extrusion-color":color(),"fill-extrusion-height":["*",["get","h"],["interpolate",["linear"],["zoom"],11,2.2,14,1.2,FAR_Z,1]],
+      paint:{"fill-extrusion-color":color(),"fill-extrusion-height":["interpolate",["linear"],["zoom"],11,["*",["get","h"],2.2],14,["*",["get","h"],1.2],FAR_Z,["get","h"]],
         "fill-extrusion-base":["get","mh"],"fill-extrusion-opacity":1,"fill-extrusion-vertical-gradient":true}});
     map.addLayer({id:"atlas-fill",type:"fill",source:"atlas-fp",maxzoom:FAR_Z,filter:filt(),layout:{visibility:"none"},
       paint:{"fill-color":color(),"fill-outline-color":"#14212E"}});
