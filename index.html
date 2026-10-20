@@ -96,6 +96,8 @@ button{font:inherit}
 .igpool iframe{position:absolute;top:0;left:0;width:320px;height:420px;visibility:hidden;pointer-events:none;border:1px solid var(--line);background:#fff}
 .igpool iframe.on{visibility:visible;pointer-events:auto}
 .igslot{width:100%;aspect-ratio:1/1.32}
+.lg.lgall{font-weight:700;text-decoration:underline;text-underline-offset:3px;opacity:1!important}
+@media (max-width:760px){ .lg.lgall{text-decoration:none;background:var(--ink);color:var(--paper);border-color:var(--ink)} .lg.lgall[aria-pressed="true"]{background:var(--paper);color:var(--ink)} }
 .item{display:grid;grid-template-columns:30px 1fr auto;gap:10px;align-items:center;padding:9px 18px;cursor:pointer;border-bottom:1px solid #EEF1F4}
 .item:hover,.item.active{background:var(--board)}
 .item b{display:block;font-weight:500;font-size:14px}
@@ -395,7 +397,7 @@ body.zfar .pin:not(.active),.pin.crowd:not(.active){visibility:hidden!important;
 .igf::after{content:"טוען צילום מאינסטגרם…";position:absolute;left:0;right:0;top:42%;text-align:center;font-size:13px;color:var(--ink-soft);pointer-events:none}
 .igf.ok::after{display:none}
 </style>
-<script>/*BUILD*/window.__BUILD="1792487558";
+<script>/*BUILD*/window.__BUILD="1792493190";
 (function(){try{
   fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"}).then(r=>r.text()).then(t=>{
     const m=t.match(/window\.__BUILD="(\d+)"/); if(!m||m[1]===window.__BUILD) return;
@@ -1100,13 +1102,18 @@ Object.entries(ERAS).forEach(([k,e])=>{
 });
 legendEl.addEventListener("click",e=>{
   const b=e.target.closest(".lg"); if(!b) return;
-  const k=b.dataset.era;
-  if(state.eras.size===Object.keys(ERAS).length){ state.eras=new Set([k]); }
-  else if(state.eras.has(k)){ state.eras.delete(k); if(!state.eras.size) state.eras=new Set(Object.keys(ERAS)); }
-  else state.eras.add(k);
-  legendEl.querySelectorAll(".lg").forEach(x=>x.setAttribute("aria-pressed",state.eras.has(x.dataset.era)));
-  render();
+  if(b.classList.contains("lgall")){ state.eras=state.eras.size?new Set():new Set(Object.keys(ERAS)); }
+  else { const k=b.dataset.era; if(state.eras.has(k)) state.eras.delete(k); else state.eras.add(k); }
+  syncLegend(); render();
 });
+/* one button clears every period (an empty map) or brings them all back; then each period toggles on and off */
+const lgAll=document.createElement("button"); lgAll.type="button"; lgAll.className="lg lgall"; legendEl.appendChild(lgAll);
+function syncLegend(){
+  legendEl.querySelectorAll(".lg[data-era]").forEach(x=>x.setAttribute("aria-pressed",state.eras.has(x.dataset.era)));
+  const none=!state.eras.size; lgAll.textContent=none?"הצג הכל":"נקה הכל"; lgAll.setAttribute("aria-pressed",String(none));
+  document.body.classList.toggle("noeras",none);
+}
+syncLegend();
 let qT=null; document.getElementById("search").addEventListener("input",e=>{ clearTimeout(qT); const v=e.target.value.trim().toLowerCase(); qT=setTimeout(()=>{ state.q=v; render(); },110); });
 const visible=b=>state.eras.has(b.era)&&(!state.office||b.offs.includes(state.office))&&(!state.q||[b.he,b.en,b.arch,b.hood,b.year,b.addr].join(" ").toLowerCase().includes(state.q));
 
