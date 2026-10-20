@@ -395,7 +395,7 @@ body.zfar .pin:not(.active),.pin.crowd:not(.active){visibility:hidden!important;
 .igf::after{content:"טוען צילום מאינסטגרם…";position:absolute;left:0;right:0;top:42%;text-align:center;font-size:13px;color:var(--ink-soft);pointer-events:none}
 .igf.ok::after{display:none}
 </style>
-<script>/*BUILD*/window.__BUILD="1792487412";
+<script>/*BUILD*/window.__BUILD="1792487558";
 (function(){try{
   fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"}).then(r=>r.text()).then(t=>{
     const m=t.match(/window\.__BUILD="(\d+)"/); if(!m||m[1]===window.__BUILD) return;
@@ -1144,8 +1144,9 @@ function addPins(){
   }catch(e){ clearTimeout(addPins.t); addPins.t=setTimeout(addPins,250); }
 }
 function pinFilter(){ const ids=BUILDINGS.filter(b=>PIN_IDS.has(b.id)&&visible(b)).map(b=>b.id); return ["in",["get","id"],["literal",ids]]; }
-function pinsUpdate(){ try{ if(map.getLayer("pins")) map.setFilter("pins",pinFilter()); if(map.getLayer("pins-active")) map.setFilter("pins-active",["==",["get","id"],state.active||-1]); }catch(e){} }
-map.on("style.load",addPins); map.on("load",addPins); map.on("idle",()=>{ if(!map.getLayer("pins-active")) addPins(); }); if(map.isStyleLoaded&&map.isStyleLoaded()) addPins();
+function pinsTop(){ try{ const L=map.getStyle().layers; const last=L[L.length-1]&&L[L.length-1].id; if(last!=="pins-active"){ map.moveLayer("pins"); map.moveLayer("pins-active"); } }catch(e){} }
+function pinsUpdate(){ pinsTop(); try{ if(map.getLayer("pins")) map.setFilter("pins",pinFilter()); if(map.getLayer("pins-active")) map.setFilter("pins-active",["==",["get","id"],state.active||-1]); }catch(e){} }
+map.on("style.load",addPins); map.on("load",addPins); map.on("idle",()=>{ if(!map.getLayer("pins-active")) addPins(); else pinsTop(); }); if(map.isStyleLoaded&&map.isStyleLoaded()) addPins();
 const pinAt=pt=>{ try{ if(!map.getLayer("pins")) return null; const f=map.queryRenderedFeatures([[pt.x-6,pt.y-6],[pt.x+6,pt.y+6]],{layers:["pins-active","pins"]})[0]; return f?f.properties.id:null; }catch(e){ return null; } };
 window.__pinAt=pinAt;
 
@@ -1416,11 +1417,11 @@ function collectFootprints(){
   });
   if(changed) paintFootprints();
 }
-paintFootprints.last=new Map();
+const PF_LAST=new Map();
 function paintFootprints(){
   if(!map.getSource("bfp")) return;
   FS.forEach((ids,id)=>{const b=BUILDINGS[id-1];const st={c:visible(b)?ERA_HEX[b.era]:BASE_GREY,sel:state.active===id};
-    const sig=st.c+(st.sel?1:0)+":"+ids.length; if(paintFootprints.last.get(id)===sig) return; paintFootprints.last.set(id,sig);
+    const sig=st.c+(st.sel?1:0)+":"+ids.length; if(PF_LAST.get(id)===sig) return; PF_LAST.set(id,sig);
     ids.forEach(fid=>{try{map.setFeatureState({source:"bfp",sourceLayer:"building",id:fid},st);}catch(e){}});});
 }
 map.on("style.load",()=>{
