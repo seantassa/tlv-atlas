@@ -395,7 +395,7 @@ body.zfar .pin:not(.active),.pin.crowd:not(.active){visibility:hidden!important;
 .igf::after{content:"טוען צילום מאינסטגרם…";position:absolute;left:0;right:0;top:42%;text-align:center;font-size:13px;color:var(--ink-soft);pointer-events:none}
 .igf.ok::after{display:none}
 </style>
-<script>/*BUILD*/window.__BUILD="1792487250";
+<script>/*BUILD*/window.__BUILD="1792487412";
 (function(){try{
   fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"}).then(r=>r.text()).then(t=>{
     const m=t.match(/window\.__BUILD="(\d+)"/); if(!m||m[1]===window.__BUILD) return;
@@ -1125,27 +1125,27 @@ function pinImage(fill,dashed,active){
 const PIN_FILL={eclectic:"#A8C6E1",intl:"#6C9BC8",brutal:"#3A6A99",contemp:"#16365A"};
 const LABEL_Z_PINS=window.matchMedia("(max-width:760px)").matches?15.6:14.2;
 function addPins(){
-  if(map.getSource("pins")) return;
+  if(map.getLayer("pins")&&map.getLayer("pins-active")) return;
   try{
-    Object.entries(PIN_FILL).forEach(([k,c])=>{ map.addImage("pin-"+k,pinImage(c,false,false),{pixelRatio:2}); map.addImage("pina-"+k,pinImage(c,false,true),{pixelRatio:2}); });
-    map.addImage("pin-future",pinImage("#FFFFFF",true,false),{pixelRatio:2}); map.addImage("pina-future",pinImage("#FFFFFF",true,true),{pixelRatio:2});
-    map.addImage("pin-area",pinImage("rgba(255,255,255,.85)",true,false),{pixelRatio:2}); map.addImage("pina-area",pinImage("rgba(255,255,255,.85)",true,true),{pixelRatio:2});
-    map.addSource("pins",{type:"geojson",data:PINS});
+    if(!map.hasImage("pin-intl")) Object.entries(PIN_FILL).forEach(([k,c])=>{ map.addImage("pin-"+k,pinImage(c,false,false),{pixelRatio:2}); map.addImage("pina-"+k,pinImage(c,false,true),{pixelRatio:2}); });
+    if(!map.hasImage("pin-future")){ map.addImage("pin-future",pinImage("#FFFFFF",true,false),{pixelRatio:2}); map.addImage("pina-future",pinImage("#FFFFFF",true,true),{pixelRatio:2});
+    map.addImage("pin-area",pinImage("rgba(255,255,255,.85)",true,false),{pixelRatio:2}); map.addImage("pina-area",pinImage("rgba(255,255,255,.85)",true,true),{pixelRatio:2}); }
+    if(!map.getSource("pins")) map.addSource("pins",{type:"geojson",data:PINS});
     const font=["DIN Pro Medium","Arial Unicode MS Regular"];
-    map.addLayer({id:"pins",type:"symbol",source:"pins",minzoom:LABEL_Z_PINS,filter:pinFilter(),
+    if(!map.getLayer("pins")) map.addLayer({id:"pins",type:"symbol",source:"pins",minzoom:LABEL_Z_PINS,filter:pinFilter(),
       layout:{"icon-image":["get","ic"],"icon-size":IS_PHONE?1.05:0.9,"icon-allow-overlap":false,"icon-padding":IS_PHONE?6:3,
         "text-field":["get","num"],"text-font":font,"text-size":IS_PHONE?11.5:10.5,"text-allow-overlap":false,"text-optional":false,
         "symbol-sort-key":["get","id"],"text-offset":[0,0]},
       paint:{"text-color":["get","tc"]}});
-    map.addLayer({id:"pins-active",type:"symbol",source:"pins",filter:["==",["get","id"],state.active||-1],
+    if(!map.getLayer("pins-active")) map.addLayer({id:"pins-active",type:"symbol",source:"pins",filter:["==",["get","id"],state.active||-1],
       layout:{"icon-image":["concat","pina-",["slice",["get","ic"],4]],"icon-size":IS_PHONE?1.2:1.05,"icon-allow-overlap":true,"text-allow-overlap":true,"icon-ignore-placement":true,
         "text-field":["get","num"],"text-font":font,"text-size":IS_PHONE?13:12},
       paint:{"text-color":["get","tc"]}});
-  }catch(e){ console.warn("pins",e); }
+  }catch(e){ clearTimeout(addPins.t); addPins.t=setTimeout(addPins,250); }
 }
 function pinFilter(){ const ids=BUILDINGS.filter(b=>PIN_IDS.has(b.id)&&visible(b)).map(b=>b.id); return ["in",["get","id"],["literal",ids]]; }
 function pinsUpdate(){ try{ if(map.getLayer("pins")) map.setFilter("pins",pinFilter()); if(map.getLayer("pins-active")) map.setFilter("pins-active",["==",["get","id"],state.active||-1]); }catch(e){} }
-map.on("style.load",addPins); if(map.isStyleLoaded&&map.isStyleLoaded()) addPins();
+map.on("style.load",addPins); map.on("load",addPins); map.on("idle",()=>{ if(!map.getLayer("pins-active")) addPins(); }); if(map.isStyleLoaded&&map.isStyleLoaded()) addPins();
 const pinAt=pt=>{ try{ if(!map.getLayer("pins")) return null; const f=map.queryRenderedFeatures([[pt.x-6,pt.y-6],[pt.x+6,pt.y+6]],{layers:["pins-active","pins"]})[0]; return f?f.properties.id:null; }catch(e){ return null; } };
 window.__pinAt=pinAt;
 
