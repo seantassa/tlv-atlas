@@ -395,7 +395,7 @@ body.zfar .pin:not(.active),.pin.crowd:not(.active){visibility:hidden!important;
 .igf::after{content:"טוען צילום מאינסטגרם…";position:absolute;left:0;right:0;top:42%;text-align:center;font-size:13px;color:var(--ink-soft);pointer-events:none}
 .igf.ok::after{display:none}
 </style>
-<script>/*BUILD*/window.__BUILD="1792447200";
+<script>/*BUILD*/window.__BUILD="1792487250";
 (function(){try{
   fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"}).then(r=>r.text()).then(t=>{
     const m=t.match(/window\.__BUILD="(\d+)"/); if(!m||m[1]===window.__BUILD) return;
@@ -1107,29 +1107,47 @@ legendEl.addEventListener("click",e=>{
   legendEl.querySelectorAll(".lg").forEach(x=>x.setAttribute("aria-pressed",state.eras.has(x.dataset.era)));
   render();
 });
-document.getElementById("search").addEventListener("input",e=>{state.q=e.target.value.trim().toLowerCase();render();});
+let qT=null; document.getElementById("search").addEventListener("input",e=>{ clearTimeout(qT); const v=e.target.value.trim().toLowerCase(); qT=setTimeout(()=>{ state.q=v; render(); },110); });
 const visible=b=>state.eras.has(b.era)&&(!state.office||b.offs.includes(state.office))&&(!state.q||[b.he,b.en,b.arch,b.hood,b.year,b.addr].join(" ").toLowerCase().includes(state.q));
 
-/* pins */
-BUILDINGS.forEach(b=>{
-  if(b.priv==="none") return;
-  const el=document.createElement("div");
-  if(b.priv==="area") el.classList.add("area");
-  el.classList.add("pin"); if(b.era==="future") el.classList.add("future"); el.textContent=String(b.id).padStart(2,"0");
-  if(b.priv!=="area"){ el.style.background=ERAS[b.era].color; el.style.color=ERAS[b.era].text; }
-  el.setAttribute("role","button"); el.setAttribute("aria-label",b.he); el.title=b.he; el.dataset.id=b.id;
-  el.addEventListener("click",ev=>{ev.stopPropagation();select(b.id);});
-  markers.set(b.id,{el,b,on:false,marker:new mapboxgl.Marker({element:el}).setLngLat([b.lng,b.lat])});
-});
-/* performance: keep only pins near the visible area in the DOM (hundreds of DOM markers make panning/zooming stutter on phones) */
-function cullPins(){
-  const bb=map.getBounds(); if(!bb) return;
-  const w=bb.getEast()-bb.getWest(), hgt=bb.getNorth()-bb.getSouth();
-  const W=bb.getWest()-w*.35, E=bb.getEast()+w*.35, S=bb.getSouth()-hgt*.35, N=bb.getNorth()+hgt*.35;
-  markers.forEach((m,id)=>{ const b=m.b; const inside=(b.lng!=null&&b.lng>=W&&b.lng<=E&&b.lat>=S&&b.lat<=N)||state.active===id;
-    if(inside&&!m.on){ m.marker.addTo(map); m.on=true; } else if(!inside&&m.on){ m.marker.remove(); m.on=false; } });
+/* pins: drawn by the map itself (one GL symbol layer) instead of hundreds of DOM markers, so panning stays smooth */
+const PIN_IDS=new Set(BUILDINGS.filter(b=>b.priv!=="none"&&b.lat).map(b=>b.id));
+const PINS={type:"FeatureCollection",features:BUILDINGS.filter(b=>PIN_IDS.has(b.id)).map(b=>({type:"Feature",id:b.id,geometry:{type:"Point",coordinates:[b.lng,b.lat]},
+  properties:{id:b.id,num:String(b.id).padStart(2,"0"),ic:b.priv==="area"?"pin-area":b.era==="future"?"pin-future":"pin-"+b.era,tc:b.priv==="area"||b.era==="future"?"#14212E":(ERAS[b.era].text==="#fff"?"#FFFFFF":"#14212E")}}))};
+function pinImage(fill,dashed,active){
+  const r=2, S=active?40:30, c=document.createElement("canvas"); c.width=c.height=S*r; const g=c.getContext("2d"); g.scale(r,r);
+  const o=active?7:3, w=S-o-4;
+  if(!dashed){ g.fillStyle="rgba(20,33,46,.35)"; g.fillRect(o+2,o+2,w,w); }
+  g.fillStyle=fill; g.fillRect(o,o,w,w); g.strokeStyle="#14212E"; g.lineWidth=1.5; if(dashed) g.setLineDash([3,2]); g.strokeRect(o+.75,o+.75,w-1.5,w-1.5);
+  if(active){ g.setLineDash([]); g.lineWidth=2; g.strokeRect(o-4,o-4,w+8,w+8); }
+  return {width:S*r,height:S*r,data:g.getImageData(0,0,S*r,S*r).data};
 }
-map.on("moveend",cullPins); map.on("load",cullPins); setTimeout(cullPins,0);
+const PIN_FILL={eclectic:"#A8C6E1",intl:"#6C9BC8",brutal:"#3A6A99",contemp:"#16365A"};
+const LABEL_Z_PINS=window.matchMedia("(max-width:760px)").matches?15.6:14.2;
+function addPins(){
+  if(map.getSource("pins")) return;
+  try{
+    Object.entries(PIN_FILL).forEach(([k,c])=>{ map.addImage("pin-"+k,pinImage(c,false,false),{pixelRatio:2}); map.addImage("pina-"+k,pinImage(c,false,true),{pixelRatio:2}); });
+    map.addImage("pin-future",pinImage("#FFFFFF",true,false),{pixelRatio:2}); map.addImage("pina-future",pinImage("#FFFFFF",true,true),{pixelRatio:2});
+    map.addImage("pin-area",pinImage("rgba(255,255,255,.85)",true,false),{pixelRatio:2}); map.addImage("pina-area",pinImage("rgba(255,255,255,.85)",true,true),{pixelRatio:2});
+    map.addSource("pins",{type:"geojson",data:PINS});
+    const font=["DIN Pro Medium","Arial Unicode MS Regular"];
+    map.addLayer({id:"pins",type:"symbol",source:"pins",minzoom:LABEL_Z_PINS,filter:pinFilter(),
+      layout:{"icon-image":["get","ic"],"icon-size":IS_PHONE?1.05:0.9,"icon-allow-overlap":false,"icon-padding":IS_PHONE?6:3,
+        "text-field":["get","num"],"text-font":font,"text-size":IS_PHONE?11.5:10.5,"text-allow-overlap":false,"text-optional":false,
+        "symbol-sort-key":["get","id"],"text-offset":[0,0]},
+      paint:{"text-color":["get","tc"]}});
+    map.addLayer({id:"pins-active",type:"symbol",source:"pins",filter:["==",["get","id"],state.active||-1],
+      layout:{"icon-image":["concat","pina-",["slice",["get","ic"],4]],"icon-size":IS_PHONE?1.2:1.05,"icon-allow-overlap":true,"text-allow-overlap":true,"icon-ignore-placement":true,
+        "text-field":["get","num"],"text-font":font,"text-size":IS_PHONE?13:12},
+      paint:{"text-color":["get","tc"]}});
+  }catch(e){ console.warn("pins",e); }
+}
+function pinFilter(){ const ids=BUILDINGS.filter(b=>PIN_IDS.has(b.id)&&visible(b)).map(b=>b.id); return ["in",["get","id"],["literal",ids]]; }
+function pinsUpdate(){ try{ if(map.getLayer("pins")) map.setFilter("pins",pinFilter()); if(map.getLayer("pins-active")) map.setFilter("pins-active",["==",["get","id"],state.active||-1]); }catch(e){} }
+map.on("style.load",addPins); if(map.isStyleLoaded&&map.isStyleLoaded()) addPins();
+const pinAt=pt=>{ try{ if(!map.getLayer("pins")) return null; const f=map.queryRenderedFeatures([[pt.x-6,pt.y-6],[pt.x+6,pt.y+6]],{layers:["pins-active","pins"]})[0]; return f?f.properties.id:null; }catch(e){ return null; } };
+window.__pinAt=pinAt;
 
 /* index list */
 const listEl=document.getElementById("list");
@@ -1143,7 +1161,7 @@ function render(){
       <span><b>${esc(b.he)}</b><small>${esc(b.arch)}${b.priv?" · בית פרטי":""}</small></span>
       <span class="yr">${np&&isFinite(b._d)?`<span class="dist">${fmtD(b._d)}</span><small class="walk">${walk(b._d)}</small>`:(b.era==="future"?"עתידי":(b.year||"—"))}</span></li>`).join("");
   if(typeof paintFootprints==="function") paintFootprints();
-  BUILDINGS.forEach(b=>{const m=markers.get(b.id); if(m) m.el.classList.toggle("dim",!visible(b));});
+  pinsUpdate();
 }
 listEl.addEventListener("click",e=>{const li=e.target.closest(".item"); if(li) select(+li.dataset.id);});
 listEl.addEventListener("keydown",e=>{if(e.key==="Enter"){const li=e.target.closest(".item"); if(li) select(+li.dataset.id);}});
@@ -1179,7 +1197,7 @@ function heroMap(container,b){
     hero=new mapboxgl.Map({container,style:STYLE_URL,center:[b.lng,b.lat],zoom:b.priv?16:17.1,pitch:64,bearing:(b.id*47)%360,interactive:false,attributionControl:false});
     hero.on("style.load",()=>{ setCfg(hero,"theme","monochrome"); ["showPlaceLabels","showRoadLabels","showPointOfInterestLabels","showTransitLabels"].forEach(k=>setCfg(hero,k,false)); });
     if(!b.priv){ const d=document.createElement("div"); d.className="heropin"; new mapboxgl.Marker({element:d}).setLngLat([b.lng,b.lat]).addTo(hero); }
-    if(!reduceMotion&&!IS_PHONE){ const step=()=>{ if(!hero) return; hero.setBearing((hero.getBearing()+0.06)%360); heroRaf=requestAnimationFrame(step); }; hero.once("idle",()=>{heroRaf=requestAnimationFrame(step);}); }
+    if(!reduceMotion&&!IS_PHONE){ const step=()=>{ if(!hero) return; if(!map.isMoving()) hero.setBearing((hero.getBearing()+0.06)%360); heroRaf=requestAnimationFrame(step); }; hero.once("idle",()=>{heroRaf=requestAnimationFrame(step);}); }
   }catch(e){}
 }
 
@@ -1250,7 +1268,7 @@ function select(id){
   const b=BUILDINGS.find(x=>x.id===id); if(!b) return;
   if(state.active!==id) track("building/"+b.k,b.he);
   state.active=id;
-  markers.forEach((m,k)=>m.el.classList.toggle("active",k===id));
+  pinsUpdate();
   const e=ERAS[b.era], G=b.gal;
   let pc=plate.querySelector(":scope > .pc"); if(!pc){ pc=document.createElement("div"); pc.className="pc"; plate.appendChild(pc); }
   pc.innerHTML=`
@@ -1368,28 +1386,41 @@ function pip(pt,ring){let c=false;for(let i=0,j=ring.length-1;i<ring.length;j=i+
 function polys(g){return g.type==="Polygon"?[g.coordinates]:g.type==="MultiPolygon"?g.coordinates:[];}
 function segDist(p,a,b){const k=Math.cos(p[1]*Math.PI/180)*111320,m=110540;const px=p[0]*k,py=p[1]*m,ax=a[0]*k,ay=a[1]*m,bx=b[0]*k,by=b[1]*m;const dx=bx-ax,dy=by-ay;const t=Math.max(0,Math.min(1,((px-ax)*dx+(py-ay)*dy)/((dx*dx+dy*dy)||1)));return Math.hypot(px-ax-t*dx,py-ay-t*dy);}
 function polyDist(p,poly){if(pip(p,poly[0]))return 0;let d=1e9;const r=poly[0];for(let i=1;i<r.length;i++)d=Math.min(d,segDist(p,r[i-1],r[i]));return d;}
+const fpDone=new Set(); let fpLastN=-1;
 function collectFootprints(){
   if(!map.getSource("bfp")) return;
+  let bnd; try{ bnd=map.getBounds(); }catch(e){ return; }
+  const todo=fpTargets.filter(b=>!fpDone.has(b.id)&&bnd.contains([b.lng,b.lat]));
+  if(!todo.length) return;
   let feats;try{feats=map.querySourceFeatures("bfp",{sourceLayer:"building"});}catch(e){return;}
-  if(!feats.length) return;
-  const pad=0.00025; /* ~25 מ׳ */
-  const boxes=feats.map(f=>{let x0=180,y0=90,x1=-180,y1=-90;polys(f.geometry).forEach(pl=>pl[0].forEach(([x,y])=>{if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y;}));return [x0-pad,y0-pad,x1+pad,y1+pad];});
+  if(!feats.length||feats.length===fpLastN) return; fpLastN=feats.length;
+  const pad=0.00025, C=0.002, grid=new Map(), key=(x,y)=>Math.floor(x/C)+":"+Math.floor(y/C);
+  /* spatial grid: each target only looks at the few footprints in its own cell */
+  const want=new Set(todo.map(b=>key(b.lng,b.lat)));
+  feats.forEach((f,i)=>{ if(f.id==null) return; let x0=180,y0=90,x1=-180,y1=-90;
+    polys(f.geometry).forEach(pl=>pl[0].forEach(([x,y])=>{if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y;}));
+    const bx=[x0-pad,y0-pad,x1+pad,y1+pad];
+    for(let gx=Math.floor(bx[0]/C);gx<=Math.floor(bx[2]/C);gx++) for(let gy=Math.floor(bx[1]/C);gy<=Math.floor(bx[3]/C);gy++){
+      const k=gx+":"+gy; if(!want.has(k)) continue; let a=grid.get(k); if(!a){a=[];grid.set(k,a);} a.push([f,bx]); } });
   let changed=false;
-  fpTargets.forEach(b=>{
+  todo.forEach(b=>{
     const p=[b.lng,b.lat];const hits=new Set();let best=null,bd=14;
-    feats.forEach((f,i)=>{const bx=boxes[i];if(f.id==null||p[0]<bx[0]||p[0]>bx[2]||p[1]<bx[1]||p[1]>bx[3])return;
+    (grid.get(key(b.lng,b.lat))||[]).forEach(([f,bx])=>{ if(p[0]<bx[0]||p[0]>bx[2]||p[1]<bx[1]||p[1]>bx[3])return;
       polys(f.geometry).forEach(poly=>{const d=polyDist(p,poly);if(d===0)hits.add(f.id);if(d<bd){bd=d;best=f.id;}});});
     const ids=hits.size?[...hits]:(best!=null?[best]:[]);
     if(!ids.length) return;
+    if(hits.size||map.getZoom()>15.5) fpDone.add(b.id);
     const old=FS.get(b.id)||[];
     const merged=[...new Set([...old,...ids])];
     if(merged.length!==old.length){FS.set(b.id,merged);changed=true;}
   });
   if(changed) paintFootprints();
 }
+paintFootprints.last=new Map();
 function paintFootprints(){
   if(!map.getSource("bfp")) return;
   FS.forEach((ids,id)=>{const b=BUILDINGS[id-1];const st={c:visible(b)?ERA_HEX[b.era]:BASE_GREY,sel:state.active===id};
+    const sig=st.c+(st.sel?1:0)+":"+ids.length; if(paintFootprints.last.get(id)===sig) return; paintFootprints.last.set(id,sig);
     ids.forEach(fid=>{try{map.setFeatureState({source:"bfp",sourceLayer:"building",id:fid},st);}catch(e){}});});
 }
 map.on("style.load",()=>{
@@ -1401,12 +1432,12 @@ map.on("style.load",()=>{
       paint:{"fill-extrusion-color":["case",["boolean",["feature-state","sel"],false],SEL_COLOR,["coalesce",["feature-state","c"],BASE_GREY]],
         "fill-extrusion-height":["interpolate",["linear"],["zoom"],13,0,13.6,["coalesce",["get","height"],8]],
         "fill-extrusion-base":["coalesce",["get","min_height"],0],
-        "fill-extrusion-opacity":1,"fill-extrusion-ambient-occlusion-intensity":0.35,"fill-extrusion-vertical-gradient":true}});
+        "fill-extrusion-opacity":1,"fill-extrusion-ambient-occlusion-intensity":IS_PHONE?0:0.35,"fill-extrusion-vertical-gradient":true,"fill-extrusion-cast-shadows":!IS_PHONE}});
   }catch(e){console.warn("buildings layer",e);}
 });
 let fpT=null;
 map.on("sourcedata",e=>{ if(e.sourceId==="bfp"&&e.isSourceLoaded){ clearTimeout(fpT); fpT=setTimeout(collectFootprints,300);} });
-map.on("idle",collectFootprints);
+map.on("idle",()=>{ (window.requestIdleCallback||setTimeout)(collectFootprints); });
 
 /* ================= מה יש לידי ================= */
 const near={pos:null,watch:null,marker:null};
@@ -1738,7 +1769,7 @@ const FPDATA = {"tachana":[[3,0,[6175,5877,6179,5871,6162,5863,6157,5869,6175,58
   const hit=pt=>{ const L=lyr(); if(!L.length) return null; let fs; try{fs=map.queryRenderedFeatures(pt,{layers:L});}catch(e){return null;}
     if(!fs.length) return null; const m=new Map(); FS.forEach((ids,id)=>ids.forEach(f=>m.set(f,id)));
     for(const f of fs){ const id=m.get(f.id); if(id&&visible(BUILDINGS[id-1])) return id; } return null; };
-  const any=pt=>hit(pt)||(window.__atlasHit&&window.__atlasHit(pt));
+  const any=pt=>(window.__pinAt&&window.__pinAt(pt))||hit(pt)||(window.__atlasHit&&window.__atlasHit(pt));
   map.on("click",e=>{ const id=any(e.point); if(id) select(id); });
   map.on("mousemove",e=>{ map.getCanvas().style.cursor=any(e.point)?"pointer":""; });
 })();
@@ -1748,7 +1779,7 @@ const FPDATA = {"tachana":[[3,0,[6175,5877,6179,5871,6162,5863,6157,5869,6175,58
    Instagram serves embeds as no-store and moving an iframe reloads it, so the card never moves them:
    each one is absolutely positioned over its slot and only shown/hidden. ===== */
 window.IGPOOL=(function(){
-  const CAP=IS_PHONE_IG?5:8, pool=new Map();
+  const CAP=IS_PHONE_IG?3:8, pool=new Map();
   let host=null, active=null, slot=null, ro=null, curB=null;
   const hostEl=()=>{ if(host&&host.parentNode===plate) return host; host=document.createElement("div"); host.className="igpool"; plate.appendChild(host); return host; };
   function evict(){ if(pool.size<=CAP) return; [...pool.values()].filter(o=>o!==active).sort((a,b)=>a.t-b.t).slice(0,pool.size-CAP).forEach(o=>{ o.f.remove(); pool.delete(o.c); }); }
@@ -1783,7 +1814,9 @@ window.IGPOOL=(function(){
 /* when to preload: hovering / touching a pin or a row, the buildings nearest the middle of a close-up view, and the near-me strip */
 (function(){
   const byId=id=>BUILDINGS.find(x=>x.id===+id);
-  const hit=e=>{ const p=e.target.closest&&e.target.closest(".pin[data-id],.item[data-id],.nearrow button[data-id]"); if(p) IGPOOL.pre(byId(p.dataset.id)); };
+  const hit=e=>{ const p=e.target.closest&&e.target.closest(".item[data-id],.nearrow button[data-id]"); if(p) IGPOOL.pre(byId(p.dataset.id)); };
+  let mmT=0; map.on("mousemove",e=>{ const n=performance.now(); if(n-mmT<120) return; mmT=n; const id=window.__pinAt&&__pinAt(e.point); if(id) IGPOOL.pre(byId(id)); });
+  map.on("touchstart",e=>{ if(!e.point) return; const id=window.__pinAt&&__pinAt(e.point); if(id) IGPOOL.pre(byId(id)); });
   document.addEventListener("pointerover",hit,{passive:true});
   document.addEventListener("touchstart",hit,{passive:true});
   let t=null;
@@ -1845,25 +1878,6 @@ window.IGPOOL=(function(){
   fill();
 })();
 
-/* declutter: when numbers overlap on screen, keep one and hide the rest until you zoom closer */
-(function(){
-  const R=()=>window.innerWidth<=760?34:28;
-  let raf=null;
-  function run(){ raf=null; if(document.body.classList.contains("zfar")) return;
-    const kept=[], r2=R()*R(), W=window.innerWidth, H=window.innerHeight;
-    const ids=[...markers.keys()].sort((a,b)=>(a===state.active?-1:b===state.active?1:a-b));
-    ids.forEach(id=>{ const m=markers.get(id), b=BUILDINGS[id-1]; if(!m||!m.on||!b||!b.lat) return;
-      if(m.el.classList.contains("dim")){ m.el.classList.remove("crowd"); return; }
-      let p; try{ p=map.project([b.lng,b.lat]); }catch(e){ return; }
-      if(p.x<-40||p.y<-40||p.x>W+40||p.y>H+40){ m.el.classList.remove("crowd"); return; }
-      const hit=kept.some(q=>{const dx=q.x-p.x,dy=q.y-p.y; return dx*dx+dy*dy<r2;});
-      m.el.classList.toggle("crowd",hit); if(!hit) kept.push(p); });
-  }
-  const sched=()=>{ if(!raf) raf=setTimeout(run,60); };
-  ["moveend","zoomend","rotateend","pitchend","load"].forEach(ev=>map.on(ev,sched));
-  const _r=render; render=function(){ _r(); sched(); };
-  sched();
-})();
 render();
 </script>
 </body>
