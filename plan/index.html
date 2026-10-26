@@ -196,6 +196,40 @@ details summary{cursor:pointer}
 .fine{font-size:11px;color:var(--ink-soft);padding:0 20px 16px;margin:0;line-height:1.5}
 .sheet footer.act{display:flex;gap:8px;padding:10px 12px;border-top:1px solid var(--line)}.sheet footer.act .btn{flex:1;justify-content:center;font-size:13.5px}
 .hint{transition:opacity .6s}.hint.gone{opacity:0;pointer-events:none}
+
+/* ---------- phone: full-screen model + bottom sheet ---------- */
+.grab{display:none}
+@media (max-width:760px){
+ :root{--peek:132px}
+ .sheet{left:0;right:0;bottom:0;top:auto;width:auto;max-height:none;height:calc(var(--peek) + env(safe-area-inset-bottom,0px));border:0;border-top:1px solid var(--ink);box-shadow:0 -8px 28px rgba(20,33,46,.14);transition:height .3s cubic-bezier(.2,.8,.2,1)}
+ .sheet.open{height:86vh;height:86dvh}
+ .grab{display:flex;justify-content:center;align-items:center;width:100%;height:26px;border:0;background:none;cursor:grab;touch-action:none;flex:none}
+ .grab::before{content:"";width:42px;height:4px;border-radius:2px;background:var(--line)}
+ .sheet:not(.open) header,.sheet:not(.open) footer.act{display:none}
+ .sheet:not(.open) .scroll{overflow:hidden}
+ .sheet:not(.open) .hero .room,.sheet:not(.open) #arrStatus,.sheet:not(.open) .whyd,.sheet:not(.open) #shop,.sheet:not(.open) .linkb{display:none}
+ .sheet header{padding:4px 16px 10px}.sheet h1.disp{font-size:28px}
+ .hero{padding:2px 16px 12px;border-bottom:1px solid var(--line)}
+ .sheet.open .hero .room{margin-bottom:8px}
+ .btn.big{margin-top:0;font-size:16.5px;padding:14px;box-shadow:none}
+ .byline{margin-top:7px}
+ .acc{padding:0 16px}.acc>summary{padding:16px 0;font-size:15px}
+ .talk{padding:16px}
+ .fab{display:none!important}
+ .bar{top:calc(env(safe-area-inset-top,0px) + 10px);left:10px}
+ .bar button{padding:8px 11px;font-size:13px}
+ #calibBtn{display:none}
+ .wallbtn{top:calc(env(safe-area-inset-top,0px) + 10px);bottom:auto;left:auto;right:10px;width:38px;height:38px;padding:0;justify-content:center;box-shadow:none}
+ .wallbtn span{display:none}
+ .itembar{left:10px!important;right:10px;top:auto!important;bottom:calc(var(--peek) + env(safe-area-inset-bottom,0px) + 10px);transform:none!important;max-width:none;min-width:0;box-shadow:0 6px 20px rgba(20,33,46,.16)}
+ .itembar::after{display:none}
+ .itembar .ibb button{padding:9px 6px;font-size:13px}
+ body.sheet-open .itembar,body.sheet-open .toast,body.sheet-open .placehint{display:none!important}
+ .toast{top:calc(env(safe-area-inset-top,0px) + 58px)!important;bottom:auto!important;left:10px;right:10px;max-width:none;padding:10px 12px}.toast span{display:none}.toast b{font-size:14px;margin:0 0 0 24px}.toast .row{margin-top:8px}
+ .sheet:not(.open) .acc,.sheet:not(.open) .talk,.sheet:not(.open) .fine{display:none}
+ .placehint{top:calc(env(safe-area-inset-top,0px) + 58px)}
+ input,select,textarea{font-size:16px!important}
+}
 </style>
 
 <main id="main">
@@ -223,6 +257,7 @@ details summary{cursor:pointer}
 </div>
 
 <aside class="sheet">
+  <button class="grab" id="grab" type="button" aria-label="עוד אפשרויות" aria-expanded="false"></button>
   <header>
     <a class="brand" href="https://www.sts-arch.com" target="_blank" rel="noopener">STS ARCH</a>
     <h1 class="disp">תוכנית חיה</h1>
@@ -784,7 +819,7 @@ $('vPlan').onclick=()=>setMode('plan');$('v3d').onclick=()=>setMode('3d');$('vWa
 function frameView(reset){if(!bounds)return;resize();const span=Math.max(bounds.w,bounds.h)+3;
  if(mode==='plan'){const r=main.getBoundingClientRect(),asp=r.width/r.height;const hh=asp>bounds.w/bounds.h?(bounds.h+3)/2:(bounds.w+7)/2/asp;
   ortho.left=-hh*asp;ortho.right=hh*asp;ortho.top=hh;ortho.bottom=-hh;ortho.position.set(bounds.cx,40,bounds.cy+.001);ortho.up.set(0,0,-1);ortho.zoom=1;ortho.lookAt(bounds.cx,0,bounds.cy);ortho.updateProjectionMatrix();ctlO.target.set(bounds.cx,0,bounds.cy);ctlO.update()}
- else if(mode==='3d'){persp.fov=20;persp.updateProjectionMatrix();if(focus&&!reset){return}ctl.target.set(bounds.cx,.4,bounds.cy);const r=main.getBoundingClientRect();const k=r.width<r.height?1.8:1.38;
+ else if(mode==='3d'){persp.fov=20;persp.updateProjectionMatrix();if(focus&&!reset){return}ctl.target.set(bounds.cx,.4,bounds.cy);const r=main.getBoundingClientRect();const k=r.width<r.height?1.55:1.38;
   persp.position.set(bounds.cx+span*1.45*k,span*1.75*k,bounds.cy+span*1.45*k);ctl.update()}
  else if(mode==='walk'){persp.fov=70;persp.updateProjectionMatrix()}}
 // walk controls
@@ -1300,7 +1335,7 @@ async function unpackState(t){let raw=b64u.dec(t.slice(1));if(t[0]==='z'){const 
 async function shareURL(){if(!plan)return location.href;try{return location.href.split('#')[0]+'#d='+await packState()}catch(e){return location.href.split('#')[0]}}
 $('shareBtn').onclick=async()=>{const u=await shareURL();const b=$('shareBtn');
  try{if(navigator.share&&innerWidth<=760){await navigator.share({title:'העיצוב שלי · תוכנית חיה',text:'תראו איך סידרתי את הדירה',url:u});return}await navigator.clipboard.writeText(u);b.textContent='✓ הקישור הועתק'}catch(e){b.textContent='לא הצלחתי להעתיק'}setTimeout(()=>b.textContent='↗ שתפו את העיצוב',2200)};
-const goTalk=()=>{svcSel='call';renderSvc();$('svcSec').scrollIntoView({behavior:'smooth',block:'start'});setTimeout(()=>$('lName').focus({preventScroll:true}),450)};
+const goTalk=()=>{if(innerWidth<=760){document.querySelector('.sheet').classList.add('open');document.body.classList.add('sheet-open');$('grab').setAttribute('aria-expanded','true')}svcSel='call';renderSvc();$('svcSec').scrollIntoView({behavior:'smooth',block:'start'});setTimeout(()=>$('lName').focus({preventScroll:true}),450)};
 $('talkBtn').onclick=goTalk;
 let nudged=false;function nudge2(){if(nudged)return;nudged=true;setTimeout(()=>{const t=document.createElement('div');t.className='toast';t.setAttribute('role','status');
  t.innerHTML='<button class="x" aria-label="סגירה">×</button><b></b><span></span><div class="row"><button class="btn accent" type="button"></button><button class="btn" type="button"></button></div>';
@@ -1309,6 +1344,16 @@ let nudged=false;function nudge2(){if(nudged)return;nudged=true;setTimeout(()=>{
 // gentle nudge after real engagement (one time)
 let engaged=0;const engage=()=>{engaged++;if(engaged===8)nudge2()};
 addEventListener('pointerdown',()=>{const h=$('hint');if(h)h.classList.add('gone')},{once:true,capture:true});
+
+/* phone bottom sheet */
+const sheetEl=document.querySelector('.sheet');const isPhone=()=>innerWidth<=760;
+function setSheet(open){sheetEl.classList.toggle('open',open);document.body.classList.toggle('sheet-open',open);$('grab').setAttribute('aria-expanded',String(open));if(!open)sheetEl.querySelector('.scroll').scrollTop=0;setTimeout(()=>{resize()},340)}
+{let sy=null,sw=false;const g=$('grab');g.addEventListener('pointerdown',e=>{sy=e.clientY;sw=false;g.setPointerCapture(e.pointerId)});
+ g.addEventListener('pointerup',e=>{if(sy===null)return;const dy=e.clientY-sy;sy=null;if(Math.abs(dy)>24){sw=true;setSheet(dy<0)}});
+ g.addEventListener('click',()=>{if(sw){sw=false;return}setSheet(!sheetEl.classList.contains('open'))})}
+$('arrBtn').addEventListener('click',()=>{if(isPhone())setSheet(false)});
+$('roomSel').addEventListener('change',()=>{if(isPhone())setSheet(false)});
+$('talkBtn').addEventListener('click',()=>{if(isPhone())setSheet(true)},true);
 /* ---------------- boot ---------------- */
 const shared=location.hash.startsWith('#d=')?location.hash.slice(3):null;
 const st=ls.get('tp_state3');
