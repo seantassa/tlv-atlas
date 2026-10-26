@@ -230,6 +230,16 @@ details summary{cursor:pointer}
  .placehint{top:calc(env(safe-area-inset-top,0px) + 58px)}
  input,select,textarea{font-size:16px!important}
 }
+
+.vctl{position:fixed;left:16px;bottom:72px;z-index:4;display:flex;background:var(--paper);border:1px solid var(--ink);box-shadow:3px 3px 0 rgba(20,33,46,.35)}
+.vctl button{width:42px;height:40px;border:0;background:none;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ink)}
+.vctl button+button{border-right:1px solid var(--line)}
+.vctl button:hover{background:var(--board)}
+.vctl svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.vctl[hidden]{display:none}
+#cv{cursor:grab}#cv.grabbing{cursor:grabbing}
+@media (max-width:760px){.vctl{left:auto;right:10px;bottom:auto;top:calc(env(safe-area-inset-top,0px) + 56px);flex-direction:column;box-shadow:none}.vctl button{width:38px;height:38px}.vctl button+button{border-right:0;border-top:1px solid var(--line)}
+ .hint.coach{display:block!important;opacity:1!important;left:12px;right:12px;max-width:none;text-align:center;top:auto;bottom:calc(var(--peek) + env(safe-area-inset-bottom,0px) + 14px);transform:none;font-size:13px;color:var(--ink);background:rgba(255,255,255,.95);border-color:var(--ink)}}
 </style>
 
 <main id="main">
@@ -243,7 +253,8 @@ details summary{cursor:pointer}
   <button id="vWalk" aria-pressed="false">סיור</button>
   <button id="calibBtn">כיול</button>
 </nav>
-<div class="hint" id="hint">גרירה להזזה · קליק ימני לסיבוב · גלגלת לזום</div>
+<div class="hint" id="hint">גרירה לסיבוב · קליק ימני להזזה · גלגלת לזום</div>
+<div class="vctl" id="vctl" role="group" aria-label="סיבוב המודל"><button type="button" id="rotL" title="סובב 90° (Q)" aria-label="סובב שמאלה"><svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.6-5.9M4 4v5h5"/></svg></button><button type="button" id="homeV" title="מבט התחלתי (0)" aria-label="מבט התחלתי"><svg viewBox="0 0 24 24"><path d="M4 11l8-7 8 7M6 10v10h12V10"/></svg></button><button type="button" id="rotR" title="סובב 90° (E)" aria-label="סובב ימינה"><svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.6-5.9M20 4v5h-5"/></svg></button></div>
 <div class="calib" id="calib" hidden><span id="calibT">לחצו על קיר בתוכנית</span><input id="calibI" type="number" placeholder="ס״מ" hidden><button class="btn" id="calibOk" hidden>החל</button><button class="btn" id="calibX">ביטול</button></div>
 <div class="fitbar" id="fitbar" hidden></div>
 <div class="itembar" id="itemBar" hidden><div class="ibt"><span id="ibName"></span><span class="chip" id="ibChip"></span></div><div class="ibi" id="ibInfo"></div><div class="ibi fs" id="ibFs"></div><div class="swap" id="ibSwapP" hidden></div><div class="sw" id="ibFab"></div><div class="sw" id="ibWood"></div><div class="ibb"><button id="ibSwap" title="להחליף לדגם אחר באותו מקום">⇄ החלף</button><button id="ibRot" title="סיבוב (R)">↻ סובב</button><button id="ibDel" title="מחיקה (Delete)">✕ הסר</button></div></div>
@@ -703,7 +714,7 @@ function showSel(){const box=$('selBox');furn.forEach(o=>o.mesh.userData.outline
  if(!f.ok){chip.className='chip bad';chip.textContent='לא נכנס';$('selInfo').textContent=f.why+'. גררו למקום אחר או סובבו.'}
  else if(f.clear<.6){chip.className='chip warn';chip.textContent='נכנס, צפוף';$('selInfo').textContent=`מרווח ${Math.round(f.clear*100)} ס״מ בלבד. למעבר נוח צריך בערך 60–80 ס״מ.`}
  else{chip.className='chip ok';chip.textContent='נכנס';$('selInfo').textContent=`מרווח מינימלי ${f.clear>3?'גדול':Math.round(f.clear*100)+' ס״מ'} מהקיר או מהרהיט הקרוב.`}
- box.hidden=true;renderSwatches();if(swapFor!==sel)swapFor=null;$('ibSwapP').hidden=!swapFor;$('ibName').textContent=`${sel.n} · ${sel.w}×${sel.d}`;$('ibChip').className=chip.className;$('ibChip').textContent=chip.textContent;$('ibInfo').textContent=$('selInfo').textContent;const fsT=fengShui(sel);$('ibFs').textContent=fsT;$('ibFs').hidden=!fsT;$('ibFs').classList.toggle('warn',fsT.startsWith('⚠'));
+ box.hidden=true;renderSwatches();if(swapFor!==sel)swapFor=null;$('ibSwapP').hidden=!swapFor;$('ibName').textContent=`${sel.n} · ${sel.w}×${sel.d}`;$('ibChip').className=chip.className;$('ibChip').textContent=chip.textContent;$('ibInfo').textContent=$('selInfo').textContent+' גררו את הרהיט כדי להזיז אותו.';const fsT=fengShui(sel);$('ibFs').textContent=fsT;$('ibFs').hidden=!fsT;$('ibFs').classList.toggle('warn',fsT.startsWith('⚠'));
  const fb=$('fitbar');fb.hidden=true;if(false)fb.textContent=`${sel.n}: ${chip.textContent}${f.ok&&f.clear<3?` · מרווח ${Math.round(f.clear*100)} ס״מ`:''}`;fb.style.background=!f.ok?'var(--bad)':f.clear<.6?'var(--warn)':'var(--ink)'}
 function roomCenter(pref){const r=plan.rooms.find(r=>pref.test(r.name))||plan.rooms.slice().sort((a,b)=>polyArea(b.poly)-polyArea(a.poly))[0];return r?centroid(r.poly):[bounds.cx,bounds.cy]}
 function autoAdd(it,pref){const rooms=plan.rooms.filter(r=>pref.test(r.name)).concat(plan.rooms.filter(r=>!pref.test(r.name)&&!/מרפסת|רחצה|מקלחת|שירות/.test(r.name)));
@@ -752,8 +763,9 @@ $('vLow').onclick=()=>{lowWalls=!lowWalls;$('vLow').setAttribute('aria-pressed',
 /* ---------------- interaction (map-like) ----------------
    left-drag = pan, right-drag = rotate/tilt, wheel = zoom; one finger pans, two fingers rotate/zoom.
    left-click on a piece = select and drag it; "+" puts the piece on the cursor until you click the floor. */
-ctl.mouseButtons={LEFT:THREE.MOUSE.PAN,MIDDLE:THREE.MOUSE.DOLLY,RIGHT:THREE.MOUSE.ROTATE};
-ctl.touches={ONE:THREE.TOUCH.PAN,TWO:THREE.TOUCH.DOLLY_ROTATE};ctl.screenSpacePanning=false;
+ctl.mouseButtons={LEFT:THREE.MOUSE.ROTATE,MIDDLE:THREE.MOUSE.DOLLY,RIGHT:THREE.MOUSE.PAN};
+ctl.touches={ONE:THREE.TOUCH.ROTATE,TWO:THREE.TOUCH.DOLLY_PAN};ctl.screenSpacePanning=false;
+Object.assign(ctl,{rotateSpeed:.62,dampingFactor:.085,minPolarAngle:Math.PI*.05,maxPolarAngle:Math.PI*.44,panSpeed:.9,zoomSpeed:1.15});
 ctlO.mouseButtons={LEFT:THREE.MOUSE.PAN,MIDDLE:THREE.MOUSE.DOLLY,RIGHT:THREE.MOUSE.PAN};ctlO.touches={ONE:THREE.TOUCH.PAN,TWO:THREE.TOUCH.DOLLY_PAN};
 cv.addEventListener('contextmenu',e=>e.preventDefault());
 const ray=new THREE.Raycaster(),ndc=new THREE.Vector2(),floorP=new THREE.Plane(new THREE.Vector3(0,1,0),0),hit=new THREE.Vector3();
@@ -773,12 +785,13 @@ cv.addEventListener('pointerdown',e=>{if(mode==='walk')return;
  if(e.button!==0)return;setNdc(e);
  if(calib.on){const h=ray.intersectObjects(wallMeshes,false)[0];if(h){e.stopImmediatePropagation();pickCalib(h.object.userData.wall)}return}
  const hits=ray.intersectObjects(furnG.children,true);if(hits.length){let o=hits[0].object;while(o&&!o.userData.f)o=o.parent;
+  if(o&&o.userData.f!==sel){const f=o.userData.f,sx=e.clientX,sy=e.clientY;const up=ev=>{cv.removeEventListener('pointerup',up);if(Math.hypot(ev.clientX-sx,ev.clientY-sy)<6){sel=f;showSel()}};cv.addEventListener('pointerup',up);return}
   if(o){e.stopImmediatePropagation();sel=o.userData.f;ray.ray.intersectPlane(floorP,hit);drag={o:sel,dx:sel.x-hit.x,dy:sel.y-hit.z,moved:false,x0:e.clientX,y0:e.clientY};cv.setPointerCapture(e.pointerId);controlsOn(false);cv.style.cursor='grabbing';showSel();return}}
  // empty click deselects (a pan still works)
  const sx=e.clientX,sy=e.clientY;const up=ev=>{cv.removeEventListener('pointerup',up);if(Math.hypot(ev.clientX-sx,ev.clientY-sy)<5){sel=null;showSel()}};cv.addEventListener('pointerup',up)},{capture:true});
 cv.addEventListener('pointermove',e=>{if(placing){moveTo(placing,e);return}
  if(drag){if(Math.hypot(e.clientX-drag.x0,e.clientY-drag.y0)>3)drag.moved=true;if(drag.moved)moveTo(drag.o,e,drag.dx,drag.dy);return}
- if(mode!=='walk'&&e.buttons===0){setNdc(e);const h=ray.intersectObjects(furnG.children,true).length;cv.style.cursor=h?'grab':''}});
+ if(mode!=='walk'&&e.buttons===0){setNdc(e);const hs=ray.intersectObjects(furnG.children,true);let o=hs.length?hs[0].object:null;while(o&&!o.userData.f)o=o.parent;cv.style.cursor=o?(o.userData.f===sel?'move':'pointer'):''}});
 const endDrag=()=>{if(!drag)return;drag=null;cv.style.cursor='';controlsOn(true);updateFit();save()};
 cv.addEventListener('pointerup',endDrag);cv.addEventListener('pointercancel',endDrag);
 window.addEventListener('keydown',e=>{if(e.target.closest('input,textarea,select'))return;
@@ -810,9 +823,9 @@ $('calibOk').onclick=()=>{const v=+$('calibI').value;if(!(v>20)||calib.wall<0)re
 
 /* ---------------- views ---------------- */
 let mode='3d';const walk={x:0,y:0,yaw:0,pitch:0,keys:{}};
-function setMode(m){mode=m;sun.castShadow=m!=='plan';['vPlan','v3d','vWalk'].forEach(id=>$(id).setAttribute('aria-pressed',String({vPlan:'plan',v3d:'3d',vWalk:'walk'}[id]===m)));
+function setMode(m){mode=m;camAnim=null;if($('vctl'))$('vctl').hidden=m!=='3d';sun.castShadow=m!=='plan';['vPlan','v3d','vWalk'].forEach(id=>$(id).setAttribute('aria-pressed',String({vPlan:'plan',v3d:'3d',vWalk:'walk'}[id]===m)));
  cam=m==='plan'?ortho:persp;ctl.enabled=m==='3d';ctlO.enabled=m==='plan';$('pad').hidden=m!=='walk';
- $('hint').textContent=m==='plan'?'גרירה להזזה · גלגלת לזום':m==='walk'?'גררו להסתכל · חיצים ללכת':'גרירה להזזה · קליק ימני לסיבוב · גלגלת לזום';
+ $('hint').textContent=m==='plan'?'גרירה להזזה · גלגלת לזום':m==='walk'?'גררו להסתכל · חיצים ללכת':'גרירה לסיבוב · קליק ימני להזזה · גלגלת לזום';
  if(m==='walk'){const rv=+$('roomSel').value;const c=rv>=0&&plan.rooms[rv]?centroid(plan.rooms[rv].poly):roomCenter(/סלון/);walk.x=c[0];walk.y=c[1];walk.yaw=Math.PI;walk.pitch=0;sel=null;showSel()}
  frameView(false)}
 $('vPlan').onclick=()=>setMode('plan');$('v3d').onclick=()=>setMode('3d');$('vWalk').onclick=()=>setMode('walk');
@@ -844,7 +857,7 @@ function resize(){const r=main.getBoundingClientRect();if(!r.width||!r.height)re
  if(mode==='plan'&&bounds){const hh=ortho.top;ortho.left=-hh*persp.aspect;ortho.right=hh*persp.aspect;ortho.updateProjectionMatrix()}applyOffset(r)}
 new ResizeObserver(()=>{resize()}).observe(main);
 let last=performance.now();
-function loop(now){const dt=Math.min(.05,(now-last)/1000);last=now;if(mode==='walk')stepWalk(dt);else if(mode==='3d')ctl.update();else ctlO.update();
+function loop(now){const dt=Math.min(.05,(now-last)/1000);last=now;stepCam(now);if(mode==='walk')stepWalk(dt);else if(mode==='3d')ctl.update();else ctlO.update();
  // wall cutaway in 3D: lower walls nearest the camera so the interior reads
  if(bounds)cutaway();if(comp&&mode==='3d'&&hiQ())comp.render();else R.render(S,cam);placeLabels();placeItemBar();requestAnimationFrame(loop)}
 function hiQ(){return main.clientWidth>760&&!drag}
@@ -1165,7 +1178,7 @@ function renderShop(){const box=$('shop');box.innerHTML='';if(!lastShop.length)r
   box.appendChild(row)}
  h.textContent=`רשימת קניות · ${lastShop.length} פריטים · ₪${total.toLocaleString('he-IL')}`}
 function focusRoom(ri){const r=plan.rooms[ri];if(!r)return;if(!lowWalls){lowWalls=true;$('vLow').setAttribute('aria-pressed','true');$('vLow').querySelector('span').textContent='הגבה קירות';keepView=true;build(plan)}focus=centroid(r.poly);setMode('3d');const xs=r.poly.map(p=>p[0]),ys=r.poly.map(p=>p[1]);const sp=Math.max(Math.max(...xs)-Math.min(...xs),Math.max(...ys)-Math.min(...ys))+1.2;
- ctl.target.set(focus[0],.6,focus[1]);persp.position.set(focus[0]+sp*1.9,sp*2.1+1.5,focus[1]+sp*1.9);ctl.update()}
+ const off=new THREE.Vector3().subVectors(persp.position,ctl.target).setY(0);const az=off.length()>.1?Math.atan2(off.z,off.x):Math.PI/4;const hd=sp*1.9*Math.SQRT2;animCam(new THREE.Vector3(focus[0]+Math.cos(az)*hd,sp*2.1+1.5,focus[1]+Math.sin(az)*hd),new THREE.Vector3(focus[0],.6,focus[1]),700)}
 $('roomSel').addEventListener('change',()=>{const v=+$('roomSel').value;if(v>=0)focusRoom(v);else{focus=null;setMode('3d')}});
 function nudge(o,room){const x0=o.x,y0=o.y,r0=o.r;for(let rad=.05;rad<=1.2;rad+=.05)for(let a=0;a<16;a++){const t=a/16*Math.PI*2;o.x=x0+Math.cos(t)*rad;o.y=y0+Math.sin(t)*rad;for(const rr of [r0,r0+Math.PI/2]){o.r=rr;if(pip([o.x,o.y],room.poly)&&fitOf(o).ok){place(o);return true}}}o.x=x0;o.y=y0;o.r=r0;place(o);return false}
 
@@ -1354,11 +1367,37 @@ function setSheet(open){sheetEl.classList.toggle('open',open);document.body.clas
 $('arrBtn').addEventListener('click',()=>{if(isPhone())setSheet(false)});
 $('roomSel').addEventListener('change',()=>{if(isPhone())setSheet(false)});
 $('talkBtn').addEventListener('click',()=>{if(isPhone())setSheet(true)},true);
+
+/* ---------------- view: smooth camera moves, rotate buttons, zoom to cursor, double-tap focus ---------------- */
+let camAnim=null,introOn=false;
+function animCam(pos,tgt,ms=650){camAnim={p0:persp.position.clone(),t0:ctl.target.clone(),p1:pos.clone(),t1:tgt.clone(),s:performance.now(),ms}}
+function stepCam(now){if(!camAnim)return;const k=Math.min(1,(now-camAnim.s)/camAnim.ms),e=k<.5?4*k*k*k:1-Math.pow(-2*k+2,3)/2;
+ // rotate around the target along an arc instead of cutting through the model
+ const a0=new THREE.Vector3().subVectors(camAnim.p0,camAnim.t0),a1=new THREE.Vector3().subVectors(camAnim.p1,camAnim.t1);const s0=new THREE.Spherical().setFromVector3(a0),s1=new THREE.Spherical().setFromVector3(a1);
+ let dth=s1.theta-s0.theta;if(dth>Math.PI)dth-=2*Math.PI;if(dth<-Math.PI)dth+=2*Math.PI;const sp=new THREE.Spherical(s0.radius+(s1.radius-s0.radius)*e,s0.phi+(s1.phi-s0.phi)*e,s0.theta+dth*e);
+ ctl.target.lerpVectors(camAnim.t0,camAnim.t1,e);persp.position.copy(ctl.target).add(new THREE.Vector3().setFromSpherical(sp));if(k>=1)camAnim=null}
+function orbitBy(a){if(mode!=='3d')setMode('3d');const off=new THREE.Vector3().subVectors(persp.position,ctl.target).applyAxisAngle(new THREE.Vector3(0,1,0),a);animCam(new THREE.Vector3().addVectors(ctl.target,off),ctl.target.clone(),700)}
+function homeView(){if(mode!=='3d')setMode('3d');const p=persp.position.clone(),t=ctl.target.clone();focus=null;frameView(true);const p1=persp.position.clone(),t1=ctl.target.clone();persp.position.copy(p);ctl.target.copy(t);ctl.update();animCam(p1,t1,750)}
+$('rotL').onclick=()=>orbitBy(-Math.PI/2);$('rotR').onclick=()=>orbitBy(Math.PI/2);$('homeV').onclick=homeView;
+addEventListener('keydown',e=>{if(e.target.closest('input,textarea,select'))return;if(e.key==='q'||e.key==='Q'||e.key==='/')orbitBy(-Math.PI/2);if(e.key==='e'||e.key==='E'||e.key==='ק')orbitBy(Math.PI/2);if(e.key==='0')homeView()});
+const stopIntro=()=>{camAnim=introOn?null:camAnim;introOn=false};
+cv.addEventListener('pointerdown',e=>{stopIntro();if(mode==='3d')cv.classList.add('grabbing');$('hint').classList.remove('coach')});addEventListener('pointerup',()=>cv.classList.remove('grabbing'));
+const flo=new THREE.Plane(new THREE.Vector3(0,1,0),0),rcv=new THREE.Raycaster(),hitV=new THREE.Vector3();
+function floorAt(cx,cy){const r=cv.getBoundingClientRect();rcv.setFromCamera({x:(cx-r.left)/r.width*2-1,y:-(cy-r.top)/r.height*2+1},persp);return rcv.ray.intersectPlane(flo,hitV)?hitV.clone():null}
+// zoom toward the point under the cursor
+cv.addEventListener('wheel',e=>{if(mode!=='3d')return;stopIntro();camAnim=null;const h=floorAt(e.clientX,e.clientY);if(!h||!bounds)return;h.x=clamp(h.x,bounds.x0-2,bounds.x1+2);h.z=clamp(h.z,bounds.y0-2,bounds.y1+2);
+ const f=e.deltaY<0?.14:-.06;const d=new THREE.Vector3(h.x-ctl.target.x,0,h.z-ctl.target.z).multiplyScalar(f);ctl.target.add(d);persp.position.add(d)},{passive:true,capture:true});
+// double click / double tap: fly in to that spot
+cv.addEventListener('dblclick',e=>{if(mode!=='3d')return;const h=floorAt(e.clientX,e.clientY);if(!h)return;const off=new THREE.Vector3().subVectors(persp.position,ctl.target).multiplyScalar(.6);if(off.length()<5)off.setLength(5);h.y=.4;animCam(new THREE.Vector3().addVectors(h,off),h,600)});
+{let lt=0,lx=0,ly=0;cv.addEventListener('touchend',e=>{if(e.touches.length||e.changedTouches.length!==1)return;const t=e.changedTouches[0],n=performance.now();if(n-lt<300&&Math.hypot(t.clientX-lx,t.clientY-ly)<30){cv.dispatchEvent(new MouseEvent('dblclick',{clientX:t.clientX,clientY:t.clientY}));lt=0}else{lt=n;lx=t.clientX;ly=t.clientY}})}
+// first visit: a short turn shows the model is 3D, and a one-time hint on phones
+function intro(){if(mode!=='3d'||sessionStorage.getItem('tp_intro'))return;try{sessionStorage.setItem('tp_intro','1')}catch(e){}introOn=true;const off=new THREE.Vector3().subVectors(persp.position,ctl.target).applyAxisAngle(new THREE.Vector3(0,1,0),-.45);animCam(new THREE.Vector3().addVectors(ctl.target,off),ctl.target.clone(),2600);
+ if(innerWidth<=760){const h=$('hint');h.textContent='אצבע אחת: סיבוב · שתיים: הזזה וזום';h.classList.add('coach');setTimeout(()=>h.classList.remove('coach'),5000)}}
 /* ---------------- boot ---------------- */
 const shared=location.hash.startsWith('#d=')?location.hash.slice(3):null;
 const st=ls.get('tp_state3');
 try{if(st&&st.plan){loadState({plan:sanitize(st.plan),furn:st.furn,wallColor:st.wallColor,defaultFloor:st.defaultFloor,lowWalls:st.lowWalls});setStatus('התוכנית האחרונה שלכם נטענה.')}else loadDemo()}catch(e){loadDemo()}
-setMode('3d');
+setMode('3d');setTimeout(intro,1200);
 if(shared)unpackState(shared).then(o=>{loadState(o);setStatus('עיצוב ששותף איתכם. שחקו איתו כמו שאתם רוצים.');history.replaceState(null,'',location.pathname+location.search);setMode('3d')}).catch(()=>{});
 (async()=>{let cs=null;try{cs=window.claude?await window.claude.use('sample'):null}catch(e){cs=null}
  if(cs){sample=cs;const lim=await cs.limits().catch(()=>null);if(!lim||!lim.images){$('dropS').textContent='קריאת תמונות לא זמינה כאן. אפשר לשחק עם דירת הדוגמה.'}}
