@@ -27,7 +27,7 @@ button,input,select{font:inherit;color:inherit}
 /* ---------- 3D surface ---------- */
 main{position:fixed;inset:0;background:#EFEFED}
 #cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
-#labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+#labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}#lblSvg{position:absolute;inset:0;width:100%;height:100%}#lblSvg path{stroke:var(--ink);stroke-width:.8;fill:none;opacity:.55}#lblSvg circle{fill:var(--ink)}
 .rl{position:absolute;left:0;top:0;pointer-events:none;display:flex;align-items:stretch;background:var(--paper);border:1px solid var(--ink);box-shadow:2px 2px 0 rgba(20,33,46,.35);white-space:nowrap}
 .rl b{font-size:11.5px;font-weight:500;padding:3px 7px}
 .rl i{font-style:normal;font-family:var(--mono);font-size:10.5px;color:var(--ink-soft);padding:3px 6px;border-right:1px solid var(--line);direction:ltr}
@@ -43,6 +43,7 @@ main{position:fixed;inset:0;background:#EFEFED}
 .itembar{position:fixed;left:0;top:0;z-index:5;background:var(--paper);border:1px solid var(--ink);box-shadow:2px 2px 0 rgba(20,33,46,.35);padding:8px 10px;min-width:210px;max-width:280px;pointer-events:auto}
 .itembar::after{content:"";position:absolute;bottom:-7px;left:50%;width:12px;height:12px;background:var(--paper);border-right:1px solid var(--ink);border-bottom:1px solid var(--ink);transform:translateX(-50%) rotate(45deg)}
 .ibt{display:flex;justify-content:space-between;gap:8px;align-items:center;font-size:12.5px;font-weight:500}
+.ibi.fs{color:#2F6B4F;margin-top:-2px}.ibi.fs.warn{color:#9A5B12}
 .ibi{font-size:11.5px;color:var(--ink-soft);margin:4px 0 6px;line-height:1.4}
 .sw{display:flex;gap:4px;margin:0 0 6px;align-items:center}.sw b{font-size:10.5px;font-weight:400;color:var(--ink-soft);min-width:34px}.sw button{width:18px;height:18px;border:1px solid var(--line);cursor:pointer;padding:0}.sw button[aria-pressed="true"]{outline:2px solid var(--ink);outline-offset:1px}
 #floorChips button{display:inline-flex;align-items:center;gap:6px}.fth{width:18px;height:18px;border:1px solid var(--line);background-size:cover;display:inline-block}
@@ -151,6 +152,8 @@ main{position:fixed;inset:0;background:#EFEFED}
 .btn.big{width:100%;justify-content:center;font-size:16px;font-weight:700;padding:12px;margin-top:8px;box-shadow:3px 3px 0 rgba(20,33,46,.3)}
 .divider{display:flex;align-items:center;gap:10px;padding:14px 18px 0;font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;color:var(--ink-soft)}
 .divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--line)}
+.wallbtn{position:fixed;left:16px;bottom:16px;z-index:4;display:flex;align-items:center;gap:8px;background:var(--paper);color:var(--ink);border:1px solid var(--ink);padding:9px 14px;font:inherit;font-size:14px;font-weight:500;cursor:pointer;box-shadow:3px 3px 0 rgba(20,33,46,.35)}.wallbtn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8}.wallbtn[aria-pressed=true]{background:var(--ink);color:#fff}
+@media (max-width:760px){.wallbtn{bottom:calc(50vh + 18px);left:10px;padding:8px 10px}.wallbtn span{display:none}}
 .fab{position:fixed;bottom:16px;left:calc((100vw - 392px)/2);transform:translateX(-50%);z-index:4;background:var(--accent);color:#fff;border:1px solid var(--ink);padding:11px 18px;font:inherit;font-size:15px;font-weight:700;cursor:pointer;box-shadow:3px 3px 0 rgba(20,33,46,.35);white-space:nowrap}
 .fab:hover{filter:brightness(1.05)}
 .north{bottom:66px!important}
@@ -175,21 +178,21 @@ details summary{cursor:pointer}
 
 <main id="main">
   <canvas id="cv" aria-label="מודל תלת־ממדי של הדירה"></canvas>
-  <div id="labels"></div>
+  <div id="labels"><svg id="lblSvg" aria-hidden="true"></svg></div>
 </main>
 
 <nav class="bar" aria-label="מבט">
   <button id="vPlan" aria-pressed="false">תוכנית</button>
   <button id="v3d" aria-pressed="true">תלת־ממד</button>
   <button id="vWalk" aria-pressed="false">סיור</button>
-  <button id="vLow" aria-pressed="false" title="להוריד את הקירות לגובה 110 ס״מ">קירות 110</button>
   <button id="calibBtn">כיול</button>
 </nav>
 <div class="hint" id="hint">גרירה להזזה · קליק ימני וגרירה לסיבוב · גלגלת לזום · קליק על רהיט לבחירה וגרירה</div>
 <div class="calib" id="calib" hidden><span id="calibT">לחצו על קיר בתוכנית</span><input id="calibI" type="number" placeholder="ס״מ" hidden><button class="btn" id="calibOk" hidden>החל</button><button class="btn" id="calibX">ביטול</button></div>
 <div class="fitbar" id="fitbar" hidden></div>
-<div class="itembar" id="itemBar" hidden><div class="ibt"><span id="ibName"></span><span class="chip" id="ibChip"></span></div><div class="ibi" id="ibInfo"></div><div class="swap" id="ibSwapP" hidden></div><div class="sw" id="ibFab"></div><div class="sw" id="ibWood"></div><div class="ibb"><button id="ibSwap" title="להחליף לדגם אחר באותו מקום">⇄ החלף</button><button id="ibRot" title="סיבוב (R)">↻ סובב</button><button id="ibDel" title="מחיקה (Delete)">✕ הסר</button></div></div>
+<div class="itembar" id="itemBar" hidden><div class="ibt"><span id="ibName"></span><span class="chip" id="ibChip"></span></div><div class="ibi" id="ibInfo"></div><div class="ibi fs" id="ibFs"></div><div class="swap" id="ibSwapP" hidden></div><div class="sw" id="ibFab"></div><div class="sw" id="ibWood"></div><div class="ibb"><button id="ibSwap" title="להחליף לדגם אחר באותו מקום">⇄ החלף</button><button id="ibRot" title="סיבוב (R)">↻ סובב</button><button id="ibDel" title="מחיקה (Delete)">✕ הסר</button></div></div>
 <div class="placehint" id="placeHint" hidden></div>
+<button class="wallbtn" id="vLow" aria-pressed="false" title="קיצור: H"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20h18M5 20V9h4v11M15 20v-6h4v6"/></svg><span>הנמך קירות</span></button>
 <button class="fab" id="fab">רהט לי את הדירה · לפי שון טסה</button>
 <div class="north" id="north">N ↑ · 1:100 · LIVE PLAN</div>
 <div class="walkpad" id="pad" hidden>
@@ -362,7 +365,7 @@ const CAT=[
  {k:'b',kind:'crib',n:'עריסה',w:70,d:125,h:90},{k:'b',kind:'nightstand',n:'שידת לילה',w:45,d:40,h:55},{k:'b',kind:'dresser',n:'שידה',w:120,d:48,h:85},
  {k:'b',kind:'wardrobe',n:'ארון 2 דלתות',w:100,d:60,h:220},{k:'b',kind:'wardrobe',n:'ארון 3 דלתות',w:150,d:60,h:220},{k:'b',kind:'wardrobe',n:'ארון 4 דלתות',w:200,d:60,h:220},
  {k:'b',kind:'desk',n:'שולחן עבודה',w:120,d:65,h:75},{k:'b',kind:'shelf',n:'כוננית',w:80,d:35,h:180},{k:'b',kind:'rug',n:'שטיח',w:200,d:300,h:1},
- {k:'b',kind:'plant',n:'עציץ',w:45,d:45,h:120},{k:'b',kind:'floor_lamp',n:'מנורת רצפה',w:40,d:40,h:150},{k:'b',kind:'fridge',n:'מקרר',w:70,d:72,h:185},{k:'b',kind:'washer',n:'מכונת כביסה',w:60,d:60,h:85}];
+ {k:'b',kind:'plant',n:'עציץ',w:45,d:45,h:120},{k:'b',kind:'floor_lamp',n:'מנורת רצפה',w:40,d:40,h:150},{k:'b',kind:'kitchen_counter',n:'מטבח 240',w:240,d:60,h:90},{k:'b',kind:'kitchen_counter',n:'מטבח 300',w:300,d:60,h:90},{k:'b',kind:'island',n:'אי מטבח',w:180,d:95,h:92},{k:'b',kind:'fridge',n:'מקרר',w:70,d:72,h:185},{k:'b',kind:'washer',n:'מכונת כביסה',w:60,d:60,h:85}];
 const catBy=k=>CAT.find(c=>c.k===k);
 
 /* ---------------- three setup ---------------- */
@@ -542,11 +545,27 @@ function pushSolid(w,s0,s1){if(s1-s0<.02)return;const L=len(w.a,w.b),dx=(w.b[0]-
 
 /* ---------------- room labels ---------------- */
 let labelEls=[];
-function buildLabels(){const box=$('labels');box.innerHTML='';labelEls=plan.rooms.map(r=>{const el=document.createElement('div');el.className='rl';
+function buildLabels(){const box=$('labels');box.querySelectorAll('.rl').forEach(e=>e.remove());labelEls=plan.rooms.map(r=>{const el=document.createElement('div');el.className='rl';
  const b=document.createElement('b');b.textContent=r.name;const i=document.createElement('i');i.textContent=polyArea(r.poly).toFixed(1)+' מ״ר';el.append(b,i);box.appendChild(el);return {el,c:centroid(r.poly)}})}
 const v3=new THREE.Vector3();
-function placeLabels(){const r=main.getBoundingClientRect();const show=mode!=='walk';for(const l of labelEls){v3.set(l.c[0],.1,l.c[1]).project(cam);
- const vis=show&&v3.z<1&&Math.abs(v3.x)<1.1&&Math.abs(v3.y)<1.1;l.el.hidden=!vis;if(vis)l.el.style.transform=`translate(${(v3.x*.5+.5)*r.width}px,${(-v3.y*.5+.5)*r.height}px) translate(-50%,-50%)`;l.el.style.left='0';l.el.style.top='0'}}
+// room callouts sit around the model, tied to the room by a thin leader line
+const lv=new THREE.Vector3();
+function placeLabels(){const r=main.getBoundingClientRect(),W=r.width,Hh=r.height,mob=innerWidth<=760;const svg=$('lblSvg');
+ const show=mode!=='walk'&&!!bounds&&!mob;if(!show){labelEls.forEach(l=>l.el.hidden=true);svg.innerHTML='';return}
+ const P=(x,y,z)=>{lv.set(x,y,z).project(cam);return [(lv.x*.5+.5)*W,(-lv.y*.5+.5)*Hh,lv.z]};
+ let mnx=1e9,mny=1e9,mxx=-1e9,mxy=-1e9;const top=lowWalls?LOW_H:H;
+ for(const x of [bounds.x0,bounds.x1])for(const y of [bounds.y0,bounds.y1])for(const z of [-.32,top]){const q=P(x,z,y);mnx=Math.min(mnx,q[0]);mxx=Math.max(mxx,q[0]);mny=Math.min(mny,q[1]);mxy=Math.max(mxy,q[1])}
+ const cx=(mnx+mxx)/2,cy=(mny+mxy)/2,rx=(mxx-mnx)/2+28,ry=(mxy-mny)/2+22;
+ const xMin=10,xMax=mob?W-10:W-402,yMin=mob?54:108,yMax=mob?Hh*.5-10:Hh-70;
+ const L=[],R=[];
+ for(const l of labelEls){const q=P(l.c[0],.1,l.c[1]);l.p=q;if(q[2]>=1){l.el.hidden=true;continue}l.el.hidden=false;if(!l.w){l.w=l.el.offsetWidth;l.h=l.el.offsetHeight}
+  const left=q[0]<cx;l.tx=left?mnx-14:mxx+14;l.ty=q[1];(left?L:R).push(l)}
+ for(const [side,list] of [[-1,L],[1,R]]){list.sort((a,b)=>a.ty-b.ty);let y=-1e9;for(const l of list){l.ty=Math.max(l.ty,y+l.h+6);y=l.ty}
+  const over=y-yMax;if(over>0)for(const l of list)l.ty-=over;y=1e9;for(let i=list.length-1;i>=0;i--){const l=list[i];l.ty=Math.min(l.ty,y-l.h-6);y=l.ty}
+  for(const l of list){l.ty=clamp(l.ty,yMin,yMax);l.ax=side<0?clamp(l.tx,xMin+l.w,xMax):clamp(l.tx,xMin,xMax-l.w);
+   l.el.style.left='0';l.el.style.top='0';l.el.style.transform=`translate(${side<0?l.ax-l.w:l.ax}px,${l.ty-l.h/2}px)`}}
+ let d='',c='';for(const l of labelEls){if(l.el.hidden)continue;d+=`M${l.p[0].toFixed(1)} ${l.p[1].toFixed(1)}L${l.ax.toFixed(1)} ${l.ty.toFixed(1)}`;c+=`<circle cx="${l.p[0].toFixed(1)}" cy="${l.p[1].toFixed(1)}" r="2.6"/>`}
+ svg.innerHTML=`<path d="${d}"/>${c}`}
 
 /* ---------------- furniture ---------------- */
 let furn=[],sel=null;
@@ -566,7 +585,7 @@ const FAB=[['שמנת','#E6E1DA'],['אפור','#A9A6A1'],['פחם','#4A4A48'],['
 const matCache={};const lm=c=>matCache[c]||(matCache[c]=new THREE.MeshLambertMaterial({color:c}));
 function makeMesh(it){const g=new THREE.Group();const w=it.w/100,d=it.d/100,h=(it.h||80)/100;const k=kindOfItem(it);const F=Object.assign({},FM);
  if(it.fab){F.fabric=lm(it.fab);F.fabric2=lm(new THREE.Color(it.fab).multiplyScalar(.92).getStyle());if(k==='armchair')F.dark=lm(it.fab)}
- if(it.wood){F.walnut=lm(it.wood);F.oak=lm(it.wood);if(k==='wardrobe'||k==='kitchen_counter')F.white=lm(it.wood)}
+ if(it.wood){F.walnut=lm(it.wood);F.oak=lm(it.wood);if(k==='wardrobe'||k==='kitchen_counter'||k==='island')F.white=lm(it.wood)}
  const legs=(x0,z0,hh,m=F.walnut,s=.035)=>{for(const sx of[-1,1])for(const sz of[-1,1])fbox(g,s,hh,s,sx*x0,0,sz*z0,m)};
  if(k==='sofa'){const sh=.42,ah=.62,bd=.22,aw=Math.min(.22,w*.12);legs(w/2-.08,d/2-.08,.06,F.dark,.04);
   fbox(g,w,.2,d,0,.06,0,F.fabric,.05);fbox(g,w-.04,.6,bd,0,.18,-d/2+bd/2,F.fabric,.08);fbox(g,aw,ah-.06,d,-w/2+aw/2,.06,0,F.fabric,.07);fbox(g,aw,ah-.06,d,w/2-aw/2,.06,0,F.fabric,.07);
@@ -603,6 +622,9 @@ function makeMesh(it){const g=new THREE.Group();const w=it.w/100,d=it.d/100,h=(i
  else if(k==='sink'){fbox(g,w,.5,d,0,.3,0,F.walnut,.01);fbox(g,w,.04,d,0,.8,0,F.ceramic,.01);fbox(g,w*.5,.04,d*.5,0,.81,.02,F.stone,.02);fcyl(g,.012,.012,.18,0,.84,-d/2+.08,F.metal,8);fbox(g,w*.9,.7,.02,0,1.05,-d/2+.01,F.glass)}
  else if(k==='shower'){fbox(g,w,.05,d,0,0,0,F.ceramic,.01);fbox(g,w,2,.012,0,.05,d/2,F.glass);fbox(g,.012,2,d*.5,w/2,.05,d/4,F.glass);fcyl(g,.1,.1,.02,-w/4,1.95,-d/2+.15,F.metal,16);fbox(g,.02,.02,d*.5,-w/4,1.96,-d/2+.25,F.metal)}
  else if(k==='bathtub'){fbox(g,w,.55,d,0,0,0,F.ceramic,.04);fbox(g,w-.16,.06,d-.16,0,.5,0,F.stone,.08)}
+ else if(k==='island'){const ov=.28;fbox(g,w-.04,.84,d-ov,0,.04,-ov/2,F.white,.005);fbox(g,w-.06,.04,d-ov-.04,0,0,-ov/2,F.dark);fbox(g,w,.05,d,0,.88,0,F.stone,.008);
+  const n=Math.max(1,Math.round(w/.6));for(let i=1;i<n;i++)fbox(g,.006,.78,.005,-w/2+w*i/n,.08,-ov/2-(d-ov)/2,F.grey);fbox(g,.5,.03,.4,-w/4,.9,-.12,F.metal,.02);
+  const ns=Math.max(2,Math.floor(w/.6));for(let i=0;i<ns;i++){const x=-w/2+w*(i+.5)/ns;fcyl(g,.17,.17,.05,x,.62,d/2+.2,F.oak,20);fcyl(g,.02,.02,.62,x,0,d/2+.2,F.dark,8);fcyl(g,.15,.15,.015,x,0,d/2+.2,F.dark,20)}}
  else if(k==='kitchen_counter'){fbox(g,w,.82,d,0,.08,0,F.white,.005);fbox(g,w,.08,d-.06,0,0,-.03,F.dark);fbox(g,w+.01,.04,d+.02,0,.9,.01,F.stone,.005);
   const n=Math.max(1,Math.round(w/.6));for(let i=1;i<n;i++)fbox(g,.006,.78,.005,-w/2+w*i/n,.1,d/2,F.grey);
   fbox(g,w,.7,.35,0,1.5,-d/2+.175,F.white,.005);for(let i=1;i<n;i++)fbox(g,.006,.68,.005,-w/2+w*i/n,1.51,-d/2+.35,F.grey);
@@ -632,7 +654,7 @@ function showSel(){const box=$('selBox');furn.forEach(o=>o.mesh.userData.outline
  if(!f.ok){chip.className='chip bad';chip.textContent='לא נכנס';$('selInfo').textContent=f.why+'. גררו למקום אחר או סובבו.'}
  else if(f.clear<.6){chip.className='chip warn';chip.textContent='נכנס, צפוף';$('selInfo').textContent=`מרווח ${Math.round(f.clear*100)} ס״מ בלבד. למעבר נוח צריך בערך 60–80 ס״מ.`}
  else{chip.className='chip ok';chip.textContent='נכנס';$('selInfo').textContent=`מרווח מינימלי ${f.clear>3?'גדול':Math.round(f.clear*100)+' ס״מ'} מהקיר או מהרהיט הקרוב.`}
- box.hidden=true;renderSwatches();if(swapFor!==sel)swapFor=null;$('ibSwapP').hidden=!swapFor;$('ibName').textContent=`${sel.n} · ${sel.w}×${sel.d}`;$('ibChip').className=chip.className;$('ibChip').textContent=chip.textContent;$('ibInfo').textContent=$('selInfo').textContent;
+ box.hidden=true;renderSwatches();if(swapFor!==sel)swapFor=null;$('ibSwapP').hidden=!swapFor;$('ibName').textContent=`${sel.n} · ${sel.w}×${sel.d}`;$('ibChip').className=chip.className;$('ibChip').textContent=chip.textContent;$('ibInfo').textContent=$('selInfo').textContent;const fsT=fengShui(sel);$('ibFs').textContent=fsT;$('ibFs').hidden=!fsT;$('ibFs').classList.toggle('warn',fsT.startsWith('⚠'));
  const fb=$('fitbar');fb.hidden=true;if(false)fb.textContent=`${sel.n}: ${chip.textContent}${f.ok&&f.clear<3?` · מרווח ${Math.round(f.clear*100)} ס״מ`:''}`;fb.style.background=!f.ok?'var(--bad)':f.clear<.6?'var(--warn)':'var(--ink)'}
 function roomCenter(pref){const r=plan.rooms.find(r=>pref.test(r.name))||plan.rooms.slice().sort((a,b)=>polyArea(b.poly)-polyArea(a.poly))[0];return r?centroid(r.poly):[bounds.cx,bounds.cy]}
 function autoAdd(it,pref){const rooms=plan.rooms.filter(r=>pref.test(r.name)).concat(plan.rooms.filter(r=>!pref.test(r.name)&&!/מרפסת|רחצה|מקלחת|שירות/.test(r.name)));
@@ -657,6 +679,7 @@ const SIZES={sofa:[['ספה דו־מושבית',170,88],['ספה תלת־מוש�
  desk:[['שולחן עבודה 100',100,55],['שולחן עבודה 120',120,60],['שולחן עבודה 140',140,70]],tv_unit:[['מזנון 140',140,40],['מזנון 180',180,45],['מזנון 220',220,45]],dresser:[['שידה 80',80,48],['שידה 120',120,48],['שידה 160',160,48]],
  shelf:[['כוננית 80',80,35],['כוננית 120',120,35],['כוננית 160',160,35]],nightstand:[['שידת לילה 40',40,35],['שידת לילה 50',50,40]],rug:[['שטיח 160×230',230,160],['שטיח 200×300',300,200],['שטיח 240×340',340,240],['שטיח עגול ⌀200',200,200,1]],
  sink:[['כיור 60',60,46],['כיור 80',80,46],['כיור 100',100,46]],shower:[['מקלחון 80×80',80,80],['מקלחון 90×90',90,90],['מקלחון 120×80',120,80]],bathtub:[['אמבטיה 160',160,70],['אמבטיה 170',170,75],['אמבטיה 180',180,80]],
+ island:[['אי קטן',150,90],['אי 180',180,95],['אי גדול',220,105]],
  kitchen_counter:[['משטח 180',180,60],['משטח 240',240,60],['משטח 300',300,60],['משטח 360',360,60]],fridge:[['מקרר 60',60,66],['מקרר 70',70,72],['מקרר דו־דלתי',90,75]]};
 const HUG=new Set(['sofa','bed_double','bed_single','wardrobe','dresser','tv_unit','desk','shelf','nightstand','sink','toilet','kitchen_counter','fridge','washer','bathtub']);
 let swapFor=null;
@@ -673,7 +696,7 @@ function renderSwap(){const p=$('ibSwapP');if(!sel||swapFor!==sel){p.hidden=true
  head('מידה משלכם (ס״מ)');const f=document.createElement('form');f.innerHTML='<input type="number" min="20" max="600" aria-label="רוחב"><span>×</span><input type="number" min="20" max="400" aria-label="עומק"><button>החל</button>';
  f.children[0].value=o.w;f.children[2].value=o.d;f.onsubmit=e=>{e.preventDefault();const w=+f.children[0].value,d=+f.children[2].value;if(w>=20&&d>=20)swapTo(o,{k:'custom',n:`${base} ${w}×${d}`,w,d,url:undefined})};p.appendChild(f)}
 $('ibSwap').onclick=()=>{swapFor=swapFor===sel?null:sel;renderSwap()};
-$('vLow').onclick=()=>{lowWalls=!lowWalls;$('vLow').setAttribute('aria-pressed',String(lowWalls));if(plan){const keepF=focus;keepView=true;build(plan);focus=keepF}save()};
+$('vLow').onclick=()=>{lowWalls=!lowWalls;$('vLow').setAttribute('aria-pressed',String(lowWalls));$('vLow').querySelector('span').textContent=lowWalls?'הגבה קירות':'הנמך קירות';if(plan){const keepF=focus;keepView=true;build(plan);focus=keepF}save()};
 
 
 /* ---------------- interaction (map-like) ----------------
@@ -709,15 +732,17 @@ cv.addEventListener('pointermove',e=>{if(placing){moveTo(placing,e);return}
 const endDrag=()=>{if(!drag)return;drag=null;cv.style.cursor='';controlsOn(true);updateFit();save()};
 cv.addEventListener('pointerup',endDrag);cv.addEventListener('pointercancel',endDrag);
 window.addEventListener('keydown',e=>{if(e.target.closest('input,textarea,select'))return;
+ if((e.key==='h'||e.key==='H'||e.key==='י')&&!e.metaKey&&!e.ctrlKey)$('vLow').click();
  if(e.key==='Escape'){if(placing)cancelPlacing();else{sel=null;showSel()}}
  if((e.key==='r'||e.key==='R'||e.key==='ר')&&sel)rotSel(e.shiftKey?Math.PI/12:Math.PI/2);
  if((e.key==='Delete'||e.key==='Backspace')&&sel&&!placing)delSel();
  if(sel&&!placing&&mode!=='walk'&&/^Arrow/.test(e.key)){e.preventDefault();const st=e.shiftKey?.2:.05;const f=new THREE.Vector3();cam.getWorldDirection(f);f.y=0;if(f.lengthSq()<1e-6)f.set(0,0,-1);f.normalize();const r=new THREE.Vector3(-f.z,0,f.x);
   const v=e.key==='ArrowUp'?f:e.key==='ArrowDown'?f.clone().negate():e.key==='ArrowRight'?r:r.clone().negate();sel.x=Math.round((sel.x+v.x*st)*100)/100;sel.y=Math.round((sel.y+v.z*st)*100)/100;place(sel);updateFit();save()}});
-const FAB_KINDS=new Set(['sofa','armchair','bed_double','bed_single','rug']),WOOD_KINDS=new Set(['coffee_table','side_table','dining_table','desk','tv_unit','dresser','nightstand','shelf','wardrobe','bed_double','bed_single','armchair','kitchen_counter','sink']);
+const FAB_KINDS=new Set(['sofa','armchair','bed_double','bed_single','rug']),WOOD_KINDS=new Set(['island','coffee_table','side_table','dining_table','desk','tv_unit','dresser','nightstand','shelf','wardrobe','bed_double','bed_single','armchair','kitchen_counter','sink']);
+const KIT=new Set(['kitchen_counter','island']),KFRONT=[['לבן','#F2F0EC'],['שמנת','#E7DFD2'],['ירוק מרווה','#9BA88F'],['ירוק זית','#6F7558'],['כחול לילה','#3E4A5C'],['אפור','#A7A6A2'],['טרקוטה','#B9775C'],['אלון','#C7A47E'],['אגוז','#6E4C34']];
 function renderSwatches(){for(const [id,list,key,kinds,lab] of [['ibFab',FAB,'fab',FAB_KINDS,'בד'],['ibWood',WOODS,'wood',WOOD_KINDS,'גימור']]){const box=$(id);box.innerHTML='';
-  if(!sel||!kinds.has(sel.kind)){box.hidden=true;continue}box.hidden=false;const b0=document.createElement('b');b0.textContent=lab;box.appendChild(b0);
-  for(const [n,c] of list){const b=document.createElement('button');b.type='button';b.title=n;b.setAttribute('aria-label',n);b.style.background=c;b.setAttribute('aria-pressed',String(sel[key]===c));
+  if(!sel||!kinds.has(sel.kind)){box.hidden=true;continue}box.hidden=false;const b0=document.createElement('b');const kit=id==='ibWood'&&KIT.has(sel.kind);b0.textContent=kit?'חזיתות':lab;box.appendChild(b0);
+  for(const [n,c] of (kit?KFRONT:list)){const b=document.createElement('button');b.type='button';b.title=n;b.setAttribute('aria-label',n);b.style.background=c;b.setAttribute('aria-pressed',String(sel[key]===c));
    b.onclick=()=>{sel[key]=c;rebuildMesh(sel);tint(sel,!(sel.fit||{ok:true}).ok);showSel();save()};box.appendChild(b)}}}
 // floating bar over the selected piece
 const vb=new THREE.Vector3();
@@ -735,16 +760,16 @@ $('calibOk').onclick=()=>{const v=+$('calibI').value;if(!(v>20)||calib.wall<0)re
 
 /* ---------------- views ---------------- */
 let mode='3d';const walk={x:0,y:0,yaw:0,pitch:0,keys:{}};
-function setMode(m){mode=m;['vPlan','v3d','vWalk'].forEach(id=>$(id).setAttribute('aria-pressed',String({vPlan:'plan',v3d:'3d',vWalk:'walk'}[id]===m)));
+function setMode(m){mode=m;sun.castShadow=m!=='plan';['vPlan','v3d','vWalk'].forEach(id=>$(id).setAttribute('aria-pressed',String({vPlan:'plan',v3d:'3d',vWalk:'walk'}[id]===m)));
  cam=m==='plan'?ortho:persp;ctl.enabled=m==='3d';ctlO.enabled=m==='plan';$('pad').hidden=m!=='walk';
  $('hint').textContent=m==='plan'?'גרירה להזזה · גלגלת לזום · גוררים רהיטים ישירות על התוכנית':m==='walk'?'גררו כדי להסתכל מסביב · חיצים או W/A/S/D כדי ללכת · נכנסים בדלתות':'גרירה להזזה · קליק ימני וגרירה לסיבוב · גלגלת לזום · קליק על רהיט לבחירה וגרירה';
  if(m==='walk'){const rv=+$('roomSel').value;const c=rv>=0&&plan.rooms[rv]?centroid(plan.rooms[rv].poly):roomCenter(/סלון/);walk.x=c[0];walk.y=c[1];walk.yaw=Math.PI;walk.pitch=0;sel=null;showSel()}
  frameView(false)}
 $('vPlan').onclick=()=>setMode('plan');$('v3d').onclick=()=>setMode('3d');$('vWalk').onclick=()=>setMode('walk');
 function frameView(reset){if(!bounds)return;resize();const span=Math.max(bounds.w,bounds.h)+3;
- if(mode==='plan'){const r=main.getBoundingClientRect(),asp=r.width/r.height;const hh=asp>bounds.w/bounds.h?(bounds.h+2.5)/2:(bounds.w+2.5)/2/asp;
+ if(mode==='plan'){const r=main.getBoundingClientRect(),asp=r.width/r.height;const hh=asp>bounds.w/bounds.h?(bounds.h+3)/2:(bounds.w+7)/2/asp;
   ortho.left=-hh*asp;ortho.right=hh*asp;ortho.top=hh;ortho.bottom=-hh;ortho.position.set(bounds.cx,40,bounds.cy+.001);ortho.up.set(0,0,-1);ortho.zoom=1;ortho.lookAt(bounds.cx,0,bounds.cy);ortho.updateProjectionMatrix();ctlO.target.set(bounds.cx,0,bounds.cy);ctlO.update()}
- else if(mode==='3d'){persp.fov=20;persp.updateProjectionMatrix();if(focus&&!reset){return}ctl.target.set(bounds.cx,.4,bounds.cy);const r=main.getBoundingClientRect();const k=r.width<r.height?1.7:1.15;
+ else if(mode==='3d'){persp.fov=20;persp.updateProjectionMatrix();if(focus&&!reset){return}ctl.target.set(bounds.cx,.4,bounds.cy);const r=main.getBoundingClientRect();const k=r.width<r.height?1.8:1.38;
   persp.position.set(bounds.cx+span*1.45*k,span*1.75*k,bounds.cy+span*1.45*k);ctl.update()}
  else if(mode==='walk'){persp.fov=70;persp.updateProjectionMatrix()}}
 // walk controls
@@ -777,7 +802,7 @@ requestAnimationFrame(loop);
 
 /* ---------------- persistence ---------------- */
 function save(){if(!plan)return;ls.set('tp_state3',{plan:{name:plan.name,walls:plan.walls,rooms:plan.rooms,openings:plan.openings,notes:plan.notes},furn:furn.map(f=>({k:f.k,kind:f.kind,n:f.n,w:f.w,d:f.d,h:f.h,t:f.t,round:f.round,url:f.url,fab:f.fab,wood:f.wood,x:f.x,y:f.y,r:f.r})),wallColor,defaultFloor,lowWalls})}
-function loadState(st){if(st.wallColor){wallColor=st.wallColor;M.wall.color.set(wallColor)}if(st.defaultFloor&&FLOORS[st.defaultFloor])defaultFloor=st.defaultFloor;lowWalls=!!st.lowWalls;$('vLow').setAttribute('aria-pressed',String(lowWalls));clearFurn();build(st.plan);for(const f of st.furn||[])addFurn(f,f.x,f.y,f.r);updateFit()}
+function loadState(st){if(st.wallColor){wallColor=st.wallColor;M.wall.color.set(wallColor)}if(st.defaultFloor&&FLOORS[st.defaultFloor])defaultFloor=st.defaultFloor;lowWalls=!!st.lowWalls;$('vLow').setAttribute('aria-pressed',String(lowWalls));$('vLow').querySelector('span').textContent=lowWalls?'הגבה קירות':'הנמך קירות';clearFurn();build(st.plan);for(const f of st.furn||[])addFurn(f,f.x,f.y,f.r);updateFit()}
 function clearFurn(){while(furnG.children.length)furnG.remove(furnG.children[0]);furn=[];sel=null}
 function loadDemo(){clearFurn();build(sanitize(DEMO));for(const f of DEMO_FURN)addFurn({k:'demo',...f},f.x,f.y,f.r);updateFit();setStatus('דירת דוגמה. העלו תוכנית משלכם כדי לראות אותה בתלת־ממד.');save()}
 $('demo').onclick=()=>{loadDemo();setMode('3d')};
@@ -814,7 +839,11 @@ const RULES_ARR=[
  'ממ"ד מתוכנן כמו כל חדר שינה או עבודה, באותם חוקים.',
  'רהיטים לא נכנסים לקשת הפתיחה של דלתות ולא חוסמים חלונות ויציאות.',
  'מידות עבודה: מעבר ראשי 90 ס"מ ומשני 60 ס"מ. 60 ס"מ בשני הצדדים של מיטה זוגית. 80–90 ס"מ סביב שולחן אוכל. 40–45 ס"מ בין ספה לשולחן קפה. 90 ס"מ פנויים מול ארונות ומגירות.',
- 'פחות זה יותר: עדיף חדר נושם על פני חדר מלא.'];
+ 'פחות זה יותר: עדיף חדר נושם על פני חדר מלא.',
+ 'פנג שואי, עמדת שליטה: מהמיטה, מהשולחן ומהספה רואים את הדלת, אבל לא יושבים בקו ישר מולה ולא עם הגב אליה.',
+ 'פנג שואי, תמיכה: ראש המיטה וגב הספה על קיר מלא, לא מתחת לחלון ולא צף באמצע החדר.',
+ 'פנג שואי, זרימה: הכניסה פתוחה ונקייה, אין רהיט בקשת הדלת, ומעברים רכים בלי פינות חדות שמכוונות למקומות ישיבה ושינה.',
+ 'פנג שואי, איזון: צמחים בפינות, שטיח שמחבר את פינת הישיבה, ושילוב של עץ, טקסטיל ואור טבעי.'];
 $('rulesList').innerHTML='';RULES_ARR.forEach(r=>{const li=document.createElement('li');li.textContent=r;$('rulesList').appendChild(li)});
 function fillRooms(){const sl=$('roomSel');const cur=sl.value;sl.innerHTML='';const all=document.createElement('option');all.value='-1';all.textContent='כל הדירה';sl.appendChild(all);
  plan.rooms.forEach((r,i)=>{const o=document.createElement('option');o.value=i;o.textContent=`${r.name} · ${polyArea(r.poly).toFixed(1)} מ״ר`;sl.appendChild(o)});
@@ -840,14 +869,130 @@ const KIND={
  crib:{l:'עריסה',h:90,re:/עריסה|מיטת תינוק/,sz:'70×125'},
  rug:{l:'שטיח',h:1,sz:'160×230 או 200×300'},plant:{l:'עציץ',h:120,sz:'40×40'},floor_lamp:{l:'מנורת רצפה',h:150,sz:'40×40'},
  toilet:{l:'אסלה',h:40,sz:'38×55'},sink:{l:'כיור וארונית',h:85,sz:'60–100×45–50'},shower:{l:'מקלחון',h:200,sz:'80–120×80–90'},bathtub:{l:'אמבטיה',h:55,sz:'160–180×70–80'},
+ island:{l:'אי מטבח',h:92,sz:'150–240×90–110, מעבר 100 ס"מ מסביב'},
  kitchen_counter:{l:'משטח מטבח',h:90,sz:'אורך×60, לאורך הקירות, אפשר כמה'},fridge:{l:'מקרר',h:185,sz:'70×72'},washer:{l:'מכונת כביסה',h:85,sz:'60×60'}};
 function matchIkea(kind,w,d){const K=KIND[kind];if(!K||!K.re)return [];const out=[];
  IKEA.forEach((it,i)=>{if(!K.re.test(it[1]))return;const pw=it[2],pd=it[3];if(K.min&&Math.min(pw,pd)<K.min)return;if(K.max&&Math.min(pw,pd)>K.max)return;
   for(const sw of [0,1]){const a=sw?pd:pw,b=sw?pw:pd;const over=Math.max(0,a-w)+Math.max(0,b-d);const sc=over*4+Math.abs(a-w)+Math.abs(b-d)+(sw?3:0);out.push({i,sw,sc})}});
  out.sort((x,y)=>x.sc-y.sc);const seen=new Set(),res=[];for(const o of out){const key=IKEA[o.i][0]+IKEA[o.i][1]+IKEA[o.i][2]+'x'+IKEA[o.i][3];if(seen.has(key))continue;seen.add(key);res.push(o);if(res.length>=4)break}return res}
 let ctlArr=null,lastShop=[];
-$('arrBtn').onclick=async()=>{if(!plan)return;if(!sample){$('arrStatus').textContent='התכנון החכם עובד כשפותחים את האפליקציה בתוך Claude.';return}
- const v=+$('roomSel').value;const scope=v<0?plan.rooms.map((r,i)=>i):[v];const keep=$('keep').checked;
+/* ---------------- local auto-furnish: Sean's rules + feng shui, no AI needed ---------------- */
+function roomType(n){return /מרפסת שירות|כביסה/.test(n)?'laundry':/מרפסת/.test(n)?'balcony':/רחצה|מקלחת|אמבט/.test(n)?'bath':/שירותי|^שירותים|wc/i.test(n)?'wc':/מטבח/.test(n)?'kitchen':/סלון|מגורים|אוכל/.test(n)?'living':/הורים|שינה ראשי/.test(n)?'master':/מבואה|כניסה|מסדרון|פרוזדור/.test(n)?'entry':/ילד|ממ"ד|ממ״ד|ממד|עבודה|שינה|חדר/.test(n)?'kid':'other'}
+// room edges with the openings that sit on them (t along the edge, in metres)
+function roomEdges(ri){const P=plan.rooms[ri].poly;const {per}=attachOpenings(plan);const out=[];
+ for(let i=0;i<P.length;i++){const a=P[i],b=P[(i+1)%P.length],L=len(a,b);if(L<.5)continue;const dx=(b[0]-a[0])/L,dy=(b[1]-a[1])/L;const m=[(a[0]+b[0])/2,(a[1]+b[1])/2];
+  let n=[-dy,dx];if(!pip([m[0]+n[0]*.12,m[1]+n[1]*.12],P))n=[dy,-dx];const ops=[];
+  plan.walls.forEach((w,wi)=>{const WL=len(w.a,w.b),wx=(w.b[0]-w.a[0])/WL,wy=(w.b[1]-w.a[1])/WL;for(const o of per[wi]){const c=[w.a[0]+wx*o.s,w.a[1]+wy*o.s];
+   if(segDist(c,a,b)<.35){const t=(c[0]-a[0])*dx+(c[1]-a[1])*dy;ops.push({t0:t-o.w/2,t1:t+o.w/2,kind:o.kind==='door'?(o.w>1.3?'slide':'door'):'window',w:o.w,c})}}});
+  // which stretches of this edge are real walls (open-plan edges are not)
+  const wl=[];let gap=.08;for(const w of plan.walls){const WL=len(w.a,w.b);const par=Math.abs(((w.b[0]-w.a[0])*dx+(w.b[1]-w.a[1])*dy)/WL);if(par<.95)continue;if(segDist(m,w.a,w.b)<w.t/2+.06||segDist(a,w.a,w.b)<w.t/2+.06||segDist(b,w.a,w.b)<w.t/2+.06){wl.push(w);gap=Math.max(gap,w.t/2+.03)}}
+  const walled=[];let st=null;for(let t=0;t<=L+1e-6;t+=.05){const q=[a[0]+dx*t,a[1]+dy*t];const on=wl.some(w=>segDist(q,w.a,w.b)<w.t/2+.06);if(on&&st===null)st=t;if(!on&&st!==null){walled.push([st,t-.05]);st=null}}if(st!==null)walled.push([st,L]);
+  out.push({i,a,b,L,d:[dx,dy],n,ops,m,gap,walled})}return out}
+function roomDoors(ri){return roomEdges(ri).flatMap(e=>e.ops.filter(o=>o.kind!=='window').map(o=>({c:o.c,n:e.n,w:o.w,e})))}
+// keep-clear zones in front of every door (swing / passage)
+function doorZones(){const z=[];if(!plan)return z;plan.rooms.forEach((r,ri)=>{for(const d of roomDoors(ri)){if(d.w>1.3)continue;const s=d.w+.1,cx=d.c[0]+d.n[0]*s/2,cy=d.c[1]+d.n[1]*s/2;z.push(rectCorners(cx,cy,s,s,Math.atan2(d.n[1],d.n[0])))}});return z}
+const freeT=(e,avoid,pad=.08)=>{let iv=(e.walled||[[0,e.L]]).map(([s,t])=>[s+e.gap,t-e.gap]).filter(([s,t])=>t>s);for(const o of e.ops){if(!avoid.includes(o.kind))continue;const a=o.t0-pad,b=o.t1+pad;const nx=[];for(const [s,t] of iv){if(b<=s||a>=t){nx.push([s,t]);continue}if(a>s)nx.push([s,a]);if(b<t)nx.push([b,t])}iv=nx}return iv};
+const rotFor=n=>Math.atan2(-n[0],n[1]); // back of the piece against the wall whose inward normal is n
+let LZ=[];
+function okHere(o,ri,front){const f=fitOf(o);if(!f.ok)return false;const room=plan.rooms[ri];if(!corners(o).every(p=>pip(p,room.poly)))return false;
+ if(LZ.some(z=>satOverlap(corners(o),z)))return false;
+ if(front){const fx=-Math.sin(o.r),fy=Math.cos(o.r);const p=[o.x+fx*(o.d/200+front),o.y+fy*(o.d/200+front)];if(!pip(p,room.poly))return false}return true}
+// place a piece with its back on a wall. opts: avoid (opening kinds behind it), side (long side on the wall), corner, score(e,t,o)
+function wallPlace(spec,ri,opts={}){const avoid=opts.avoid||['door','slide'];const E=roomEdges(ri);const along=opts.side?spec.d/100:spec.w/100,depth=opts.side?spec.w/100:spec.d/100;const cands=[];
+ for(const e of E)for(const [s,t] of freeT(e,avoid,opts.pad??.08)){if(t-s<along+.02)continue;const ts=opts.corner?[s+along/2+.01,t-along/2-.01]:[(s+t)/2,s+along/2+.01,t-along/2-.01];
+  for(const tt of ts){const x=e.a[0]+e.d[0]*tt+e.n[0]*(depth/2+e.gap),y=e.a[1]+e.d[1]*tt+e.n[1]*(depth/2+e.gap);let r=rotFor(e.n);if(opts.side)r+=Math.PI/2*(opts.flip?-1:1);
+   cands.push({x,y,r,e,t:tt,sc:(opts.score?opts.score(e,tt,{x,y,r}):0)+(tt===(s+t)/2&&opts.center?2:0)})}}
+ cands.sort((a,b)=>b.sc-a.sc);const o=addFurn(Object.assign({k:'b'},spec),0,0,0);
+ for(const c of cands){o.x=c.x;o.y=c.y;o.r=((c.r%(2*Math.PI))+2*Math.PI)%(2*Math.PI);place(o);if(okHere(o,ri,opts.front)){o.edge=c.e;return o}}
+ furnG.remove(o.mesh);furn=furn.filter(f=>f!==o);return null}
+function freePlace(spec,ri,score,clear=.6){const room=plan.rooms[ri],P=room.poly;const xs=P.map(p=>p[0]),ys=P.map(p=>p[1]);const o=addFurn(Object.assign({k:'b'},spec),0,0,0);const c=[];
+ for(let x=Math.min(...xs)+.3;x<=Math.max(...xs)-.3;x+=.15)for(let y=Math.min(...ys)+.3;y<=Math.max(...ys)-.3;y+=.15)if(pip([x,y],P))for(const r of [0,Math.PI/2])c.push({x,y,r,sc:score?score(x,y,r):0});
+ c.sort((a,b)=>b.sc-a.sc);for(const q of c){o.x=q.x;o.y=q.y;o.r=q.r;place(o);if(okHere(o,ri)&&fitOf(o).clear>=clear)return o}
+ furnG.remove(o.mesh);furn=furn.filter(f=>f!==o);return null}
+const distTo=(x,y,pts)=>pts.length?Math.min(...pts.map(p=>Math.hypot(p[0]-x,p[1]-y))):3;
+const SP=(kind,n,w,d,extra)=>Object.assign({kind,n,w,d,h:KIND[kind]?KIND[kind].h:80},extra||{});
+function furnishRoom(ri,why){const room=plan.rooms[ri],type=roomType(room.name),A=polyArea(room.poly);const doors=roomDoors(ri),dpts=doors.filter(d=>d.w<=1.3).map(d=>d.c);
+ const E=roomEdges(ri);const longest=Math.max(...E.map(e=>e.L));const say=(o,t)=>{if(o)why.push([room.name+' · '+o.n,t])};
+ // feng shui scorer for beds/desks/sofas: far from the door, door visible (not on the same wall), not in line with it
+ const command=(e,t,q)=>{let sc=0;for(const d of dpts){const dist=Math.hypot(d[0]-q.x,d[1]-q.y);sc+=dist;if(d.e===e)sc-=3;const fx=-Math.sin(q.r),fy=Math.cos(q.r);const vx=d[0]-q.x,vy=d[1]-q.y;const ahead=vx*fx+vy*fy,lat=Math.abs(vx*fy-vy*fx);if(ahead>0&&lat<.6)sc-=4}
+  if(e.ops.some(o=>o.kind==='window'))sc-=2.5;return sc+e.L*.3};
+ if(type==='living'){
+  const slideE=E.filter(e=>e.ops.some(o=>o.kind==='slide'));
+  const perpGlass=(e)=>slideE.some(g=>Math.abs(g.d[0]*e.d[0]+g.d[1]*e.d[1])<.3)?3:0;
+  const sw=longest>=5?240:longest>=4?220:180;let sofa=null;
+  for(const w of [sw,sw-40,170]){sofa=wallPlace(SP('sofa',w>=220?'ספה תלת־מושבית':'ספה דו־מושבית',w,95),ri,{avoid:['door','slide'],front:1.6,center:true,score:(e,t,q)=>perpGlass(e)+e.L*.4-(e.ops.some(o=>o.kind==='window')?1:0)+Math.min(3,distTo(q.x,q.y,dpts))*.5});if(sofa)break}
+  if(sofa){say(sofa,'גב לקיר מלא, הצד הפתוח פונה לאור ולמרפסת (פנג שואי: תמיכה מאחור).');
+   const fx=-Math.sin(sofa.r),fy=Math.cos(sofa.r),wx=Math.cos(sofa.r),wy=Math.sin(sofa.r);const at=(k)=>[sofa.x+fx*k,sofa.y+fy*k];
+   const [rx,ry]=at(.95/2+.75);const rug=addFurn({k:'b',kind:'rug',n:'שטיח',w:Math.max(200,sofa.w+40),d:200,h:1},rx,ry,sofa.r);
+   const [cx,cy]=at(.95/2+.42+.3);const ct=addFurn({k:'b',kind:'coffee_table',n:'שולחן קפה',w:110,d:60,h:42,round:false},cx,cy,sofa.r);if(!fitOf(ct).ok){furnG.remove(ct.mesh);furn=furn.filter(f=>f!==ct)}else say(ct,'45 ס"מ מהספה, בהישג יד.');
+   const [ax,ay]=at(.95/2+.42+.6+.45+.4);const ac=addFurn({k:'b',kind:'armchair',n:'כורסה',w:78,d:80,h:80},ax,ay,sofa.r+Math.PI);
+   if(!fitOf(ac).ok||!pip([ac.x,ac.y],room.poly)){ac.x=sofa.x+fx*1.05+wx*(sofa.w/200+.55);ac.y=sofa.y+fy*1.05+wy*(sofa.w/200+.55);ac.r=sofa.r-Math.PI/2;place(ac);if(!okHere(ac,ri)){furnG.remove(ac.mesh);furn=furn.filter(f=>f!==ac)}else say(ac,'סוגרת את פינת הישיבה ל־L, מעגל שיחה.')}else say(ac,'מול הספה, סביב השולחן: מעגל שיחה.');
+   const lamp=addFurn({k:'b',kind:'floor_lamp',n:'מנורת רצפה',w:40,d:40,h:150},sofa.x-wx*(sofa.w/200+.3),sofa.y-wy*(sofa.w/200+.3),0);if(!okHere(lamp,ri)){lamp.x=sofa.x+wx*(sofa.w/200+.3);lamp.y=sofa.y+wy*(sofa.w/200+.3);place(lamp);if(!okHere(lamp,ri)){furnG.remove(lamp.mesh);furn=furn.filter(f=>f!==lamp)}}
+   // tv unit on the wall facing the sofa
+   const tv=wallPlace(SP('tv_unit','מזנון טלוויזיה',180,42),ri,{avoid:['door','slide'],front:1.2,score:(e,t,q)=>{const al=-(e.n[0]*fx+e.n[1]*fy);return al*6-Math.abs((q.x-sofa.x)*wx+(q.y-sofa.y)*wy)}});
+   if(tv&&-(tv.edge.n[0]*fx+tv.edge.n[1]*fy)>.8)say(tv,'מול הספה, במרחק צפייה נוח.');else if(tv){furnG.remove(tv.mesh);furn=furn.filter(f=>f!==tv)}}
+  // dining between kitchen and living
+  const kit=plan.rooms.findIndex(r=>roomType(r.name)==='kitchen');const kc=kit>=0?centroid(plan.rooms[kit].poly):null;
+  if(A>18||/אוכל/.test(room.name)){const big=A>30;const tbl=freePlace(SP('dining_table',big?'שולחן אוכל ל־6':'שולחן אוכל ל־4',big?180:130,big?90:80),ri,(x,y)=>-(kc?Math.hypot(kc[0]-x,kc[1]-y):0)-(sofa&&Math.hypot(sofa.x-x,sofa.y-y)<2.6?20:0),.85);
+   say(tbl,'בין המטבח לסלון, 85 ס"מ פנויים מסביב לכיסאות.')}
+  // plants in free corners: life energy (feng shui: wood element)
+  let np=0;for(const e of E){if(np>=2)break;const p=wallPlace(SP('plant','עציץ',45,45),ri,{avoid:['door','slide','window'],corner:true,score:(e2)=>e2===e?1:0});if(p){np++;if(np===1)say(p,'צמח בפינה מרכך קווים ומכניס חיים לחלל.')}}
+ }
+ else if(type==='master'||type==='kid'){
+  const dbl=type==='master'||(A>=12&&!/ילד/.test(room.name)&&!/ממ/.test(room.name));
+  let bed=null;
+  if(dbl){for(const w of [190,170,150]){bed=wallPlace(SP('bed_double',`מיטה זוגית ${w-10}`,w,212),ri,{avoid:['door','slide','window'],front:.7,center:true,score:command});if(bed)break}
+   if(bed){say(bed,'פנג שואי: ראש המיטה על קיר מלא, רואים את הדלת אבל לא בקו ישר מולה.');
+    const wx=Math.cos(bed.r),wy=Math.sin(bed.r),bx=Math.sin(bed.r),by=-Math.cos(bed.r);
+    for(const sg of [-1,1]){const k=bed.w/200+.27;const ns=addFurn({k:'b',kind:'nightstand',n:'שידת לילה',w:45,d:40,h:55},bed.x+wx*k*sg+bx*(bed.d/200-.2),bed.y+wy*k*sg+by*(bed.d/200-.2),bed.r);if(!okHere(ns,ri)){furnG.remove(ns.mesh);furn=furn.filter(f=>f!==ns)}}}}
+  else{bed=wallPlace(SP('bed_single','מיטת יחיד',97,205),ri,{avoid:['door','slide'],side:true,corner:true,front:.3,score:command});
+   if(!bed)bed=wallPlace(SP('bed_single','מיטת יחיד',97,205),ri,{avoid:['door','slide'],side:true,flip:true,corner:true,score:command});
+   say(bed,'בפינה לאורך הקיר: מרכז החדר נשאר פנוי למשחק.')}
+  const wl=Math.min(dbl?250:150,Math.max(100,longest-1.2));
+  for(const w of [Math.round(wl/50)*50,150,100]){const wd=wallPlace(SP('wardrobe',`ארון ${w}`,w,60),ri,{avoid:['door','slide','window'],front:.85,score:(e,t,q)=>-distTo(q.x,q.y,dpts)*1.5+(bed&&bed.edge===e?-6:0)});if(wd){say(wd,'קרוב לדלת ועל קיר פנימי, משאיר את החדר פתוח.');break}}
+  if(!dbl||A>=14){const dk=wallPlace(SP('desk','שולחן עבודה',120,60),ri,{avoid:['door','slide'],front:.8,score:(e,t,q)=>(e.ops.some(o=>o.kind==='window')?4:0)-(dpts.length?0:0)+command(e,t,q)*.3});say(dk,'ליד החלון לאור טבעי, גב לא אל הדלת.')}
+ }
+ else if(type==='kitchen'){
+  let best=null;for(const e of E)for(const [s,t] of freeT(e,['door','slide']))if(!best||t-s>best.l)best={e,l:t-s};
+  const cl=best?Math.min(420,Math.floor((best.l-.75)/.6)*60):0;
+  if(cl>=120){const kc=wallPlace(SP('kitchen_counter',`מטבח ${cl}`,cl,60,{h:90}),ri,{avoid:['door','slide'],front:1,center:true,score:(e)=>e===best.e?10:0});say(kc,'קיר שלם ורציף: משולש עבודה כיור־כיריים־מקרר קצר.');
+   const fr=wallPlace(SP('fridge','מקרר',70,72),ri,{avoid:['door','slide','window'],front:.9,corner:true,score:(e,t,q)=>kc?-Math.hypot(q.x-kc.x,q.y-kc.y):0});say(fr,'בקצה המשטח, לא באמצע אזור העבודה.')}
+  const xs=room.poly.map(p=>p[0]),ys=room.poly.map(p=>p[1]);if(Math.min(Math.max(...xs)-Math.min(...xs),Math.max(...ys)-Math.min(...ys))>=3.4){const is=freePlace(SP('island','אי מטבח',180,95),ri,(x,y)=>{const c=centroid(room.poly);return -Math.hypot(c[0]-x,c[1]-y)},1);say(is,'אי עם ישיבה, 100 ס"מ מעבר מכל צד.')}
+ }
+ else if(type==='bath'){
+  const big=A>=4.8&&longest>=1.75;
+  if(big){const bt=wallPlace(SP('bathtub','אמבטיה',170,75),ri,{avoid:['door','slide'],corner:true,score:(e,t,q)=>distTo(q.x,q.y,dpts)});say(bt,'בקצה הרחוק מהדלת.')}
+  else{const sh=wallPlace(SP('shower','מקלחון',90,90),ri,{avoid:['door','slide'],corner:true,score:(e,t,q)=>distTo(q.x,q.y,dpts)});say(sh,'בפינה הרחוקה מהדלת.')}
+  const tl=wallPlace(SP('toilet','אסלה',38,55),ri,{avoid:['door','slide'],front:.55,score:(e,t,q)=>distTo(q.x,q.y,dpts)-(e.ops.some(o=>o.kind==='door')?3:0)});say(tl,'פנג שואי: לא בקו ישר מול הדלת.');
+  const sk=wallPlace(SP('sink','כיור וארונית',80,46),ri,{avoid:['door','slide'],front:.6,score:(e,t,q)=>-distTo(q.x,q.y,dpts)})||wallPlace(SP('sink','כיור וארונית',60,45),ri,{avoid:['door','slide'],front:.5});say(sk,'הראשון שפוגשים בכניסה.')}
+ else if(type==='wc'){wallPlace(SP('toilet','אסלה',38,55),ri,{avoid:['door','slide'],front:.45,score:(e,t,q)=>distTo(q.x,q.y,dpts)});wallPlace(SP('sink','כיור קטן',45,35),ri,{avoid:['door','slide'],front:.4})}
+ else if(type==='laundry'){wallPlace(SP('washer','מכונת כביסה',60,60),ri,{avoid:['door','slide'],front:.6,corner:true})}
+ else if(type==='balcony'){let n=0;for(let k=0;k<3&&n<2;k++){if(wallPlace(SP('plant','עציץ',50,50),ri,{avoid:['door','slide'],corner:true,score:()=>Math.random()}))n++}
+  if(A>=6){const t=freePlace(SP('dining_table','שולחן מרפסת',80,80,{round:true}),ri,()=>Math.random(),.6);say(t,'פינת קפה קטנה מול הנוף.')}}
+ else if(type==='entry'){const p=wallPlace(SP('plant','עציץ',45,45),ri,{avoid:['door','slide'],corner:true});say(p,'פנג שואי: כניסה פתוחה ונקייה, רק צמח אחד שמקבל את הבאים.')}
+}
+function localFurnish(scope){LZ=doorZones();sel=null;
+ for(const o of furn.slice())if(scope.some(ri=>pip([o.x,o.y],plan.rooms[ri].poly))){furnG.remove(o.mesh);furn=furn.filter(f=>f!==o)}
+ const why=[];const order=['living','kitchen','master','kid','bath','wc','laundry','balcony','entry','other'];
+ scope.slice().sort((a,b)=>order.indexOf(roomType(plan.rooms[a].name))-order.indexOf(roomType(plan.rooms[b].name))).forEach(ri=>{try{furnishRoom(ri,why)}catch(e){console.warn(e)}});
+ LZ=[];updateFit();save();lastShop=[];renderShop();return why}
+// feng shui read-out for the selected piece
+function fengShui(o){if(!plan||!['bed_double','bed_single','desk','sofa'].includes(o.kind))return '';const ri=plan.rooms.findIndex(r=>pip([o.x,o.y],r.poly));if(ri<0)return '';
+ const fx=-Math.sin(o.r),fy=Math.cos(o.r),bx=-fx,by=-fy;const back=[o.x+bx*(o.d/200+.06),o.y+by*(o.d/200+.06)];const out=[];
+ const nearWall=solids.some(s=>s&&segDist(back,s.a,s.b)<.15);const E=roomEdges(ri);
+ const underWin=E.some(e=>e.ops.some(op=>op.kind==='window'&&segDist(back,[e.a[0]+e.d[0]*op.t0,e.a[1]+e.d[1]*op.t0],[e.a[0]+e.d[0]*op.t1,e.a[1]+e.d[1]*op.t1])<.25));
+ const ds=roomDoors(ri).filter(d=>d.w<=1.3);let inLine=false,behind=false;for(const d of ds){const vx=d.c[0]-o.x,vy=d.c[1]-o.y;const ahead=vx*fx+vy*fy,lat=Math.abs(vx*fy-vy*fx);if(ahead>0&&lat<Math.min(.6,o.w/200))inLine=true;if(ahead<-.2&&lat<o.w/200+.3)behind=true}
+ if(o.kind.startsWith('bed')){if(!nearWall)out.push('ראש המיטה לא על קיר');if(underWin)out.push('ראש המיטה מתחת לחלון');if(inLine)out.push('בקו ישר מול הדלת')}
+ else{if(behind)out.push('הגב לדלת');if(!nearWall&&o.kind==='desk')out.push('אין קיר מאחור')}
+ return out.length?'⚠ פנג שואי: '+out.join(', ')+'.':'✓ פנג שואי: עמדת שליטה טובה, תמיכה מאחור והדלת בשדה הראייה.'}
+
+function runLocal(scope,note){const why=localFurnish(scope);const st=$('arrStatus');st.className='status';
+ if(scope.length===1)focusRoom(scope[0]);else{focus=null;setMode('3d')}
+ $('why').innerHTML='';for(const [n,w] of why.slice(0,16)){const li=document.createElement('li');const b=document.createElement('b');b.textContent=n+': ';li.append(b,document.createTextNode(w));$('why').appendChild(li)}
+ st.textContent=(note||'')+`רוהטו ${scope.length>1?'כל החדרים':'החדר'} מחדש לפי החוקים של שון טסה ועקרונות פנג שואי. לחצו על רהיט כדי להחליף מידה או דגם.`;
+ showCTA('arrStatus','רוצים שאדריכל ידייק את זה לדירה שלכם?')}
+$('arrBtn').onclick=async()=>{if(!plan)return;
+ const v=+$('roomSel').value;const scope=v<0?plan.rooms.map((r,i)=>i):[v];if(!sample){runLocal(scope);return}const keep=$('keep').checked;
  const ctx=scope.map(roomContext);
  const kept=keep?furn.filter(o=>scope.some(ri=>pip([o.x,o.y],plan.rooms[ri].poly))).map(o=>({id:o.id,kind:o.kind,w_cm:o.w,d_cm:o.d})):[];
  const prompt=`אתה אדריכל פנים ישראלי. תכנן ריהוט מלא ל${scope.length>1?'כל החדרים בדירה':'חדר'} לפי חוקי התכנון של האדריכל שון טסה, STS ARCH (עדיפות עליונה; נלמדו מתוכניות שלו) ולפי סטנדרטים מקובלים (Neufert, ארגונומיה). בחר לכל פריט את המידה הכי מתאימה לחלל.
@@ -892,7 +1037,7 @@ ${kept.length?'רהיטים קיימים שיש להשאיר ולמקם מחדש
   const sum=String(j&&j.summary||'').slice(0,300);st.textContent=(sum||`תוכננו ${res.length} פריטים.`)+(adj?` (${adj} תוקנו קצת כדי שייכנסו.)`:'');
   showCTA('arrStatus','רוצים שאדריכל ידייק את זה לדירה שלכם?');
   if($('speak').checked&&sum)say(sum)}
- catch(e){if(e?.code==='rate_limited')showCTA('arrStatus','רוצים להמשיך עם אדריכל אמיתי?');st.className='status err';st.textContent=e?.code==='not_granted'?'צריך לאשר לאפליקציה להשתמש ב־Claude.':e?.code==='rate_limited'?'הגעתם למכסה היומית של תכנונים. נסו שוב מחר.':e?.code==='invalid_json'?'התכנון לא הצליח הפעם. נסו שוב או חדר אחד בכל פעם.':e?.code==='cancelled'?'':'משהו השתבש. נסו שוב.'}
+ catch(e){if(e?.code!=='cancelled'&&e?.code!=='not_granted'){runLocal(scope,'התכנון החכם לא זמין כרגע, אז ריהטתי לפי החוקים הקבועים. ');return}if(e?.code==='rate_limited')showCTA('arrStatus','רוצים להמשיך עם אדריכל אמיתי?');st.className='status err';st.textContent=e?.code==='not_granted'?'צריך לאשר לאפליקציה להשתמש ב־Claude.':e?.code==='rate_limited'?'הגעתם למכסה היומית של תכנונים. נסו שוב מחר.':e?.code==='invalid_json'?'התכנון לא הצליח הפעם. נסו שוב או חדר אחד בכל פעם.':e?.code==='cancelled'?'':'משהו השתבש. נסו שוב.'}
  finally{$('arrBtn').disabled=false}};
 function renderShop(){const box=$('shop');box.innerHTML='';if(!lastShop.length)return;let total=0;
  const h=document.createElement('div');h.className='shophead';box.appendChild(h);
