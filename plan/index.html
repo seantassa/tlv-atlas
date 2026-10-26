@@ -1,0 +1,875 @@
+<!doctype html>
+<html lang="he" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="description" content="מעלים תוכנית דירה ומקבלים מודל תלת־ממדי, ריהוט במידות אמיתיות מ־IKEA ישראל ותכנון לפי חוקי STS ARCH."><meta property="og:title" content="תוכנית חיה · STS ARCH"></head><body>
+<title>תוכנית חיה</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700;900&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a presentation board, like the TLV atlas. Live 3D model full-bleed, index sheet on the right, view bar top-left. */
+:root{
+  --paper:#FFFFFF; --board:#F2F4F6; --ink:#14212E; --ink-soft:#5A6774; --line:#CBD4DC; --row:#EEF1F4;
+  --b1:#A8C6E1; --b2:#6C9BC8; --b3:#3A6A99; --b4:#16365A;
+  --accent:#E8432E; --ok:#2E7D4F; --bad:#B4462E; --warn:#B7791F;
+  --display:"STS Display","Rubik",Arial,sans-serif;
+  --body:"Rubik","Arial Hebrew",Arial,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%;margin:0}
+body{background:var(--board);color:var(--ink);font-family:var(--body);font-size:14px;direction:rtl;overflow:hidden}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--b3);outline-offset:2px}
+.disp{font-family:var(--display);font-weight:900;letter-spacing:-.01em;line-height:.95}
+.eyebrow{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft);direction:ltr}
+
+/* ---------- 3D surface ---------- */
+main{position:fixed;inset:0;background:var(--board)}
+#cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+#labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.rl{position:absolute;left:0;top:0;pointer-events:none;display:flex;align-items:stretch;background:var(--paper);border:1px solid var(--ink);box-shadow:2px 2px 0 rgba(20,33,46,.35);white-space:nowrap}
+.rl b{font-size:11.5px;font-weight:500;padding:3px 7px}
+.rl i{font-style:normal;font-family:var(--mono);font-size:10.5px;color:var(--ink-soft);padding:3px 6px;border-right:1px solid var(--line);direction:ltr}
+
+/* ---------- view bar ---------- */
+.bar{position:fixed;top:16px;left:16px;z-index:3;display:flex;background:var(--paper);border:1px solid var(--ink)}
+.bar button{border:none;border-inline-start:1px solid var(--line);background:var(--paper);padding:7px 12px;cursor:pointer;font-size:12.5px}
+.bar button:first-child{border-inline-start:none}
+.bar button[aria-pressed="true"]{background:var(--ink);color:#fff}
+.hint{position:fixed;top:56px;left:16px;z-index:2;font-size:12px;color:var(--ink-soft);background:rgba(255,255,255,.88);border:1px solid var(--line);padding:5px 9px;max-width:min(420px,calc(100vw - 420px))}
+.north{position:fixed;bottom:22px;left:calc((100vw - 392px)/2);transform:translateX(-50%);z-index:2;font-family:var(--mono);font-size:10.5px;background:rgba(255,255,255,.85);border:1px solid var(--ink);padding:4px 10px;direction:ltr;letter-spacing:.08em}
+.fitbar{position:fixed;bottom:56px;left:calc((100vw - 392px)/2);transform:translateX(-50%);z-index:3;background:var(--ink);color:#fff;padding:8px 14px;font-size:13px;white-space:nowrap;box-shadow:3px 3px 0 rgba(20,33,46,.25)}
+.calib{position:fixed;top:96px;left:16px;z-index:3;background:var(--paper);border:1px solid var(--ink);padding:10px;display:flex;gap:8px;align-items:center;font-size:13px;box-shadow:2px 2px 0 rgba(20,33,46,.25)}
+.calib input{width:84px;border:1px solid var(--line);padding:5px;font-family:var(--mono);direction:ltr}
+.walkpad{position:fixed;bottom:16px;left:16px;z-index:3;display:grid;grid-template-columns:repeat(3,46px);gap:4px}
+.walkpad button{height:46px;border:1px solid var(--ink);background:var(--paper);font-size:18px;cursor:pointer;touch-action:none;box-shadow:2px 2px 0 rgba(20,33,46,.3)}
+.walkpad button:empty{visibility:hidden}
+
+/* ---------- index sheet ---------- */
+.sheet{position:fixed;top:16px;right:16px;bottom:16px;width:360px;background:var(--paper);border:1px solid var(--ink);display:flex;flex-direction:column;z-index:4}
+.sheet header{padding:18px 18px 14px;border-bottom:1px solid var(--ink)}
+.sheet h1{font-size:46px;margin:8px 0 6px}
+.sheet .sub{display:flex;justify-content:space-between;gap:8px;font-family:var(--mono);font-size:11px;color:var(--ink-soft)}
+.scroll{overflow-y:auto;flex:1;overscroll-behavior:contain}
+.sec{padding:14px 18px;border-bottom:1px solid var(--line)}
+.sec h2{margin:0 0 10px;font-size:12px;font-weight:700;display:flex;align-items:center;gap:8px}
+.sec h2 .n{font-family:var(--mono);font-size:11px;font-weight:400;width:22px;height:22px;display:grid;place-items:center;border:1px solid var(--ink)}
+.sheet footer{border-top:1px solid var(--ink);padding:8px 18px;display:flex;justify-content:space-between;gap:10px;font-family:var(--mono);font-size:10.5px;color:var(--ink-soft);direction:ltr}
+
+.drop{border:1px dashed var(--ink-soft);padding:12px;display:flex;gap:12px;align-items:center;cursor:pointer;background:var(--board)}
+.drop:hover,.drop.over{border-color:var(--ink);background:#fff}
+.drop .thumb{width:64px;height:64px;flex:none;background:var(--line) center/cover no-repeat;border:1px solid var(--line)}
+.drop p{margin:0;font-size:12.5px;line-height:1.45;color:var(--ink-soft)}
+.drop strong{display:block;color:var(--ink);font-weight:500;font-size:14px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.btn{border:1px solid var(--ink);background:var(--paper);padding:7px 12px;cursor:pointer;font-size:13px;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{background:var(--board)}
+.btn.primary{background:var(--ink);color:#fff}
+.btn.primary:hover{background:#000}
+.btn.accent{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn[disabled]{opacity:.4;cursor:default}
+.status{font-size:12.5px;line-height:1.5;color:var(--ink-soft);min-height:1.5em}
+.status.err{color:var(--bad)}
+.status .spin{display:inline-block;width:10px;height:10px;border:2px solid var(--b3);border-left-color:transparent;border-radius:50%;animation:sp .8s linear infinite;margin-left:6px;vertical-align:-1px}
+@keyframes sp{to{transform:rotate(360deg)}}
+.summary{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--ink)}
+.summary div{padding:8px 10px}
+.summary div+div{border-right:1px solid var(--line)}
+.summary b{display:block;font-family:var(--display);font-weight:900;font-size:28px;line-height:1;font-variant-numeric:tabular-nums}
+.summary span{font-family:var(--mono);font-size:10px;letter-spacing:.06em;color:var(--ink-soft)}
+.tabs{display:flex;border:1px solid var(--ink);margin-bottom:10px}
+.tabs button{flex:1;border:0;background:var(--paper);padding:7px;cursor:pointer;font-size:12.5px}
+.tabs button+button{border-right:1px solid var(--line)}
+.tabs button[aria-selected="true"]{background:var(--ink);color:#fff}
+.isearch,.room,.custom input,.ask input{border:1px solid var(--line);background:var(--paper);padding:7px 10px;min-width:0}
+.isearch{width:100%}
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0}
+.chips button{border:1px solid var(--line);background:var(--paper);padding:3px 8px;font-size:12px;cursor:pointer}
+.chips button:hover{border-color:var(--ink)}
+.chips button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.ilist{max-height:280px;overflow-y:auto;border-top:1px solid var(--ink);border-bottom:1px solid var(--line)}
+.irow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;padding:8px 2px;border-bottom:1px solid var(--row);align-items:center}
+.irow:hover{background:var(--board)}
+.irow .t{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.irow .t b{font-weight:500;font-size:13.5px;direction:ltr;unicode-bidi:isolate}
+.irow .t span{font-size:12px;color:var(--ink-soft)}
+.irow .meta{grid-column:1;font-family:var(--mono);font-size:10.5px;color:var(--ink-soft);display:flex;gap:12px}
+.irow .meta span:first-child{direction:ltr}
+.irow .meta a{color:var(--ink-soft)}
+.irow button{grid-row:1/3;grid-column:2;width:30px;height:30px;border:1px solid var(--ink);background:var(--paper);cursor:pointer;font-size:16px;line-height:1}
+.irow button:hover{background:var(--ink);color:#fff}
+.cat{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));border-top:1px solid var(--ink)}
+.cat button{text-align:right;border:0;border-bottom:1px solid var(--row);background:var(--paper);padding:8px 4px;cursor:pointer;display:flex;justify-content:space-between;gap:6px;align-items:baseline;min-width:0}
+.cat button:hover{background:var(--board)}
+.cat button span{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cat button small{font-family:var(--mono);font-size:10.5px;color:var(--ink-soft);direction:ltr;flex:none}
+.custom{display:grid;grid-template-columns:1fr 62px 62px auto;gap:6px;margin-top:10px}
+.custom input[type=number]{font-family:var(--mono);font-size:12px;direction:ltr;text-align:center;padding:7px 4px}
+.note{font-size:11.5px;color:var(--ink-soft);line-height:1.5}
+.sel{border:1px solid var(--ink);padding:10px;display:flex;flex-direction:column;gap:8px;margin-top:10px;box-shadow:2px 2px 0 rgba(20,33,46,.25)}
+.sel .name{font-weight:500}
+.chip{display:inline-block;font-family:var(--mono);font-size:11px;padding:2px 8px;color:#fff;letter-spacing:.04em}
+.chip.ok{background:var(--ok)}.chip.bad{background:var(--bad)}.chip.warn{background:var(--warn)}
+.ask{display:flex;gap:6px}
+.ask input{flex:1}
+.answer{font-size:13.5px;line-height:1.6;border-right:3px solid var(--b3);padding:6px 12px;white-space:pre-wrap;margin-top:10px;background:var(--board)}
+.answer:empty{display:none}
+.why{font-size:12.5px;line-height:1.55;padding:8px 22px 8px 10px;margin:8px 0 0;background:var(--board);border-right:3px solid var(--accent)}
+.why:empty{display:none}
+.shophead{font-family:var(--mono);font-size:11px;letter-spacing:.06em;margin-top:10px;padding:6px 0;border-top:1px solid var(--ink);border-bottom:1px solid var(--line)}
+.shop{padding:8px 0;border-bottom:1px solid var(--row)}
+.shop .st a{color:var(--ink);text-decoration:none;display:block;margin-top:2px}.shop .st a b{font-weight:500;direction:ltr;unicode-bidi:isolate}.shop .st a span{font-size:12.5px;color:var(--ink-soft)}
+.shop .st a:hover b{text-decoration:underline}
+.shop .sm{font-family:var(--mono);font-size:11px;color:var(--ink-soft);margin-top:2px}
+.alts{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.alts button{border:1px solid var(--line);background:var(--paper);font-family:var(--mono);font-size:10.5px;padding:2px 6px;cursor:pointer;direction:ltr}
+.alts button:hover{border-color:var(--ink)}
+.svc{display:grid;gap:6px}
+.svc button{display:grid;grid-template-columns:1fr auto;gap:2px 10px;text-align:right;border:1px solid var(--line);background:var(--paper);padding:9px 10px;cursor:pointer}
+.svc button:hover{border-color:var(--ink)}
+.svc button[aria-checked="true"]{border-color:var(--ink);box-shadow:inset 3px 0 0 var(--accent)}
+.svc b{font-weight:500;font-size:13.5px}.svc .pr{font-family:var(--mono);font-size:11.5px;color:var(--ink);unicode-bidi:plaintext}
+#planArea{direction:ltr;unicode-bidi:isolate}
+.svc span.d{grid-column:1/-1;font-size:12px;color:var(--ink-soft);line-height:1.45}
+.lead{display:grid;gap:6px;margin-top:10px}
+.lead input,.lead textarea{border:1px solid var(--line);background:var(--paper);padding:8px 10px;font:inherit;min-width:0;resize:vertical}
+.cta{margin-top:10px;border:1px solid var(--ink);padding:10px;display:flex;justify-content:space-between;gap:10px;align-items:center;font-size:13px;background:var(--paper);box-shadow:2px 2px 0 rgba(20,33,46,.25)}
+.rules{font-size:12px;line-height:1.55;color:var(--ink-soft);margin:6px 0 0;padding-right:18px}
+.room{flex:1}
+details summary{cursor:pointer}
+@media (max-width:760px){
+  .sheet{top:auto;left:8px;right:8px;bottom:8px;width:auto;max-height:50vh}
+  .sheet header{padding:10px 14px}
+  .sheet h1{font-size:30px;margin:4px 0}
+  .sec{padding:12px 14px}
+  .bar{top:calc(env(safe-area-inset-top,0px) + 10px);left:10px}
+  .hint{display:none}
+  .north{display:none}
+  .fitbar,.calib{left:50%;bottom:auto;top:calc(env(safe-area-inset-top,0px) + 56px);transform:translateX(-50%)}
+  .calib{left:10px;transform:none}
+  .walkpad{bottom:auto;top:calc(env(safe-area-inset-top,0px) + 56px);left:10px}
+}
+@media (prefers-reduced-motion:reduce){.status .spin{animation:none}}
+</style>
+
+<main id="main">
+  <canvas id="cv" aria-label="מודל תלת־ממדי של הדירה"></canvas>
+  <div id="labels"></div>
+</main>
+
+<nav class="bar" aria-label="מבט">
+  <button id="vPlan" aria-pressed="false">תוכנית</button>
+  <button id="v3d" aria-pressed="true">תלת־ממד</button>
+  <button id="vWalk" aria-pressed="false">סיור</button>
+  <button id="calibBtn">כיול</button>
+</nav>
+<div class="hint" id="hint">גררו כדי לסובב · גלגלת לזום · לחיצה על רהיט כדי להזיז</div>
+<div class="calib" id="calib" hidden><span id="calibT">לחצו על קיר בתוכנית</span><input id="calibI" type="number" placeholder="ס״מ" hidden><button class="btn" id="calibOk" hidden>החל</button><button class="btn" id="calibX">ביטול</button></div>
+<div class="fitbar" id="fitbar" hidden></div>
+<div class="north" id="north">N ↑ · 1:100 · LIVE PLAN</div>
+<div class="walkpad" id="pad" hidden>
+  <button></button><button data-k="f" aria-label="קדימה">↑</button><button></button>
+  <button data-k="l" aria-label="סובב שמאלה">↶</button><button data-k="b" aria-label="אחורה">↓</button><button data-k="r" aria-label="סובב ימינה">↷</button>
+</div>
+
+<aside class="sheet">
+  <header>
+    <div class="eyebrow"><a href="https://www.sts-arch.com" target="_blank" rel="noopener" style="color:inherit;text-decoration:none">STS ARCH</a> · LIVE PLAN · BETA</div>
+    <h1 class="disp">תוכנית חיה</h1>
+    <div class="sub"><span id="planName">—</span><span id="planArea"></span></div>
+  </header>
+  <div class="scroll">
+  <section class="sec">
+    <h2><span class="n">01</span> התוכנית</h2>
+    <label class="drop" id="drop" for="file">
+      <div class="thumb" id="thumb"></div>
+      <p><strong id="dropT">העלו צילום של תוכנית</strong><span id="dropS">מיד2, מקבלן או צילום מסך. אפשר לגרור לכאן או להדביק.</span></p>
+    </label>
+    <input type="file" id="file" accept="image/png,image/jpeg,image/webp" hidden>
+    <div class="row" style="margin-top:10px">
+      <button class="btn primary" id="build" disabled>בנו לי תלת־ממד</button>
+      <button class="btn" id="demo">דירת דוגמה</button>
+    </div>
+    <div class="status" id="status" style="margin-top:8px"></div>
+    <div class="summary" style="margin-top:10px">
+      <div><b id="sArea">0</b><span>M² BUILT</span></div>
+      <div><b id="sRooms">0</b><span>SPACES</span></div>
+      <div><b id="sOpen">0</b><span>OPENINGS</span></div>
+    </div>
+  </section>
+
+  <section class="sec">
+    <h2><span class="n">02</span> רהיטים: זה נכנס?</h2>
+    <div class="tabs" role="tablist"><button role="tab" id="tIkea" aria-selected="true">IKEA ישראל</button><button role="tab" id="tBasic" aria-selected="false">מידות בסיס</button></div>
+    <div id="pIkea">
+      <input class="isearch" id="iq" placeholder="חיפוש: KIVIK, ארון בגדים, מיטה 160…" aria-label="חיפוש מוצר">
+      <div class="chips" id="icats"></div>
+      <div class="ilist" id="ilist"></div>
+      <p class="note" id="inote" style="margin:6px 0 0"></p>
+    </div>
+    <div id="pBasic" hidden><div class="cat" id="cat"></div></div>
+    <form class="custom" id="customF">
+      <input id="cName" placeholder="הרהיט שלי" aria-label="שם הרהיט">
+      <input id="cW" type="number" min="20" max="600" placeholder="רוחב" aria-label="רוחב בס״מ">
+      <input id="cD" type="number" min="20" max="600" placeholder="עומק" aria-label="עומק בס״מ">
+      <button class="btn" type="submit">הוסף</button>
+    </form>
+    <p class="note" style="margin:6px 0 0">מידות בס״מ. גוררים רהיט על הרצפה ומסובבים עם R.</p>
+    <div class="sel" id="selBox" hidden>
+      <div class="row" style="justify-content:space-between"><span class="name" id="selName"></span><span class="chip" id="selChip"></span></div>
+      <div class="note" id="selInfo"></div>
+      <div class="row"><button class="btn" id="rotBtn">סובב 90°</button><button class="btn" id="delBtn">הסר</button></div>
+    </div>
+  </section>
+
+  <section class="sec" id="arrSec">
+    <h2><span class="n">03</span> תכנן לי את הדירה</h2>
+    <div class="row"><select class="room" id="roomSel" aria-label="חדר"></select><button class="btn accent" id="arrBtn">תכנן</button></div>
+    <label class="row note" style="margin-top:8px;gap:6px"><input type="checkbox" id="keep"> להשאיר את הרהיטים שכבר הצבתי</label><p class="note" style="margin:4px 0 0">בוחר מידה מדויקת לכל פריט, מוצא לו דגם ב־IKEA ובונה את החדר, כולל רחצה ומטבח.</p>
+    <div class="status" id="arrStatus" style="margin-top:6px"></div>
+    <div id="shop"></div><ul class="why" id="why"></ul>
+    <details style="margin-top:8px"><summary class="note">חוקי התכנון של STS ARCH</summary><ol class="rules" id="rulesList"></ol></details>
+  </section>
+
+  <section class="sec" id="aiSec">
+    <h2><span class="n">04</span> שאלו את האדריכל</h2>
+    <div class="chips" id="qchips" style="margin-top:0"></div>
+    <form class="ask" id="askF"><input id="askI" placeholder="למשל: איפה כדאי שולחן עבודה?" aria-label="שאלה על התוכנית"><button class="btn accent" type="submit" id="askB">שאל</button></form>
+    <label class="row note" style="margin-top:8px;gap:6px"><input type="checkbox" id="speak" checked> הקראה בקול</label>
+    <div class="answer" id="answer" aria-live="polite"></div>
+    <p class="note" id="aiNote" hidden>העוזר זמין כשפותחים את האפליקציה בתוך Claude.</p>
+  </section>
+
+  <section class="sec" id="svcSec">
+    <h2><span class="n">05</span> רוצים שאדריכל יעשה את זה איתכם?</h2>
+    <div class="svc" id="svcList" role="radiogroup" aria-label="שירות"></div>
+    <form class="lead" id="leadF">
+      <input id="lName" placeholder="שם" aria-label="שם" autocomplete="name" required>
+      <input id="lPhone" placeholder="טלפון" aria-label="טלפון" autocomplete="tel" inputmode="tel">
+      <input id="lEmail" placeholder="מייל (לא חובה)" aria-label="מייל" autocomplete="email" type="email">
+      <textarea id="lNote" rows="2" placeholder="ספרו בקצרה על הדירה או מה אתם צריכים" aria-label="הערה"></textarea>
+      <button class="btn primary" type="submit" id="lSend">שלחו לי פרטים</button>
+      <div class="status" id="lStatus"></div>
+    </form>
+    <p class="note" style="margin:6px 0 0">STS ARCH · סטודיו בוטיק לאדריכלות. התוכנית שבניתם כאן מצורפת לפנייה.</p>
+  </section>
+
+  <section class="sec note" style="border-bottom:0">זיהוי התוכנית נעשה ב־AI ועלול לטעות במידות; זה כלי להתרשמות, לא תחליף למדידה. מידות ומחירי IKEA מאתר IKEA ישראל, 26.10.2026, ועשויים להשתנות. האפליקציה לא קשורה ל־IKEA.</section>
+  </div>
+  <footer><span>STS ARCH</span><span id="ftCount">771 IKEA ITEMS</span></footer>
+</aside>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/geometries/RoundedBoxGeometry.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/math/SimplexNoise.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/shaders/CopyShader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/shaders/SSAOShader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/postprocessing/EffectComposer.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/postprocessing/RenderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/postprocessing/ShaderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/postprocessing/SSAOPass.js"></script>
+<script>
+(()=>{
+const $=id=>document.getElementById(id);
+const H=2.7, DOOR_H=2.1, SILL=0.9, WIN_TOP=2.15;
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+const ls={get(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+
+/* ---------------- demo plan (meters, y down) ---------------- */
+const DEMO={name:"דירת 4 חדרים (דוגמה)",
+ walls:[
+  {a:[0,0],b:[12,0],t:.25,ext:1},{a:[12,0],b:[12,9],t:.25,ext:1},{a:[12,9],b:[0,9],t:.25,ext:1},{a:[0,9],b:[0,0],t:.25,ext:1},
+  {a:[0,3.6],b:[5.8,3.6],t:.12},{a:[4,0],b:[4,2.2],t:.12},{a:[4,2.2],b:[5.8,2.2],t:.12},
+  {a:[5.8,0],b:[5.8,3.6],t:.3},{a:[5.8,3.6],b:[8.6,3.6],t:.3},{a:[8.6,0],b:[8.6,3.6],t:.3},
+  {a:[8.6,3.6],b:[12,3.6],t:.12},{a:[9.6,3.6],b:[9.6,6.2],t:.12},{a:[9.6,6.2],b:[12,6.2],t:.12},
+  {a:[0,9],b:[0,10.8],t:.12,h:1.05},{a:[0,10.8],b:[4.6,10.8],t:.12,h:1.05},{a:[4.6,10.8],b:[4.6,9],t:.12,h:1.05}],
+ openings:[
+  {kind:"window",center:[2,0],w:1.6},{kind:"window",center:[4.9,0],w:.6},{kind:"window",center:[7.2,0],w:1},{kind:"window",center:[10.3,0],w:1.6},
+  {kind:"window",center:[12,1.8],w:1.2},{kind:"window",center:[12,4.9],w:.6},
+  {kind:"window",center:[9.5,9],w:1.6},{kind:"window",center:[5.4,9],w:1.4},{kind:"door",center:[2.1,9],w:2.4},
+  {kind:"door",center:[0,4.4],w:1},{kind:"door",center:[3.2,3.6],w:.9},{kind:"door",center:[4.9,2.2],w:.8},
+  {kind:"door",center:[7.6,3.6],w:.8},{kind:"door",center:[9.2,3.6],w:.9},{kind:"door",center:[9.6,4.9],w:.8}],
+ rooms:[
+  {name:"חדר הורים",poly:[[0,0],[4,0],[4,2.2],[5.8,2.2],[5.8,3.6],[0,3.6]]},
+  {name:"מקלחת הורים",poly:[[4,0],[5.8,0],[5.8,2.2],[4,2.2]]},
+  {name:"ממ״ד",poly:[[5.8,0],[8.6,0],[8.6,3.6],[5.8,3.6]]},
+  {name:"חדר ילדים",poly:[[8.6,0],[12,0],[12,3.6],[8.6,3.6]]},
+  {name:"סלון ופינת אוכל",poly:[[0,3.6],[7,3.6],[7,9],[0,9]]},
+  {name:"מבואה",poly:[[7,3.6],[9.6,3.6],[9.6,6.2],[7,6.2]]},
+  {name:"חדר רחצה",poly:[[9.6,3.6],[12,3.6],[12,6.2],[9.6,6.2]]},
+  {name:"מטבח",poly:[[7,6.2],[12,6.2],[12,9],[7,9]]},
+  {name:"מרפסת שמש",poly:[[0,9],[4.6,9],[4.6,10.8],[0,10.8]]}]};
+const DEMO_FURN=[
+ {kind:'rug',n:'שטיח',w:230,d:160,h:1,x:1.75,y:6.2,r:Math.PI/2},{kind:'sofa',n:'ספה',w:228,d:95,h:83,x:.62,y:6.2,r:Math.PI*1.5},
+ {kind:'armchair',n:'כורסה',w:72,d:78,h:80,x:2.95,y:5.55,r:Math.PI/2},{kind:'armchair',n:'כורסה',w:72,d:78,h:80,x:2.95,y:6.85,r:Math.PI/2},
+ {kind:'coffee_table',n:'שולחן קפה',w:110,d:60,h:42,x:1.75,y:6.2,r:Math.PI/2},{kind:'floor_lamp',n:'מנורת רצפה',w:40,d:40,h:150,x:.45,y:7.75,r:0},
+ {kind:'plant',n:'עציץ',w:45,d:45,h:120,x:.45,y:8.55,r:0},{kind:'plant',n:'עציץ',w:45,d:45,h:120,x:6.55,y:8.55,r:0},{kind:'plant',n:'עציץ',w:40,d:40,h:110,x:4.2,y:10.4,r:0},
+ {kind:'dining_table',n:'שולחן אוכל',w:180,d:90,h:75,x:5.3,y:6.6,r:0},
+ {kind:'kitchen_counter',n:'משטח מטבח',w:450,d:60,h:90,x:9.6,y:8.56,r:Math.PI},{kind:'fridge',n:'מקרר',w:70,d:72,h:185,x:11.45,y:6.65,r:0},
+ {kind:'bathtub',n:'אמבטיה',w:170,d:75,h:55,x:10.85,y:5.73,r:Math.PI},{kind:'toilet',n:'אסלה',w:38,d:55,h:40,x:11.58,y:4.25,r:Math.PI/2},{kind:'sink',n:'כיור וארונית',w:80,d:48,h:85,x:10.45,y:3.92,r:0},
+ {kind:'shower',n:'מקלחון',w:90,d:90,h:200,x:5.15,y:1.0,r:0},{kind:'toilet',n:'אסלה',w:38,d:55,h:40,x:4.36,y:1.45,r:Math.PI*1.5},{kind:'sink',n:'כיור וארונית',w:60,d:45,h:85,x:4.4,y:.36,r:0},
+ {kind:'bed_double',n:'מיטה זוגית',w:176,d:209,h:100,x:2.87,y:1.6,r:Math.PI/2},{kind:'nightstand',n:'שידת לילה',w:45,d:40,h:55,x:3.7,y:.46,r:Math.PI/2},{kind:'nightstand',n:'שידת לילה',w:45,d:40,h:55,x:3.7,y:2.74,r:Math.PI/2},
+ {kind:'wardrobe',n:'ארון בגדים',w:150,d:60,h:220,x:4.9,y:3.18,r:Math.PI},
+ {kind:'desk',n:'שולחן עבודה',w:140,d:70,h:75,x:7.2,y:.5,r:0},{kind:'shelf',n:'כוננית',w:80,d:35,h:180,x:6.13,y:2.2,r:Math.PI*1.5},
+ {kind:'bed_single',n:'מיטת יחיד',w:97,d:207,h:90,x:11.35,y:2.35,r:Math.PI},{kind:'wardrobe',n:'ארון בגדים',w:100,d:60,h:220,x:10.2,y:3.18,r:Math.PI},{kind:'desk',n:'שולחן עבודה',w:100,d:60,h:75,x:9.95,y:.47,r:0}];
+
+/* ---------------- furniture catalog (cm) ---------------- */
+const CAT=[
+ {k:"sofa",n:"ספה תלת־מושבית",w:220,d:95,h:85,t:"sofa"},
+ {k:"arm",n:"כורסה",w:85,d:85,h:85,t:"sofa"},
+ {k:"dining",n:"שולחן אוכל ל־6",w:180,d:90,h:75,t:"table"},
+ {k:"bed2",n:"מיטה זוגית",w:160,d:200,h:50,t:"bed"},
+ {k:"bed1",n:"מיטת יחיד",w:90,d:190,h:50,t:"bed"},
+ {k:"crib",n:"עריסה",w:70,d:125,h:90,t:"box"},
+ {k:"wardrobe3",n:"ארון 3 דלתות",w:150,d:60,h:220,t:"box"},
+ {k:"wardrobe4",n:"ארון 4 דלתות",w:200,d:60,h:220,t:"box"},
+ {k:"desk",n:"שולחן עבודה",w:140,d:70,h:75,t:"table"},
+ {k:"tv",n:"מזנון טלוויזיה",w:180,d:45,h:50,t:"box"},
+ {k:"fridge",n:"מקרר",w:70,d:72,h:180,t:"box"},
+ {k:"washer",n:"מכונת כביסה",w:60,d:60,h:85,t:"box"}];
+const catBy=k=>CAT.find(c=>c.k===k);
+
+/* ---------------- three setup ---------------- */
+const cv=$('cv'),main=$('main');
+const R=new THREE.WebGLRenderer({canvas:cv,antialias:true});
+R.setPixelRatio(Math.min(2,window.devicePixelRatio||1));R.shadowMap.enabled=true;R.shadowMap.type=THREE.PCFSoftShadowMap;
+R.outputEncoding=THREE.LinearEncoding;
+const S=new THREE.Scene();S.background=new THREE.Color('#F2F4F6');
+const hemi=new THREE.HemisphereLight(0xFFF6EC,0xBDB1A2,.78);S.add(hemi);
+const sun=new THREE.DirectionalLight(0xFFF3E4,.78);sun.position.set(-8,16,10);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);
+Object.assign(sun.shadow.camera,{left:-15,right:15,top:15,bottom:-15,near:1,far:60});sun.shadow.bias=-.0004;sun.shadow.radius=4;S.add(sun);S.add(sun.target);
+const fill=new THREE.DirectionalLight(0xE8EEF5,.22);fill.position.set(10,8,-6);S.add(fill);
+{const bc=document.createElement('canvas');bc.width=bc.height=512;const g=bc.getContext('2d');const gr=g.createRadialGradient(256,200,40,256,256,380);gr.addColorStop(0,'#F3F0EC');gr.addColorStop(1,'#D9D3CC');g.fillStyle=gr;g.fillRect(0,0,512,512);S.background=new THREE.CanvasTexture(bc)}
+const persp=new THREE.PerspectiveCamera(30,1,.05,300);
+const ortho=new THREE.OrthographicCamera(-10,10,10,-10,.1,200);
+let cam=persp;
+const ctl=new THREE.OrbitControls(persp,cv);ctl.enableDamping=true;ctl.maxPolarAngle=Math.PI*.46;ctl.minDistance=3;ctl.maxDistance=90;
+const ctlO=new THREE.OrbitControls(ortho,cv);ctlO.enableRotate=false;ctlO.enabled=false;ctlO.screenSpacePanning=true;ctlO.minZoom=.3;ctlO.maxZoom=8;
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(200,200),new THREE.ShadowMaterial({opacity:.16}));ground.rotation.x=-Math.PI/2;ground.position.y=-.23;ground.receiveShadow=true;S.add(ground);
+const world=new THREE.Group();S.add(world);
+const furnG=new THREE.Group();S.add(furnG);
+// post: SSAO for the soft "model" look (desktop 3D view only)
+let comp=null,ssao=null;
+try{if(THREE.EffectComposer&&THREE.SSAOPass){comp=new THREE.EffectComposer(R);comp.addPass(new THREE.RenderPass(S,persp));ssao=new THREE.SSAOPass(S,persp,2,2);ssao.kernelRadius=.35;ssao.minDistance=.0006;ssao.maxDistance=.06;comp.addPass(ssao)}}catch(e){comp=null}
+// procedural textures
+function canvasTex(w,h,draw,rep){const c=document.createElement('canvas');c.width=w;c.height=h;draw(c.getContext('2d'),w,h);const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.anisotropy=8;if(rep)t.repeat.set(rep[0],rep[1]);return t}
+let seedT=7;const rT=()=>{seedT=(seedT*16807)%2147483647;return (seedT-1)/2147483646};
+const TEX={
+ wood:canvasTex(1024,1024,(g,w,h)=>{const pw=w/8;for(let i=0;i<8;i++){let y=-rT()*400;while(y<h){const L=260+rT()*420;const tone=rT();
+   g.fillStyle=`rgb(${96+tone*34|0},${66+tone*24|0},${44+tone*16|0})`;g.fillRect(i*pw,y,pw,L);
+   for(let k=0;k<16;k++){g.strokeStyle=`rgba(35,20,10,${.04+rT()*.08})`;g.lineWidth=1+rT()*2;g.beginPath();const x=i*pw+rT()*pw;g.moveTo(x,y);g.bezierCurveTo(x+rT()*8-4,y+L/3,x+rT()*8-4,y+2*L/3,x+rT()*6-3,y+L);g.stroke()}
+   g.fillStyle='rgba(25,15,8,.55)';g.fillRect(i*pw,y,pw,2);y+=L}
+  g.fillStyle='rgba(25,15,8,.55)';g.fillRect(i*pw,0,2,h)}},[.5,.5]),
+ tile:canvasTex(512,512,(g,w,h)=>{g.fillStyle='#DCD7D0';g.fillRect(0,0,w,h);for(let i=0;i<8;i++)for(let j=0;j<8;j++){const t=rT()*10;g.fillStyle=`rgb(${214+t|0},${209+t|0},${202+t|0})`;g.fillRect(i*64+1,j*64+1,62,62)}},[.6,.6]),
+ deck:canvasTex(512,512,(g,w,h)=>{for(let i=0;i<8;i++){const t=rT()*14;g.fillStyle=`rgb(${196+t|0},${180+t|0},${158+t|0})`;g.fillRect(i*64,0,64,h);g.fillStyle='rgba(60,45,30,.35)';g.fillRect(i*64,0,3,h)}},[.7,.7]),
+ stone:canvasTex(512,512,(g,w,h)=>{g.fillStyle='#E4DED6';g.fillRect(0,0,w,h);for(let k=0;k<900;k++){g.fillStyle=`rgba(120,110,100,${rT()*.06})`;g.fillRect(rT()*w,rT()*h,1+rT()*3,1+rT()*3)}},[.5,.5]),
+};
+TEX.wood.repeat.set(.42,.42);
+const M={
+ wall:new THREE.MeshLambertMaterial({color:'#E9DFD2'}),
+ cut:new THREE.MeshLambertMaterial({color:'#F8F4EE'}),
+ slab:new THREE.MeshLambertMaterial({color:'#EEE6DA'}),
+ glass:new THREE.MeshLambertMaterial({color:'#CFE0EA',transparent:true,opacity:.35}),
+ frame:new THREE.MeshLambertMaterial({color:'#2A2A2A'}),
+ curtain:new THREE.MeshLambertMaterial({color:'#F5F2ED'}),
+ swing:new THREE.LineBasicMaterial({color:'#B5A898'}),
+ fWood:new THREE.MeshLambertMaterial({map:TEX.wood}),fTile:new THREE.MeshLambertMaterial({map:TEX.tile}),fDeck:new THREE.MeshLambertMaterial({map:TEX.deck}),fStone:new THREE.MeshLambertMaterial({map:TEX.stone}),
+};
+const FLOOR=n=>/רחצה|מקלחת|שירות|אמבט/.test(n)?M.fTile:/מטבח/.test(n)?M.fStone:/מרפסת/.test(n)?M.fDeck:M.fWood;
+
+
+/* ---------------- geometry helpers ---------------- */
+const len=(a,b)=>Math.hypot(b[0]-a[0],b[1]-a[1]);
+function polyArea(p){let s=0;for(let i=0;i<p.length;i++){const a=p[i],b=p[(i+1)%p.length];s+=a[0]*b[1]-b[0]*a[1]}return Math.abs(s)/2}
+function centroid(p){let x=0,y=0,a=0;for(let i=0;i<p.length;i++){const p0=p[i],p1=p[(i+1)%p.length],c=p0[0]*p1[1]-p1[0]*p0[1];a+=c;x+=(p0[0]+p1[0])*c;y+=(p0[1]+p1[1])*c}if(Math.abs(a)<1e-9)return p[0];return [x/(3*a),y/(3*a)]}
+function pip(pt,p){let c=false;for(let i=0,j=p.length-1;i<p.length;j=i++){const a=p[i],b=p[j];if(((a[1]>pt[1])!==(b[1]>pt[1]))&&(pt[0]<(b[0]-a[0])*(pt[1]-a[1])/(b[1]-a[1])+a[0]))c=!c}return c}
+function segDist(p,a,b){const dx=b[0]-a[0],dy=b[1]-a[1],L=dx*dx+dy*dy;let t=L?((p[0]-a[0])*dx+(p[1]-a[1])*dy)/L:0;t=clamp(t,0,1);return Math.hypot(p[0]-a[0]-t*dx,p[1]-a[1]-t*dy)}
+// oriented rect -> corners
+function rectCorners(cx,cy,w,d,r){const c=Math.cos(r),s=Math.sin(r),hw=w/2,hd=d/2;return [[-hw,-hd],[hw,-hd],[hw,hd],[-hw,hd]].map(([x,y])=>[cx+x*c-y*s,cy+x*s+y*c])}
+function satOverlap(A,B){for(const P of [A,B])for(let i=0;i<P.length;i++){const a=P[i],b=P[(i+1)%P.length];const nx=b[1]-a[1],ny=a[0]-b[0];let a0=1e9,a1=-1e9,b0=1e9,b1=-1e9;for(const p of A){const v=p[0]*nx+p[1]*ny;a0=Math.min(a0,v);a1=Math.max(a1,v)}for(const p of B){const v=p[0]*nx+p[1]*ny;b0=Math.min(b0,v);b1=Math.max(b1,v)}const nl=Math.hypot(nx,ny)||1;if(a1<=b0+1e-3*nl||b1<=a0+1e-3*nl)return false}return true}
+function polyDist(A,B){let m=1e9;for(const p of A)for(let i=0;i<B.length;i++)m=Math.min(m,segDist(p,B[i],B[(i+1)%B.length]));for(const p of B)for(let i=0;i<A.length;i++)m=Math.min(m,segDist(p,A[i],A[(i+1)%A.length]));return m}
+
+/* ---------------- plan model ---------------- */
+let plan=null, solids=[], wallMeshes=[], bounds=null;
+function sanitize(p){
+ const num=v=>{v=Number(v);return isFinite(v)?Math.round(v*1000)/1000:null};
+ const pt=q=>Array.isArray(q)&&q.length>=2&&num(q[0])!==null&&num(q[1])!==null?[num(q[0]),num(q[1])]:null;
+ const walls=(p.walls||[]).map(w=>({a:pt(w.a),b:pt(w.b),t:clamp(num(w.t)||.15,.06,.5),ext:!!w.ext,h:w.h?clamp(num(w.h),.5,H):undefined})).filter(w=>w.a&&w.b&&len(w.a,w.b)>.15).slice(0,400);
+ const rooms=(p.rooms||[]).map(r=>({name:String(r.name||'חדר').slice(0,40),poly:(r.poly||[]).map(pt).filter(Boolean)})).filter(r=>r.poly.length>=3&&polyArea(r.poly)>.4).slice(0,60);
+ const openings=(p.openings||[]).map(o=>({kind:o.kind==='window'?'window':'door',center:pt(o.center),w:clamp(num(o.w)||.9,.4,4)})).filter(o=>o.center).slice(0,200);
+ if(walls.length<3)throw new Error('few_walls');
+ return {name:String(p.name||'התוכנית שלי').slice(0,60),walls,rooms,openings,notes:p.notes?String(p.notes).slice(0,300):''};
+}
+// assign openings to nearest wall -> per-wall intervals
+function attachOpenings(pl){
+ const per=pl.walls.map(()=>[]);let n=0;
+ for(const o of pl.openings){let best=-1,bd=.6;pl.walls.forEach((w,i)=>{const d=segDist(o.center,w.a,w.b);if(d<bd){bd=d;best=i}});if(best<0)continue;
+  const w=pl.walls[best],L=len(w.a,w.b),dx=(w.b[0]-w.a[0])/L,dy=(w.b[1]-w.a[1])/L;const s=(o.center[0]-w.a[0])*dx+(o.center[1]-w.a[1])*dy;
+  const s0=clamp(s-o.w/2,0,L),s1=clamp(s+o.w/2,0,L);if(s1-s0<.3)continue;per[best].push({s0,s1,kind:o.kind,w:o.w,s});n++}
+ per.forEach(l=>l.sort((a,b)=>a.s0-b.s0));return {per,n};
+}
+function clearGroup(g){while(g.children.length){const c=g.children.pop();c.traverse(o=>{if(o.geometry)o.geometry.dispose()})}}
+let wallGroups=[],focus=null;
+function build(pl){
+ plan=pl;clearGroup(world);solids=[];wallMeshes=[];wallGroups=[];focus=null;
+ const {per,n}=attachOpenings(pl);
+ // floor slabs: wood / tile / deck on top, cream slab edge
+ for(const r of pl.rooms){const sh=new THREE.Shape(r.poly.map(([x,y])=>new THREE.Vector2(x,y)));
+  const g=new THREE.ExtrudeGeometry(sh,{depth:.22,bevelEnabled:false});g.rotateX(Math.PI/2);
+  const m=new THREE.Mesh(g,[FLOOR(r.name),M.slab]);m.receiveShadow=true;m.castShadow=true;world.add(m)}
+ const inside=(p)=>pl.rooms.some(r=>pip(p,r.poly));
+ pl.walls.forEach((w,wi)=>{const L=len(w.a,w.b),ang=Math.atan2(w.b[1]-w.a[1],w.b[0]-w.a[0]);const wh=w.h||H;
+  const grp=new THREE.Group();grp.position.set(w.a[0],0,w.a[1]);grp.rotation.y=-ang;world.add(grp);
+  const dx=(w.b[0]-w.a[0])/L,dy=(w.b[1]-w.a[1])/L;const mid=[(w.a[0]+w.b[0])/2,(w.a[1]+w.b[1])/2];
+  wallGroups.push({grp,mid,n:[-dy,dx],L,wh,cur:1});
+  const box=(s0,s1,y0,y1,mat)=>{if(s1-s0<.01||y1-y0<.01)return;const a0=s0===0?-w.t/2:s0,a1=Math.abs(s1-L)<1e-6?L+w.t/2:s1;
+    const g=new THREE.BoxGeometry(a1-a0,y1-y0,w.t);const mats=mat?mat:[M.wall,M.wall,y1>=wh-1e-6?M.cut:M.wall,M.wall,M.wall,M.wall];
+    const m=new THREE.Mesh(g,mats);m.position.set((a0+a1)/2,(y0+y1)/2,0);m.castShadow=m.receiveShadow=true;m.userData.wall=wi;grp.add(m);wallMeshes.push(m);return m};
+  let cur=0;const ops=wh<H?[]:per[wi];
+  for(const o of ops){box(cur,o.s0,0,wh);const ow=o.s1-o.s0,oc=(o.s0+o.s1)/2;
+   if(o.kind==='door'){box(o.s0,o.s1,DOOR_H,wh);
+     if(o.w<1.4){const r=ow,sgn=wi%2?1:-1,pts=[];for(let k=0;k<=16;k++){const a=k/16*Math.PI/2;pts.push(new THREE.Vector3(o.s0+Math.cos(a)*r,.01,Math.sin(a)*r*sgn))}
+      grp.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),M.swing))}
+     else{ // sliding glass door
+      const gl=new THREE.Mesh(new THREE.BoxGeometry(ow,DOOR_H,.03),M.glass);gl.position.set(oc,DOOR_H/2,0);grp.add(gl);
+      for(const x of [o.s0+.03,oc,o.s1-.03]){const f=new THREE.Mesh(new THREE.BoxGeometry(.05,DOOR_H,.06),M.frame);f.position.set(x,DOOR_H/2,0);grp.add(f)}
+      const tp=new THREE.Mesh(new THREE.BoxGeometry(ow,.05,.06),M.frame);tp.position.set(oc,DOOR_H-.02,0);grp.add(tp)}}
+   else{box(o.s0,o.s1,0,SILL);box(o.s0,o.s1,WIN_TOP,wh);
+     const gl=new THREE.Mesh(new THREE.BoxGeometry(ow,WIN_TOP-SILL,.02),M.glass);gl.position.set(oc,(SILL+WIN_TOP)/2,0);grp.add(gl);
+     const fb=(W,Hh,x,y)=>{const f=new THREE.Mesh(new THREE.BoxGeometry(W,Hh,.06),M.frame);f.position.set(x,y,0);grp.add(f)};
+     fb(ow,.05,oc,SILL+.025);fb(ow,.05,oc,WIN_TOP-.025);fb(.05,WIN_TOP-SILL,o.s0+.025,(SILL+WIN_TOP)/2);fb(.05,WIN_TOP-SILL,o.s1-.025,(SILL+WIN_TOP)/2);
+     const nm=Math.max(1,Math.round(ow/.6));for(let k=1;k<nm;k++)fb(.035,WIN_TOP-SILL,o.s0+ow*k/nm,(SILL+WIN_TOP)/2);fb(ow,.035,oc,SILL+(WIN_TOP-SILL)*.62);
+     // curtains on the room side
+     const cx=w.a[0]+dx*oc,cy=w.a[1]+dy*oc;const side=inside([cx-dy*.4,cy+dx*.4])?1:inside([cx+dy*.4,cy-dx*.4])?-1:0;
+     if(side){for(const sx of [-1,1]){const cw=.28;const cg=new THREE.Group();for(let f=0;f<5;f++){const p=new THREE.Mesh(new THREE.BoxGeometry(cw/5+.015,wh-.12,.05),M.curtain);p.position.set(-cw/2+f*cw/5+cw/10,(wh-.12)/2,(f%2?.025:-.01));p.castShadow=true;cg.add(p)}
+       cg.position.set(oc+sx*(ow/2+.05),0,side*(w.t/2+.09));grp.add(cg)}}
+     pushSolid(w,o.s0,o.s1)}
+   cur=o.s1}
+  box(cur,L,0,wh);
+  let c=0;for(const o of ops){if(o.kind==='door'){pushSolid(w,c,o.s0);c=o.s1}}pushSolid(w,c,L);
+ });
+ let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;for(const w of pl.walls)for(const p of [w.a,w.b]){x0=Math.min(x0,p[0]);y0=Math.min(y0,p[1]);x1=Math.max(x1,p[0]);y1=Math.max(y1,p[1])}
+ bounds={x0,y0,x1,y1,cx:(x0+x1)/2,cy:(y0+y1)/2,w:x1-x0,h:y1-y0};
+ sun.target.position.set(bounds.cx,0,bounds.cy);sun.position.set(bounds.cx-9,17,bounds.cy+8);
+ const sp=Math.max(bounds.w,bounds.h)/2+3;Object.assign(sun.shadow.camera,{left:-sp,right:sp,top:sp,bottom:-sp});sun.shadow.camera.updateProjectionMatrix();
+ let area=0;for(const r of pl.rooms)if(!/מרפסת/.test(r.name))area+=polyArea(r.poly);
+ if(!pl.rooms.length)area=bounds.w*bounds.h;
+ $('sArea').textContent=Math.round(area);$('planName').textContent=pl.name;$('planArea').textContent=`${Math.round(area)} M² · ${pl.rooms.length} SPACES`;$('sRooms').textContent=pl.rooms.length;$('sOpen').textContent=n;
+ buildLabels();fillRooms();frameView(true);updateFit();
+}
+// doll-house cutaway: walls between the camera and the focus drop to a low curb
+function cutaway(){const on=mode==='3d';const c=focus||[bounds?bounds.cx:0,bounds?bounds.cy:0];
+ const dxz=new THREE.Vector3();persp.getWorldDirection(dxz);dxz.y=0;dxz.normalize();
+ for(const g of wallGroups){let t=1;if(on&&g.wh>=H){const vx=g.mid[0]-c[0],vz=g.mid[1]-c[1];const toward=-(vx*dxz.x+vz*dxz.z);const face=Math.abs(g.n[0]*dxz.x+g.n[1]*dxz.z);
+   if(toward>.3&&face>.3)t=.05}
+  g.cur+=(t-g.cur)*.25;if(Math.abs(g.cur-t)<.002)g.cur=t;g.grp.scale.y=g.cur}}
+function pushSolid(w,s0,s1){if(s1-s0<.02)return;const L=len(w.a,w.b),dx=(w.b[0]-w.a[0])/L,dy=(w.b[1]-w.a[1])/L;
+ const a=[w.a[0]+dx*s0,w.a[1]+dy*s0],b=[w.a[0]+dx*s1,w.a[1]+dy*s1],nx=-dy*w.t/2,ny=dx*w.t/2;
+ solids.push({a,b,poly:[[a[0]+nx,a[1]+ny],[b[0]+nx,b[1]+ny],[b[0]-nx,b[1]-ny],[a[0]-nx,a[1]-ny]],low:(w.h||H)<1.2})}
+
+/* ---------------- room labels ---------------- */
+let labelEls=[];
+function buildLabels(){const box=$('labels');box.innerHTML='';labelEls=plan.rooms.map(r=>{const el=document.createElement('div');el.className='rl';
+ const b=document.createElement('b');b.textContent=r.name;const i=document.createElement('i');i.textContent=polyArea(r.poly).toFixed(1)+' מ״ר';el.append(b,i);box.appendChild(el);return {el,c:centroid(r.poly)}})}
+const v3=new THREE.Vector3();
+function placeLabels(){const r=main.getBoundingClientRect();const show=mode!=='walk';for(const l of labelEls){v3.set(l.c[0],.1,l.c[1]).project(cam);
+ const vis=show&&v3.z<1&&Math.abs(v3.x)<1.1&&Math.abs(v3.y)<1.1;l.el.hidden=!vis;if(vis)l.el.style.transform=`translate(${(v3.x*.5+.5)*r.width}px,${(-v3.y*.5+.5)*r.height}px) translate(-50%,-50%)`;l.el.style.left='0';l.el.style.top='0'}}
+
+/* ---------------- furniture ---------------- */
+let furn=[],sel=null;
+const FM={fabric:new THREE.MeshLambertMaterial({color:'#E6E1DA'}),fabric2:new THREE.MeshLambertMaterial({color:'#D8D1C7'}),grey:new THREE.MeshLambertMaterial({color:'#A9A6A1'}),
+ dark:new THREE.MeshLambertMaterial({color:'#2B2A28'}),walnut:new THREE.MeshLambertMaterial({color:'#6E4C34'}),oak:new THREE.MeshLambertMaterial({color:'#C7A47E'}),
+ white:new THREE.MeshLambertMaterial({color:'#F6F4F0'}),ceramic:new THREE.MeshLambertMaterial({color:'#FBFBFA'}),metal:new THREE.MeshLambertMaterial({color:'#9C9C98'}),
+ green:new THREE.MeshLambertMaterial({color:'#4E7A3C'}),green2:new THREE.MeshLambertMaterial({color:'#6E9C4F'}),pot:new THREE.MeshLambertMaterial({color:'#E8E2D9'}),
+ rug:new THREE.MeshLambertMaterial({color:'#E9E3D9'}),rug2:new THREE.MeshLambertMaterial({color:'#CFC5B6'}),stone:new THREE.MeshLambertMaterial({color:'#DCD6CE'}),
+ glass:new THREE.MeshLambertMaterial({color:'#D6E6EE',transparent:true,opacity:.3}),lamp:new THREE.MeshBasicMaterial({color:'#FFF1D6'}),screen:new THREE.MeshLambertMaterial({color:'#151515'}),
+ bad:new THREE.MeshLambertMaterial({color:'#E8432E'})};
+const RB=THREE.RoundedBoxGeometry;
+function fbox(g,w,h,d,x,y,z,m,r){const geo=r&&RB?new RB(w,h,d,3,Math.min(r,w/2-.001,h/2-.001,d/2-.001)):new THREE.BoxGeometry(w,h,d);const b=new THREE.Mesh(geo,m);b.position.set(x,y+h/2,z);b.castShadow=b.receiveShadow=true;g.add(b);return b}
+function fcyl(g,r1,r2,h,x,y,z,m,seg=24){const c=new THREE.Mesh(new THREE.CylinderGeometry(r1,r2,h,seg),m);c.position.set(x,y+h/2,z);c.castShadow=c.receiveShadow=true;g.add(c);return c}
+function kindOfItem(it){if(it.kind)return it.kind;const n=it.n||'',t=it.t||'';
+ return /כורס/.test(n)?'armchair':/ספה|ספת/.test(n)?'sofa':/עריסה/.test(n)?'crib':/מיטה|מיטת|מסגרת מיטה/.test(n)?(it.w>=135?'bed_double':'bed_single'):/שולחן קפה/.test(n)?'coffee_table':/שולחן צד/.test(n)?'side_table':/כתיבה|עבודה/.test(n)?'desk':/שולחן/.test(n)?'dining_table':/מזנון|טלוויזיה/.test(n)?'tv_unit':/שידת לילה|שולחן לילה/.test(n)?'nightstand':/ארון|PAX/.test(n)?'wardrobe':/שיד/.test(n)?'dresser':/מדפים|ספרים|כוננית/.test(n)?'shelf':/מקרר/.test(n)?'fridge':/כביסה/.test(n)?'washer':t==='sofa'?'sofa':t==='bed'?'bed_double':t==='table'?'dining_table':'box'}
+function makeMesh(it){const g=new THREE.Group();const w=it.w/100,d=it.d/100,h=(it.h||80)/100;const k=kindOfItem(it);const F=FM;
+ const legs=(x0,z0,hh,m=F.walnut,s=.035)=>{for(const sx of[-1,1])for(const sz of[-1,1])fbox(g,s,hh,s,sx*x0,0,sz*z0,m)};
+ if(k==='sofa'){const sh=.42,ah=.62,bd=.22,aw=Math.min(.22,w*.12);legs(w/2-.08,d/2-.08,.06,F.dark,.04);
+  fbox(g,w,.2,d,0,.06,0,F.fabric,.05);fbox(g,w-.04,.6,bd,0,.18,-d/2+bd/2,F.fabric,.08);fbox(g,aw,ah-.06,d,-w/2+aw/2,.06,0,F.fabric,.07);fbox(g,aw,ah-.06,d,w/2-aw/2,.06,0,F.fabric,.07);
+  const n=w>1.9?3:2,cw=(w-2*aw)/n;for(let i=0;i<n;i++){fbox(g,cw-.02,.16,d-bd-.04,-w/2+aw+cw*(i+.5),.26,bd/2-.0,F.fabric2,.06);fbox(g,cw-.04,.36,.16,-w/2+aw+cw*(i+.5),.42,-d/2+bd+.06,F.fabric2,.07)}
+  fbox(g,.36,.34,.12,-w/2+aw+.3,.44,-d/2+bd+.18,F.grey,.05);if(w>1.6)fbox(g,.36,.34,.12,w/2-aw-.3,.44,-d/2+bd+.18,F.dark,.05)}
+ else if(k==='armchair'){legs(w/2-.06,d/2-.06,.22,F.walnut,.035);fbox(g,w-.06,.05,d-.06,0,.2,0,F.walnut,.01);fbox(g,w-.12,.1,d-.16,0,.24,.03,F.dark,.04);
+  const b=fbox(g,w-.12,.5,.09,0,.34,-d/2+.14,F.dark,.04);b.rotation.x=-.25;for(const sx of[-1,1])fbox(g,.04,.08,d-.04,sx*(w/2-.04),.42,0,F.walnut,.01)}
+ else if(k==='bed_double'||k==='bed_single'||(it.t==='bed'&&k!=='crib')){fbox(g,w,.28,d,0,.04,0,F.oak,.02);legs(w/2-.06,d/2-.06,.04,F.oak,.05);fbox(g,w-.06,.18,d-.08,0,.32,.02,F.white,.06);
+  fbox(g,w-.02,.16,d*.62,0,.4,d*.17,F.fabric,.05);fbox(g,w,Math.max(.9,h)-.0,.08,0,0,-d/2+.04,F.fabric2,.03);
+  const np=w>1.2?2:1;for(let i=0;i<np;i++)fbox(g,np===2?w*.4:w*.7,.12,.38,np===2?(i?1:-1)*w*.23:0,.5,-d/2+.3,F.white,.05)}
+ else if(k==='crib'){fbox(g,w,.06,d,0,.3,0,F.white);fbox(g,w-.04,.1,d-.04,0,.36,0,F.fabric);for(const sx of[-1,1])for(let i=0;i<=8;i++){fbox(g,.02,.6,.02,-w/2+i*w/8,.3,sx*(d/2-.01),F.white)}for(const sz of[-1,1])fbox(g,w,.9,.03,0,0,sz*0,F.white).visible=false;legs(w/2-.02,d/2-.02,.3,F.white,.04);for(const sx of[-1,1])fbox(g,.03,.9,d,sx*(w/2-.015),0,0,F.white)}
+ else if(k==='coffee_table'||k==='side_table'){if(it.round||k==='side_table'&&Math.abs(w-d)<.05){fcyl(g,w/2,w/2,.04,0,h-.04,0,F.walnut,40);fcyl(g,.03,.03,h-.04,0,0,0,F.dark,10);fcyl(g,w/4,w/4,.02,0,0,0,F.dark,24)}
+  else{fbox(g,w,.05,d,0,h-.05,0,F.walnut,.015);fbox(g,w-.08,.03,d-.08,0,.1,0,F.walnut,.01);legs(w/2-.04,d/2-.04,h-.05,F.walnut,.04)}}
+ else if(k==='dining_table'||it.t==='table'&&k!=='desk'){if(it.round){fcyl(g,w/2,w/2,.04,0,h-.04,0,F.oak,48);fcyl(g,.05,.12,h-.04,0,0,0,F.dark,16)}else{fbox(g,w,.045,d,0,h-.045,0,F.oak,.01);legs(w/2-.07,d/2-.07,h-.045,F.dark,.045)}
+  // chairs around
+  const ch=(x,z,ry)=>{const c=new THREE.Group();fbox(c,.44,.04,.44,0,.44,0,F.oak,.01);for(const sx of[-1,1])for(const sz of[-1,1])fbox(c,.03,.44,.03,sx*.19,0,sz*.19,F.dark);fbox(c,.44,.36,.03,0,.48,-.21,F.oak,.01);c.position.set(x,0,z);c.rotation.y=ry;g.add(c)};
+  if(it.round){const n=4;for(let i=0;i<n;i++){const a=i/n*Math.PI*2+Math.PI/4;ch(Math.cos(a)*(w/2+.12),Math.sin(a)*(w/2+.12),-a-Math.PI/2)}}
+  else{const n=Math.max(1,Math.floor(w/.6));for(let i=0;i<n;i++){const x=-w/2+w*(i+.5)/n;ch(x,-d/2-.1,0);ch(x,d/2+.1,Math.PI)}}}
+ else if(k==='desk'){fbox(g,w,.035,d,0,h-.035,0,F.oak,.01);fbox(g,.04,h-.035,d-.04,-w/2+.02,0,0,F.white);fbox(g,.4,h-.035,d-.06,w/2-.2,0,0,F.white,.01);
+  const c=new THREE.Group();fbox(c,.48,.06,.46,0,.44,0,F.dark,.03);fbox(c,.46,.5,.06,0,.5,-.21,F.dark,.03);fcyl(c,.03,.03,.44,0,0,0,F.metal,8);c.position.set(-w*.15,0,d/2+.2);c.rotation.y=Math.PI;g.add(c)}
+ else if(k==='tv_unit'){fbox(g,w,h-.08,d,0,.08,0,F.walnut,.01);legs(w/2-.06,d/2-.06,.08,F.dark,.03);const n=Math.max(2,Math.round(w/.6));for(let i=1;i<n;i++)fbox(g,.006,h-.12,.005,-w/2+w*i/n,.1,d/2,F.dark);
+  if(w>1.1){const tw=Math.min(1.4,w*.75);fbox(g,tw,tw*.56,.04,0,h+.06,-d/2+.12,F.screen,.01);fbox(g,.3,.05,.18,0,h,-d/2+.12,F.dark)}}
+ else if(k==='wardrobe'){fbox(g,w,h,d,0,0,0,F.white,.01);const n=Math.max(1,Math.round(w/.5));for(let i=1;i<n;i++)fbox(g,.006,h-.04,.005,-w/2+w*i/n,.02,d/2,F.grey);for(let i=0;i<n;i++)fbox(g,.012,.3,.02,-w/2+w*(i+.5)/n+(i%2?-.08:.08),h*.45,d/2+.005,F.metal)}
+ else if(k==='dresser'||k==='nightstand'){fbox(g,w,h-.06,d,0,.06,0,k==='nightstand'?F.oak:F.walnut,.01);legs(w/2-.04,d/2-.04,.06,F.dark,.03);const n=k==='nightstand'?2:3;for(let i=1;i<n;i++)fbox(g,w-.02,.006,.005,0,.06+(h-.06)*i/n,d/2,F.dark);
+  if(k==='nightstand'){fcyl(g,.06,.08,.06,0,h,0,F.ceramic,16);const s=new THREE.Mesh(new THREE.SphereGeometry(.12,20,12),F.lamp);s.position.set(0,h+.2,0);g.add(s)}}
+ else if(k==='shelf'){const n=Math.max(2,Math.round(h/.38));fbox(g,.03,h,d,-w/2+.015,0,0,F.oak);fbox(g,.03,h,d,w/2-.015,0,0,F.oak);for(let i=0;i<=n;i++)fbox(g,w,.025,d,0,i*(h-.025)/n,0,F.oak);
+  for(let i=0;i<n;i++)for(let j=0;j<3;j++)if((i+j)%2)fbox(g,.04+((i*7+j)%3)*.02,.22,d*.7,-w/2+.15+j*(w-.3)/2,i*(h-.025)/n+.025,0,[F.dark,F.fabric2,F.grey][(i+j)%3])}
+ else if(k==='rug'){fbox(g,w,.012,d,0,0,0,F.rug,.004);fbox(g,w-.16,.014,d-.16,0,0,0,F.rug2,.004).scale.set(1,1,1);fbox(g,w-.24,.016,d-.24,0,0,0,F.rug,.004)}
+ else if(k==='plant'){fcyl(g,w*.32,w*.24,.32,0,0,0,F.pot,20);const n=9;for(let i=0;i<n;i++){const l=new THREE.Mesh(new THREE.SphereGeometry(.1,10,8),i%2?F.green:F.green2);const a=i/n*Math.PI*2;l.scale.set(.55,2.2,.18);l.position.set(Math.cos(a)*.12,.62+(i%3)*.12,Math.sin(a)*.12);l.rotation.set(Math.sin(a)*.6,a,Math.cos(a)*.6);l.castShadow=true;g.add(l)}fcyl(g,.012,.012,.4,0,.3,0,F.green,6)}
+ else if(k==='floor_lamp'){for(let i=0;i<3;i++){const L=new THREE.Mesh(new THREE.CylinderGeometry(.008,.008,1.3,6),F.dark);const a=i/3*Math.PI*2;L.position.set(Math.cos(a)*.1,.65,Math.sin(a)*.1);L.rotation.set(Math.sin(a)*.15,0,-Math.cos(a)*.15);g.add(L)}const s=new THREE.Mesh(new THREE.SphereGeometry(.22,24,16),F.lamp);s.scale.y=.85;s.position.y=1.38;g.add(s)}
+ else if(k==='toilet'){fbox(g,w*.9,.38,d*.75,0,0,d*.08,F.ceramic,.12);fbox(g,w,.12,.2,0,.36,-d/2+.1,F.ceramic,.04);fbox(g,w*.96,.6,.08,0,.5,-d/2+.04,F.white,.02)}
+ else if(k==='sink'){fbox(g,w,.5,d,0,.3,0,F.walnut,.01);fbox(g,w,.04,d,0,.8,0,F.ceramic,.01);fbox(g,w*.5,.04,d*.5,0,.81,.02,F.stone,.02);fcyl(g,.012,.012,.18,0,.84,-d/2+.08,F.metal,8);fbox(g,w*.9,.7,.02,0,1.05,-d/2+.01,F.glass)}
+ else if(k==='shower'){fbox(g,w,.05,d,0,0,0,F.ceramic,.01);fbox(g,w,2,.012,0,.05,d/2,F.glass);fbox(g,.012,2,d*.5,w/2,.05,d/4,F.glass);fcyl(g,.1,.1,.02,-w/4,1.95,-d/2+.15,F.metal,16);fbox(g,.02,.02,d*.5,-w/4,1.96,-d/2+.25,F.metal)}
+ else if(k==='bathtub'){fbox(g,w,.55,d,0,0,0,F.ceramic,.04);fbox(g,w-.16,.06,d-.16,0,.5,0,F.stone,.08)}
+ else if(k==='kitchen_counter'){fbox(g,w,.82,d,0,.08,0,F.white,.005);fbox(g,w,.08,d-.06,0,0,-.03,F.dark);fbox(g,w+.01,.04,d+.02,0,.9,.01,F.stone,.005);
+  const n=Math.max(1,Math.round(w/.6));for(let i=1;i<n;i++)fbox(g,.006,.78,.005,-w/2+w*i/n,.1,d/2,F.grey);
+  fbox(g,w,.7,.35,0,1.5,-d/2+.175,F.white,.005);for(let i=1;i<n;i++)fbox(g,.006,.68,.005,-w/2+w*i/n,1.51,-d/2+.35,F.grey);
+  if(w>1.2){fbox(g,.6,.01,.5,w/2-.45,.94,.02,F.screen);fbox(g,.5,.03,.38,-w/2+.45,.92,.02,F.metal,.02);fcyl(g,.012,.012,.25,-w/2+.45,.94,-.2,F.metal,8)}}
+ else if(k==='fridge'){fbox(g,w,1.85,d,0,0,0,F.metal,.02);fbox(g,.02,.5,.03,w/2-.08,1.1,d/2,F.dark);fbox(g,w-.02,.006,.005,0,1.25,d/2+.001,F.dark)}
+ else if(k==='washer'){fbox(g,w,.85,d,0,0,0,F.white,.02);const dr=new THREE.Mesh(new THREE.CylinderGeometry(.17,.17,.03,24),F.dark);dr.rotation.x=Math.PI/2;dr.position.set(0,.42,d/2);g.add(dr)}
+ else{fbox(g,w,h,d,0,0,0,F.fabric2,.01)}
+ const outline=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(w+.04,Math.max(h,.05)+.04,d+.04)),new THREE.LineBasicMaterial({color:'#E8432E'}));outline.position.y=Math.max(h,.05)/2;outline.visible=false;g.add(outline);
+ g.userData={outline};return g}
+function addFurn(it,x,y,r=0){const o={...it,x,y,r,id:Math.random().toString(36).slice(2)};o.kind=kindOfItem(o);o.mesh=makeMesh(o);o.mesh.userData.f=o;furnG.add(o.mesh);furn.push(o);place(o);return o}
+function rebuildMesh(o){furnG.remove(o.mesh);o.mesh=makeMesh(o);o.mesh.userData.f=o;furnG.add(o.mesh);place(o)}
+const SOFT=new Set(['rug']);
+function place(o){o.mesh.position.set(o.x,0,o.y);o.mesh.rotation.y=-o.r}
+function corners(o){return rectCorners(o.x,o.y,o.w/100,o.d/100,o.r)}
+function fitOf(o){const A=corners(o);if(SOFT.has(o.kind))return {ok:true,clear:1};
+ const inside=A.every(p=>plan.rooms.some(r=>pip(p,r.poly)))||(!plan.rooms.length);
+ for(const s of solids){if(!s)continue;if(satOverlap(A,s.poly))return {ok:false,why:'נוגע בקיר'}}
+ for(const f of furn){if(f===o||SOFT.has(f.kind))continue;if(satOverlap(A,corners(f)))return {ok:false,why:'מתנגש ב'+f.n}}
+ if(!inside)return {ok:false,why:'בולט מחוץ לחדר'};
+ let m=1e9;for(const s of solids)if(s)m=Math.min(m,polyDist(A,s.poly));for(const f of furn)if(f!==o&&!SOFT.has(f.kind))m=Math.min(m,polyDist(A,corners(f)));
+ return {ok:true,clear:m}}
+
+function tint(o,bad){o.mesh.traverse(c=>{if(c.isMesh){if(bad){if(!c.userData.m0)c.userData.m0=c.material;c.material=FM.bad}else if(c.userData.m0){c.material=c.userData.m0;c.userData.m0=null}}})}
+function updateFit(){if(!plan)return;let any=false;for(const o of furn){const f=fitOf(o);o.fit=f;tint(o,!f.ok);if(!f.ok)any=true}showSel()}
+function showSel(){const box=$('selBox');furn.forEach(o=>o.mesh.userData.outline.visible=o===sel);if(!sel){box.hidden=true;$('fitbar').hidden=true;return}
+ box.hidden=false;$('selName').textContent=`${sel.n} · ${sel.w}×${sel.d} ס״מ`;const f=sel.fit||{ok:true,clear:1};const chip=$('selChip');
+ if(!f.ok){chip.className='chip bad';chip.textContent='לא נכנס';$('selInfo').textContent=f.why+'. גררו למקום אחר או סובבו.'}
+ else if(f.clear<.6){chip.className='chip warn';chip.textContent='נכנס, צפוף';$('selInfo').textContent=`מרווח ${Math.round(f.clear*100)} ס״מ בלבד. למעבר נוח צריך בערך 60–80 ס״מ.`}
+ else{chip.className='chip ok';chip.textContent='נכנס';$('selInfo').textContent=`מרווח מינימלי ${f.clear>3?'גדול':Math.round(f.clear*100)+' ס״מ'} מהקיר או מהרהיט הקרוב.`}
+ const fb=$('fitbar');fb.hidden=false;fb.textContent=`${sel.n}: ${chip.textContent}${f.ok&&f.clear<3?` · מרווח ${Math.round(f.clear*100)} ס״מ`:''}`;fb.style.background=!f.ok?'var(--bad)':f.clear<.6?'var(--warn)':'var(--ink)'}
+function roomCenter(pref){const r=plan.rooms.find(r=>pref.test(r.name))||plan.rooms.slice().sort((a,b)=>polyArea(b.poly)-polyArea(a.poly))[0];return r?centroid(r.poly):[bounds.cx,bounds.cy]}
+function autoAdd(it,pref){const rooms=plan.rooms.filter(r=>pref.test(r.name)).concat(plan.rooms.filter(r=>!pref.test(r.name)&&!/מרפסת|רחצה|מקלחת|שירות/.test(r.name)));
+ const c0=roomCenter(pref);const o=addFurn(it,c0[0],c0[1],0);
+ for(const r of rooms){const xs=r.poly.map(p=>p[0]),ys=r.poly.map(p=>p[1]);const c=centroid(r.poly);const pts=[];
+  for(let x=Math.min(...xs);x<=Math.max(...xs);x+=.1)for(let y=Math.min(...ys);y<=Math.max(...ys);y+=.1)if(pip([x,y],r.poly))pts.push([x,y]);
+  pts.sort((a,b)=>Math.hypot(a[0]-c[0],a[1]-c[1])-Math.hypot(b[0]-c[0],b[1]-c[1]));
+  for(const p of pts)for(const rr of [0,Math.PI/2]){o.x=p[0];o.y=p[1];o.r=rr;const f=fitOf(o);if(f.ok&&f.clear>.15){place(o);return o}}}
+ o.x=c0[0];o.y=c0[1];o.r=0;place(o);return o}
+$('cat').innerHTML='';CAT.forEach(it=>{const b=document.createElement('button');b.type='button';b.innerHTML='<span></span><small></small>';b.firstChild.textContent=it.n;b.lastChild.textContent=`${it.w}×${it.d}`;
+ b.onclick=()=>{if(!plan)return;sel=autoAdd(it,it.t==='bed'||/ארון|עריסה/.test(it.n)?/שינה|הורים|ילדים|ממ/:/סלון/);updateFit();if(mode==='walk')setMode('3d')};$('cat').appendChild(b)});
+$('customF').onsubmit=e=>{e.preventDefault();const w=+$('cW').value,d=+$('cD').value;if(!(w>=20&&d>=20)||!plan)return;const c=roomCenter(/סלון/);
+ sel=autoAdd({k:'custom',n:$('cName').value.trim()||'הרהיט שלי',w,d,h:80,t:'box'},/סלון/);updateFit();save()};
+$('rotBtn').onclick=()=>{if(sel){sel.r=(sel.r+Math.PI/2)%(Math.PI*2);place(sel);updateFit();save()}};
+$('delBtn').onclick=()=>{if(sel){furnG.remove(sel.mesh);furn=furn.filter(f=>f!==sel);sel=null;updateFit();save()}};
+
+/* ---------------- interaction: select & drag ---------------- */
+const ray=new THREE.Raycaster(),ndc=new THREE.Vector2(),floorP=new THREE.Plane(new THREE.Vector3(0,1,0),0),hit=new THREE.Vector3();
+let drag=null;
+function setNdc(e){const r=cv.getBoundingClientRect();ndc.set(((e.clientX-r.left)/r.width)*2-1,-((e.clientY-r.top)/r.height)*2+1);ray.setFromCamera(ndc,cam)}
+cv.addEventListener('pointerdown',e=>{if(mode==='walk')return;setNdc(e);
+ if(calib.on){const h=ray.intersectObjects(wallMeshes,false)[0];if(h)pickCalib(h.object.userData.wall);return}
+ const hits=ray.intersectObjects(furnG.children,true);if(hits.length){let o=hits[0].object;while(o&&!o.userData.f)o=o.parent;if(o){sel=o.userData.f;ray.ray.intersectPlane(floorP,hit);drag={o:sel,dx:sel.x-hit.x,dy:sel.y-hit.z,id:e.pointerId};cv.setPointerCapture(e.pointerId);ctl.enabled=false;ctlO.enabled=false;showSel();return}}
+ sel=null;showSel()});
+cv.addEventListener('pointermove',e=>{if(!drag)return;setNdc(e);if(ray.ray.intersectPlane(floorP,hit)){drag.o.x=Math.round((hit.x+drag.dx)*50)/50;drag.o.y=Math.round((hit.z+drag.dy)*50)/50;place(drag.o);const f=fitOf(drag.o);drag.o.fit=f;tint(drag.o,!f.ok);showSel()}});
+const endDrag=()=>{if(!drag)return;drag=null;ctl.enabled=mode==='3d';ctlO.enabled=mode==='plan';updateFit();save()};
+cv.addEventListener('pointerup',endDrag);cv.addEventListener('pointercancel',endDrag);
+window.addEventListener('keydown',e=>{if(e.target.closest('input'))return;if((e.key==='r'||e.key==='R'||e.key==='ר')&&sel){$('rotBtn').click()}if((e.key==='Delete'||e.key==='Backspace')&&sel){$('delBtn').click()}});
+
+/* ---------------- calibration ---------------- */
+const calib={on:false,wall:-1};
+$('calibBtn').onclick=()=>{if(!plan)return;calib.on=true;calib.wall=-1;$('calib').hidden=false;$('calibT').textContent='לחצו על קיר שאתם יודעים את האורך שלו';$('calibI').hidden=$('calibOk').hidden=true;setMode('plan')};
+$('calibX').onclick=()=>{calib.on=false;$('calib').hidden=true};
+function pickCalib(wi){calib.wall=wi;const w=plan.walls[wi];$('calibT').textContent=`הקיר שבחרתם: ${Math.round(len(w.a,w.b)*100)} ס״מ. האורך האמיתי:`;$('calibI').hidden=$('calibOk').hidden=false;$('calibI').value='';$('calibI').focus()}
+$('calibOk').onclick=()=>{const v=+$('calibI').value;if(!(v>20)||calib.wall<0)return;const w=plan.walls[calib.wall];const f=(v/100)/len(w.a,w.b);
+ const sc=p=>[p[0]*f,p[1]*f];const np={...plan,walls:plan.walls.map(w=>({...w,a:sc(w.a),b:sc(w.b)})),rooms:plan.rooms.map(r=>({...r,poly:r.poly.map(sc)})),openings:plan.openings.map(o=>({...o,center:sc(o.center),w:o.w*f}))};
+ furn.forEach(o=>{o.x*=f;o.y*=f;place(o)});build(np);calib.on=false;$('calib').hidden=true;setStatus('קנה המידה עודכן.');save()};
+
+/* ---------------- views ---------------- */
+let mode='3d';const walk={x:0,y:0,yaw:0,pitch:0,keys:{}};
+function setMode(m){mode=m;['vPlan','v3d','vWalk'].forEach(id=>$(id).setAttribute('aria-pressed',String({vPlan:'plan',v3d:'3d',vWalk:'walk'}[id]===m)));
+ cam=m==='plan'?ortho:persp;ctl.enabled=m==='3d';ctlO.enabled=m==='plan';$('pad').hidden=m!=='walk';
+ $('hint').textContent=m==='plan'?'גררו כדי להזיז את התוכנית · גלגלת לזום · לחיצה על רהיט כדי להזיז':m==='walk'?'גררו כדי להסתכל מסביב · חיצים או W/A/S/D כדי ללכת · נכנסים בדלתות':'גררו כדי לסובב · גלגלת לזום · לחיצה על רהיט כדי להזיז';
+ if(m==='walk'){const rv=+$('roomSel').value;const c=rv>=0&&plan.rooms[rv]?centroid(plan.rooms[rv].poly):roomCenter(/סלון/);walk.x=c[0];walk.y=c[1];walk.yaw=Math.PI;walk.pitch=0;sel=null;showSel()}
+ frameView(false)}
+$('vPlan').onclick=()=>setMode('plan');$('v3d').onclick=()=>setMode('3d');$('vWalk').onclick=()=>setMode('walk');
+function frameView(reset){if(!bounds)return;resize();const span=Math.max(bounds.w,bounds.h)+3;
+ if(mode==='plan'){const r=main.getBoundingClientRect(),asp=r.width/r.height;const hh=asp>bounds.w/bounds.h?(bounds.h+2.5)/2:(bounds.w+2.5)/2/asp;
+  ortho.left=-hh*asp;ortho.right=hh*asp;ortho.top=hh;ortho.bottom=-hh;ortho.position.set(bounds.cx,40,bounds.cy+.001);ortho.up.set(0,0,-1);ortho.zoom=1;ortho.lookAt(bounds.cx,0,bounds.cy);ortho.updateProjectionMatrix();ctlO.target.set(bounds.cx,0,bounds.cy);ctlO.update()}
+ else if(mode==='3d'){persp.fov=30;persp.updateProjectionMatrix();if(focus&&!reset){return}ctl.target.set(bounds.cx,.4,bounds.cy);const r=main.getBoundingClientRect();const k=r.width<r.height?1.7:1.15;
+  persp.position.set(bounds.cx+span*.95*k,span*1.15*k,bounds.cy+span*.95*k);ctl.update()}
+ else if(mode==='walk'){persp.fov=70;persp.updateProjectionMatrix()}}
+// walk controls
+let look=null;
+cv.addEventListener('pointerdown',e=>{if(mode!=='walk')return;look={x:e.clientX,y:e.clientY};cv.setPointerCapture(e.pointerId)});
+cv.addEventListener('pointermove',e=>{if(mode!=='walk'||!look)return;walk.yaw-=(e.clientX-look.x)*.005;walk.pitch=clamp(walk.pitch-(e.clientY-look.y)*.004,-1,1);look={x:e.clientX,y:e.clientY}});
+cv.addEventListener('pointerup',()=>look=null);
+const KEYMAP={ArrowUp:'f',KeyW:'f',ArrowDown:'b',KeyS:'b',ArrowLeft:'l',KeyA:'l',ArrowRight:'r',KeyD:'r'};
+window.addEventListener('keydown',e=>{if(mode==='walk'&&KEYMAP[e.code]&&!e.target.closest('input')){walk.keys[KEYMAP[e.code]]=1;e.preventDefault()}});
+window.addEventListener('keyup',e=>{if(KEYMAP[e.code])walk.keys[KEYMAP[e.code]]=0});
+document.querySelectorAll('#pad button[data-k]').forEach(b=>{const k=b.dataset.k;b.addEventListener('pointerdown',e=>{walk.keys[k]=1;b.setPointerCapture(e.pointerId)});['pointerup','pointercancel','pointerleave'].forEach(t=>b.addEventListener(t,()=>walk.keys[k]=0))});
+function walkBlocked(x,y){for(const s of solids){if(!s)continue;if(segDist([x,y],s.a,s.b)<.28)return true}for(const f of furn){if(f.h>=40&&satOverlap(rectCorners(x,y,.3,.3,0),corners(f)))return true}return false}
+function stepWalk(dt){const sp=1.6*dt,rt=1.8*dt,k=walk.keys;if(k.l)walk.yaw+=rt;if(k.r)walk.yaw-=rt;const mv=(k.f?1:0)-(k.b?1:0);
+ if(mv){const nx=walk.x-Math.sin(walk.yaw)*sp*mv,ny=walk.y-Math.cos(walk.yaw)*sp*mv;if(!walkBlocked(nx,walk.y))walk.x=nx;if(!walkBlocked(walk.x,ny))walk.y=ny}
+ persp.position.set(walk.x,1.6,walk.y);const dir=new THREE.Vector3(-Math.sin(walk.yaw)*Math.cos(walk.pitch),Math.sin(walk.pitch),-Math.cos(walk.yaw)*Math.cos(walk.pitch));persp.up.set(0,1,0);persp.lookAt(persp.position.clone().add(dir))}
+
+/* ---------------- loop ---------------- */
+function applyOffset(r){const desk=r.width>760;const sh=document.querySelector('.sheet').getBoundingClientRect();
+ const ox=desk?(r.width-sh.left+16)/2:0, oy=desk?0:(r.height-sh.top+8)/2;
+ for(const c of [persp,ortho])c.setViewOffset(r.width,r.height,ox,oy,r.width,r.height)}
+function resize(){const r=main.getBoundingClientRect();if(!r.width||!r.height)return;R.setSize(r.width,r.height,false);if(comp){comp.setPixelRatio(R.getPixelRatio());comp.setSize(r.width,r.height)}persp.aspect=r.width/r.height;persp.updateProjectionMatrix();
+ if(mode==='plan'&&bounds){const hh=ortho.top;ortho.left=-hh*persp.aspect;ortho.right=hh*persp.aspect;ortho.updateProjectionMatrix()}applyOffset(r)}
+new ResizeObserver(()=>{resize()}).observe(main);
+let last=performance.now();
+function loop(now){const dt=Math.min(.05,(now-last)/1000);last=now;if(mode==='walk')stepWalk(dt);else if(mode==='3d')ctl.update();else ctlO.update();
+ // wall cutaway in 3D: lower walls nearest the camera so the interior reads
+ if(bounds)cutaway();if(comp&&mode==='3d'&&hiQ())comp.render();else R.render(S,cam);placeLabels();requestAnimationFrame(loop)}
+function hiQ(){return main.clientWidth>760&&!drag}
+requestAnimationFrame(loop);
+
+/* ---------------- persistence ---------------- */
+function save(){if(!plan)return;ls.set('tp_state2',{plan:{name:plan.name,walls:plan.walls,rooms:plan.rooms,openings:plan.openings,notes:plan.notes},furn:furn.map(f=>({k:f.k,kind:f.kind,n:f.n,w:f.w,d:f.d,h:f.h,t:f.t,round:f.round,url:f.url,x:f.x,y:f.y,r:f.r}))})}
+function loadState(st){clearFurn();build(st.plan);for(const f of st.furn||[])addFurn(f,f.x,f.y,f.r);updateFit()}
+function clearFurn(){while(furnG.children.length)furnG.remove(furnG.children[0]);furn=[];sel=null}
+function loadDemo(){clearFurn();build(sanitize(DEMO));for(const f of DEMO_FURN)addFurn({k:'demo',...f},f.x,f.y,f.r);updateFit();setStatus('דירת דוגמה. העלו תוכנית משלכם כדי לראות אותה בתלת־ממד.');save()}
+$('demo').onclick=()=>{loadDemo();setMode('3d')};
+
+/* ---------------- IKEA catalog ---------------- */
+const IKEA=[["PAX","2 מסגרות ארון",200,58,236,1090,"pax-2-wardrobe-frames-grey-beige-s59494820",0],["SLÄKT","אביזר למיטה",120,120,74,295,"slaekt-bed-accessory-house-shaped-grey-20593878",1],["MALM","ארגז אחסון למסגרת מיטה גבוהה",100,62,29,395,"malm-bed-storage-box-for-high-bed-frame-white-40249541",0],["BESTÅ","ארון",60,40,202,625,"besta-cabinet-unit-white-s39284998",0],["GULLABERG","ארון",128,64,201,2195,"gullaberg-wardrobe-white-80609904",0],["GURSKEN","ארון",49,55,186,395,"gursken-wardrobe-light-beige-20486326",0],["IDANÄS","ארון",121,59,211,2245,"idanaes-wardrobe-white-60458835",0],["IVAR","ארון",80,30,83,495,"ivar-cabinet-pine-40033763",0],["PAX","ארון",175,58,236,2270,"pax-wardrobe-white-s69502631",0],["PAX / BERGSBO","ארון",100,60,236,1490,"pax-bergsbo-wardrobe-white-white-s59502655",0],["PAX / FORSAND","ארון",250,60,236,3645,"pax-forsand-wardrobe-white-white-s49502726",0],["PAX / HASVIK","ארון",200,66,236,2890,"pax-hasvik-wardrobe-white-white-s19503162",0],["PAX / MEHAMN","ארון",250,66,236,5345,"pax-mehamn-wardrobe-white-double-sided-white-s19502351",0],["PAX / VIKANES","ארון",175,60,236,3200,"pax-vikanes-wardrobe-white-white-s99502644",0],["RÅDMANSÖ","ארון",118,64,190,1695,"radmansoe-wardrobe-brown-walnut-effect-70593606",0],["SMÅSTAD / PLATSA","ארון",60,57,123,880,"smastad-platsa-wardrobe-white-white-with-3-shelves-s49483313",0],["VISTHUS","ארון",63,59,216,1195,"visthus-wardrobe-grey-white-70493447",0],["VUKU","ארון",74,51,149,95,"vuku-wardrobe-white-80331973",0],["EKET","ארון 4 תאים",70,35,70,325,"eket-cabinet-with-4-compartments-white-60333954",0],["LASTARE","ארון בגדים",80,42,201,605,"lastare-wardrobe-combination-white-s89602899",0],["PAX","ארון בגדים",375,58,201,5000,"pax-wardrobe-combination-white-s59502542",0],["PAX / ÅHEIM","ארון בגדים",50,38,201,1321,"pax-aheim-wardrobe-combination-white-mirror-glass-s29590333",0],["PAX / BERGSBO","ארון בגדים",100,60,236,1235,"pax-bergsbo-wardrobe-combination-white-white-s59552787",0],["PAX / FARDAL","ארון בגדים",170,60,201,3215,"pax-fardal-wardrobe-combination-white-high-gloss-white-white-s89606878",0],["PAX / FORSAND","ארון בגדים",200,60,236,3165,"pax-forsand-wardrobe-combination-grey-beige-grey-beige-s19581471",0],["PAX / FORSAND/ÅHEIM","ארון בגדים",150,60,236,2430,"pax-forsand-aheim-wardrobe-combination-white-mirror-glass-s49553650",0],["PAX / FYRUDDEN","ארון בגדים",250,60,236,6840,"pax-fyrudden-wardrobe-combination-white-blue-s29581946",0],["PAX / GRIMO","ארון בגדים",150,60,201,1955,"pax-grimo-wardrobe-combination-white-white-s19482169",0],["PAX / GULLABERG","ארון בגדים",150,60,236,3370,"pax-gullaberg-wardrobe-combination-white-white-s99563091",0],["PAX / HASVIK","ארון בגדים",150,43,236,2645,"pax-hasvik-wardrobe-combination-white-white-s89500297",0],["PAX / KAMMARTORP","ארון בגדים",100,38,236,2170,"pax-kammartorp-wardrobe-combination-white-mirror-glass-grey-s89613869",0],["PAX / KAMMARTORP/FLISBERGET","ארון בגדים",100,60,236,2320,"pax-kammartorp-flisberget-wardrobe-combination-white-mirror-glass-grey-light-beige-s59572498",0],["PAX / MEHAMN","ארון בגדים",200,43,236,3980,"pax-mehamn-wardrobe-combination-white-double-sided-white-white-stained-oak-effect-s29502614",0],["PAX / STORKLINTA","ארון בגדים",250,58,201,4205,"pax-storklinta-wardrobe-combination-grey-beige-oak-effect-s99562893",0],["PAX / TONSTAD","ארון בגדים",300,60,236,9240,"pax-tonstad-wardrobe-combination-white-oak-veneer-glass-s09566715",0],["PAX / TYSSEDAL","ארון בגדים",150,58,201,2535,"pax-tyssedal-wardrobe-combination-grey-beige-grey-beige-s49603184",0],["PAX / VIKANES","ארון בגדים",220,60,201,4915,"pax-vikanes-wardrobe-combination-white-white-white-s99607009",0],["SMÅGÖRA","ארון בגדים",80,50,187,795,"smagoera-wardrobe-white-10460888",0],["SUNDVIK","ארון בגדים",80,50,171,1395,"sundvik-wardrobe-white-10269696",0],["VIHALS","ארון בגדים",245,57,200,2690,"vihals-wardrobe-combination-white-mirror-glass-s49442186",0],["NYSJÖN","ארון גבוה",30,27,190,450,"nysjoen-high-cabinet-white-20470815",0],["METOD","ארון גבוה עם מזווה נשלף",60,62,208,2935,"metod-high-cabinet-with-pull-out-larder-white-vallstena-white-s39507395",0],["METOD","ארון גבוה+יחידת מדפים פנימית",40,62,208,1630,"metod-high-cabinet-with-cleaning-interior-white-veddinge-white-s79573821",0],["NYSJÖN","ארון כביסה",40,32,190,650,"nysjoen-laundry-cabinet-white-40496471",0],["NYSJÖN","ארון למכונת כביסה",65,30,190,595,"nysjoen-cabinet-for-washing-machine-white-10496477",0],["MACKAPÄR","ארון נעליים",80,35,102,495,"mackapaer-shoe-cabinet-storage-white-50334751",0],["TRONES","ארון נעליים",52,18,39,175,"trones-shoe-cabinet-storage-white-00397307",0],["BISSA","ארון נעליים עם 3 תאים",49,28,135,295,"bissa-shoe-cabinet-with-3-compartments-white-10530259",0],["BRUSALI","ארון נעליים עם 3 תאים",61,30,130,495,"brusali-shoe-cabinet-with-3-compartments-white-80480393",0],["STÄLL","ארון נעליים עם 4 תאים",96,17,90,495,"staell-shoe-cabinet-with-4-compartments-white-60530266",0],["BAGGEBO","ארון ספרים",50,25,160,175,"baggebo-bookcase-white-20436713",0],["BILLY","ארון ספרים",40,28,106,225,"billy-bookcase-white-10522037",0],["BILLY / OXBERG","ארון ספרים",80,30,202,895,"billy-oxberg-bookcase-white-s49581484",0],["BRIMNES","ארון ספרים",60,35,190,595,"brimnes-bookcase-white-90301225",0],["GERSBY","ארון ספרים",60,24,180,195,"gersby-bookcase-white-70261131",0],["HEMNES","ארון ספרים",90,37,197,1195,"hemnes-bookcase-grey-green-light-brown-stained-40596159",0],["SKRUVBY","ארון ספרים",60,38,140,495,"skruvby-bookcase-white-40503546",0],["SMÅSTAD / PLATSA","ארון ספרים",60,57,181,980,"smastad-platsa-bookcase-white-white-with-2-drawers-s69483265",0],["BILLY","ארון ספרים עם יחידת הגבהה",80,28,237,590,"billy-bookcase-with-height-extension-unit-white-s59638673",0],["METOD","ארון עליון עם מדפים",40,39,100,725,"metod-wall-cabinet-with-shelves-black-grey-lerhyttan-black-stained-s99589133",0],["HAVSTA","ארון עם מסד",81,47,89,995,"havsta-cabinet-with-plinth-white-00529242",0],["KRONÖREN","ארון פתוח",90,49,181,295,"kronoeren-open-wardrobe-pine-40610805",0],["METOD","ארון תחתון עם אבזור פנים נשלף",20,62,88,580,"metod-base-cabinet-pull-out-int-fittings-white-veddinge-white-s79168845",0],["SKÅLSTA","בסיס למסגרת כיסא",52,50,44,70,"skalsta-chair-underframe-tubular-metal-black-grey-50611814",0],["LINDBÅDEN","בסיס מיטה מפסי עץ",90,197,0,150,"lindbaden-slatted-bed-base-pine-70553182",0],["LURÖY","בסיס מיטה מפסי עץ",90,200,4,100,"luroey-slatted-bed-base-90160211",0],["ÅTERLÖGA","הדום",48,48,43,395,"aterloega-pouffe-with-storage-kilanda-light-blue-00570241",1],["EKENÄSET","הדום",59,43,40,495,"ekenaeset-footstool-oak-effect-axvall-off-white-10624413",0],["EMMISLÖV","הדום",42,42,43,295,"emmisloev-pouffe-skiftebo-yellow-90570246",1],["FÖRLUNDA","הדום",44,44,41,345,"foerlunda-pouffe-with-storage-vissle-beige-30552764",1],["FRYKSÅS","הדום",47,69,44,495,"fryksas-footstool-rattan-90574094",0],["GLOSTAD","הדום",58,68,41,295,"glostad-footstool-knisa-dark-grey-20573286",0],["HAVBERG","הדום",64,64,44,995,"havberg-footstool-grann-bomstad-golden-brown-10515107",0],["JÄRRESTAD","הדום",46,46,42,325,"jaerrestad-pouffe-with-storage-tonerud-dark-beige-80562341",1],["KIVIK","הדום",90,70,43,1295,"kivik-footstool-grann-bomstad-black-00519506",0],["LANDSKRONA","הדום",65,77,44,795,"landskrona-footstool-gunnared-dark-grey-wood-s89269740",0],["LILLESÄTER","הדום",65,65,32,395,"lillesaeter-pouffe-gunnared-dark-blue-40618482",1],["MÖRTFORS","הדום",47,47,44,225,"moertfors-pouffe-diseroed-dark-yellow-50570248",0],["POÄNG","הדום",68,54,39,365,"poaeng-footstool-dark-green-kelinge-beige-s99625452",0],["ROCKSJÖN","הדום",53,53,47,445,"rocksjoen-footstool-kilanda-light-beige-s89508868",0],["SALTSJÖBADEN","הדום",71,63,47,595,"saltsjoebaden-footstool-vittangi-light-beige-white-s69621417",0],["SANDARED","הדום",71,71,44,450,"sandared-pouffe-dark-blue-50363970",1],["SIDSJÖ","הדום",70,70,46,895,"sidsjoe-pouffe-with-storage-gransel-grey-brown-80570242",1],["STOCKHOLM 2025","הדום",69,65,40,945,"stockholm-2025-pouffe-djurmo-grey-white-60586140",0],["UPPÅKRA","הדום",126,77,46,1325,"uppakra-footstool-axvall-off-white-s39613980",0],["VALNÄS","הדום",97,70,43,1145,"valnaes-footstool-alhamn-dark-grey-blue-s99615311",0],["EKTORP","הדום עם אחסון",62,82,44,590,"ektorp-footstool-with-storage-hakebo-grey-green-s19552124",0],["GAMLEHULT","הדום עם אחסון",62,62,36,395,"gamlehult-footstool-with-storage-rattan-anthracite-10434309",1],["IKEA PS 2026","הדום עם אחסון",63,63,40,495,"ikea-ps-2026-footstool-with-storage-rattan-brown-red-50624265",1],["KIVIK","הדום עם אחסון",90,70,43,995,"kivik-footstool-with-storage-tibbleby-beige-grey-s99440496",0],["OSKARSHAMN","הדום עם אחסון",40,57,42,495,"oskarshamn-footstool-with-storage-tibbleby-beige-grey-90523617",0],["STRANDMON","הדום עם אחסון",40,60,44,495,"strandmon-footstool-with-storage-talliden-beige-brown-60628946",0],["VIMLE","הדום עם אחסון",73,98,0,1495,"vimle-footstool-with-storage-grann-bomstad-black-60465384",0],["GREJSIMOJS","הדום עם תא אחסון",57,32,24,245,"grejsimojs-pouffe-with-storage-yellow-10603180",0],["KJUGE","הדום עם תא אחסון",38,38,33,79,"kjuge-pouffe-with-storage-vissle-deep-green-20629684",1],["TOLKNING","הדום עם תא אחסון",50,50,41,545,"tolkning-pouffe-with-storage-handmade-rattan-90512666",1],["TROTTEN","יחידת 3 מגירות עם גלגלים",40,47,56,495,"trotten-drawer-unit-w-3-drawers-on-castors-white-80485098",0],["ALEX","יחידת 9 מגירות",36,48,116,645,"alex-drawer-unit-with-9-drawers-white-90486139",0],["ALEX","יחידת אחסון",36,58,70,325,"alex-storage-unit-white-stained-oak-effect-50563790",0],["BRYTNING","יחידת אחסון",29,40,47,195,"brytning-storage-unit-white-00598532",0],["HEJNE","יחידת אחסון",78,50,171,250,"hejne-1-section-softwood-s79031414",0],["SUNNERSTA","יחידת אחסון",38,56,97,175,"sunnersta-storage-unit-70500278",0],["VIHALS","יחידת אחסון",105,37,140,995,"vihals-storage-unit-white-90483268",0],["TITTEBO","יחידת אחסון למכשירי חשמל קטנים",60,30,58,995,"tittebo-tambour-storage-f-small-appliances-black-20550275",0],["EKET","יחידת אחסון לקיר",35,25,35,125,"eket-wall-mounted-shelving-unit-white-s39285808",0],["EKET","יחידת אחסון לקיר עם 4 תאים",70,35,70,355,"eket-wall-mounted-shelving-unit-w-4-comp-white-s89285820",0],["ALEX","יחידת אחסון על גלגלים",36,58,76,375,"alex-storage-unit-on-castors-white-stained-oak-effect-black-s99541952",0],["FRYKSÅS","יחידת אחסון על גלגלים",37,46,53,595,"fryksas-storage-unit-on-castors-rattan-90574174",0],["VITBJÖRN","יחידת אחסון עם מגירה",80,55,78,745,"vitbjoern-storage-unit-with-drawer-white-red-60537178",0],["VIHALS","יחידת אחסון/10 מדפים",95,37,200,845,"vihals-shelving-unit-with-10-shelves-white-70483274",0],["VIHALS","יחידת אחסון/4 מדפים",95,37,90,445,"vihals-shelving-unit-with-4-shelves-white-50483289",0],["BILLY","יחידת הגבהה",80,39,35,195,"billy-height-extension-unit-white-30525723",0],["STOCKHOLM 2025","יחידת ישיבה",69,99,0,1795,"stockholm-2025-1-seat-section-djurmo-grey-white-70586125",0],["LILLEHEM","יחידת ישיבה חד מושבית",72,72,42,610,"lillehem-1-seat-module-gunnared-brown-red-wood-s89552922",0],["JÄTTEBO","יחידת ישיבה עם אחסון",70,95,71,1515,"jaettebo-1-seat-module-with-storage-samsala-grey-beige-s99471483",0],["ALEX","יחידת מגירות",36,58,70,425,"alex-drawer-unit-white-stained-oak-effect-80473547",0],["GALANT","יחידת מגירות",89,209,83,1795,"galant-drawer-unit-white-90365161",0],["LENNART","יחידת מגירות",30,34,56,79,"lennart-drawer-unit-white-30326177",0],["TROTTEN","יחידת מגירות",34,53,56,195,"trotten-drawer-unit-white-20474762",0],["ALEX","יחידת מגירות עם גלגלים",67,48,66,695,"alex-drawer-unit-on-castors-white-stained-oak-effect-50473544",0],["FRIIDROTT","יחידת מגירות עם גלגלים",35,40,56,245,"friidrott-drawer-unit-on-castors-white-60609071",0],["HELMER","יחידת מגירות עם גלגלים",28,44,65,325,"helmer-drawer-unit-on-castors-red-20625025",0],["IDÅSEN","יחידת מגירות עם גלגלים",42,47,61,695,"idasen-drawer-unit-on-castors-golden-brown-50397913",0],["MICKE","יחידת מגירות עם גלגלים",35,50,75,395,"micke-drawer-unit-on-castors-white-90213078",0],["TONSTAD","יחידת מגירות עם גלגלים",35,47,60,395,"tonstad-drawer-unit-on-castors-off-white-50538201",0],["BAGGEBO","יחידת מדפים",60,30,80,95,"baggebo-shelving-unit-bright-green-30621480",0],["BESTÅ","יחידת מדפים",60,40,193,565,"besta-shelving-unit-with-5-shelves-white-s09590409",0],["BOAXEL","יחידת מדפים",62,40,201,405,"boaxel-shelving-unit-white-s09392616",0],["BROR","יחידת מדפים",85,40,190,775,"bror-shelving-unit-grey-green-pine-plywood-s49516139",0],["FJÄLLBO","יחידת מדפים",80,35,102,645,"fjaellbo-shelving-unit-black-50339292",0],["FRÖSJÖN","יחידת מדפים",40,35,156,295,"froesjoen-shelving-unit-black-30574902",0],["HAVSTA","יחידת מדפים",81,35,123,995,"havsta-shelving-unit-white-60529277",0],["HYLLIS","יחידת מדפים",60,27,74,95,"hyllis-shelving-unit-in-outdoor-30428326",0],["IKEA PS 2026","יחידת מדפים",160,35,161,1245,"ikea-ps-2026-shelving-unit-pine-50616816",0],["IVAR","יחידת מדפים",80,30,83,295,"ivar-shelving-unit-pine-00522330",0],["JONAXEL","יחידת מדפים",80,38,160,350,"jonaxel-shelving-unit-white-50419972",0],["KALLAX","יחידת מדפים",147,39,77,495,"kallax-shelving-unit-brown-red-20604141",0],["LAIVA","יחידת מדפים",62,24,165,195,"laiva-bookcase-black-brown-40178591",0],["MUSKAN","יחידת מדפים",42,47,61,295,"muskan-shelving-unit-white-50424327",0],["OMAR","יחידת מדפים",92,36,94,245,"omar-shelving-unit-galvanised-10069763",0],["SÅGMÄSTARE","יחידת מדפים",83,36,128,345,"sagmaestare-shelving-unit-light-grey-blue-30570249",0],["SMÅGÖRA","יחידת מדפים",29,25,88,150,"smagoera-shelf-unit-white-30465489",0],["STEGESUND","יחידת מדפים",36,28,162,295,"stegesund-shelf-unit-light-bamboo-20632021",0],["STOCKHOLM 2025","יחידת מדפים",120,40,188,2495,"stockholm-2025-shelving-unit-oak-veneer-00586633",0],["STOREDAMM","יחידת מדפים",60,28,71,395,"storedamm-shelving-unit-acacia-30576166",0],["TONSTAD","יחידת מדפים",120,37,116,995,"tonstad-shelving-unit-off-white-20488877",0],["VESKEN","יחידת מדפים",37,23,101,59,"vesken-shelf-unit-white-40307866",0],["VILTO","יחידת מדפים",46,26,150,495,"vilto-shelving-unit-black-70358741",0],["VITTSJÖ","יחידת מדפים",100,36,175,545,"vittsjoe-shelving-unit-black-brown-glass-20213312",0],["ENHET","יחידת מדפים גבוהה",30,30,180,525,"enhet-high-fr-w-shelves-white-40448946",0],["LACK","יחידת מדפים לקיר",35,40,49,425,"lack-wall-shelf-unit-white-60282186",0],["ENHET","יחידת מדפים עליונה עם מדפים",60,15,75,275,"enhet-wall-frame-with-shelves-white-00448967",0],["KALLAX","יחידת מדפים עם 2 תאי אחסון",147,39,42,535,"kallax-shelving-unit-with-2-inserts-with-4-drawers-white-s79278293",0],["KALLAX","יחידת מדפים עם 6 תאי אחסון",112,39,147,1116,"kallax-shelving-unit-with-6-inserts-white-s29278262",0],["KALLAX","יחידת מדפים עם מסגרת תחתונה",77,39,94,375,"kallax-shelving-unit-with-underframe-brown-walnut-effect-black-s29634983",0],["OMAR","יחידת מדפים עם מתלה בגדים",92,50,201,495,"omar-shelving-unit-with-clothes-rail-galvanised-60530978",0],["FRÖSJÖN","יחידת מדפים פינתית",35,35,156,295,"froesjoen-corner-shelf-unit-black-10574899",0],["VESKEN","יחידת מדפים פינתית",33,33,71,45,"vesken-corner-shelf-unit-white-70471092",0],["UTRUSTA","יחידת מדפים פנימית",33,53,134,600,"utrusta-cleaning-interior-10580824",0],["BYAKORRE","יחידת מדפים פתוחה",170,32,157,795,"byakorre-open-shelving-unit-20586458",0],["EKENABBEN","יחידת מדפים פתוחה",70,34,154,395,"ekenabben-open-shelving-unit-aspen-white-80487813",0],["ENHET","יחידת מדפים תחתונה",60,60,75,395,"enhet-base-fr-w-shelves-anthracite-10448976",0],["STOCKHOLM 2025","יחידת מדפים/ספסל",180,41,44,1395,"stockholm-2025-shelving-unit-bench-oak-veneer-90586515",0],["UPPÅKRA","יחידת תלת-מושבית",250,180,95,6790,"uppakra-3-seat-modular-sofa-with-chaise-longue-left-with-footstool-johanneshov-dark-grey-s99613072",0],["ÅRSUNDA","כורסה",66,72,100,295,"arsunda-armchair-knisa-light-grey-00535894",0],["BINGSTA","כורסה",70,58,76,695,"bingsta-armchair-vissle-dark-yellow-kabusa-dark-yellow-40455649",0],["BUSKBO","כורסה",72,63,75,795,"buskbo-armchair-rattan-70434311",0],["EKENÄSET","כורסה",65,74,75,995,"ekenaeset-armchair-oak-effect-kilanda-light-beige-10624328",0],["FRYKSÅS","כורסה",89,85,84,1195,"fryksas-armchair-rattan-80540033",0],["HERRÅKRA","כורסה",71,66,73,645,"herrakra-armchair-vissle-grey-40544716",0],["HOLMSTA","כורסה",62,75,73,995,"holmsta-armchair-handmade-beige-90508551",0],["ISMANTORP","כורסה",72,66,71,395,"ismantorp-armchair-metal-light-grey-beige-tibbleby-light-beige-00598221",0],["LANDSKRONA","כורסה",89,89,78,1495,"landskrona-armchair-gunnared-light-green-wood-s89269721",0],["LILLEHEM","כורסה",134,90,74,1330,"lillehem-armchair-vissle-beige-metal-s19470326",0],["ORRESLÄTT","כורסה",69,72,66,695,"orreslaett-armchair-30555098",0],["OSKARSHAMN","כורסה",82,86,99,1595,"oskarshamn-wing-chair-tibbleby-beige-grey-20523611",0],["PERSBOL","כורסה",69,70,84,995,"persbol-armchair-brown-red-tibbleby-beige-grey-70525919",0],["POÄNG","כורסה",68,82,100,490,"poaeng-armchair-birch-veneer-knisa-light-beige-s39240787",0],["ROCKSJÖN","כורסה",76,78,80,1095,"rocksjoen-armchair-kilanda-light-beige-s29508852",0],["SALNÖ","כורסה",65,84,110,645,"salnoe-armchair-rattan-60500778",0],["SALTSJÖBADEN","כורסה",93,88,90,1495,"saltsjoebaden-armchair-tonerud-grey-s49578561",0],["SKÅLBODA","כורסה",64,69,71,325,"skalboda-armchair-white-20582035",0],["SKARPÖ","כורסה",81,79,71,295,"skarpoe-armchair-outdoor-white-70234185",0],["SÖDERHAMN","כורסה",105,99,0,2245,"soederhamn-armchair-gunnared-beige-s69330512",0],["SOTENÄS","כורסה",86,81,68,1100,"sotenaes-armchair-hakebo-red-10581913",0],["STOCKHOLM 2025","כורסה",76,72,68,1345,"stockholm-2025-armchair-djurmo-grey-white-20594750",0],["STRANDMON","כורסה",82,96,101,1395,"strandmon-wing-chair-talliden-beige-brown-80628945",0],["TULLSTA","כורסה",79,69,78,745,"tullsta-armchair-sjoelyckan-dark-blue-beige-stripe-s69619693",0],["ULRIKSBERG","כורסה",67,74,76,545,"ulriksberg-armchair-rattan-anthracite-90434310",0],["VEDBO","כורסה",73,65,0,995,"vedbo-armchair-gunnared-dark-grey-10424126",0],["VIMLE","כורסה",101,98,83,1745,"vimle-armchair-gunnared-beige-s59477156",0],["VISKAFORS","כורסה 1,5 מושב",134,90,74,2595,"viskafors-1-5-seat-armchair-lejde-light-beige-birch-s89443278",0],["EKENÄSET","כורסה גבוהה",65,96,107,1295,"ekenaeset-high-back-armchair-oak-effect-axvall-off-white-10624366",0],["VEDBO","כורסה גבוהה",80,85,108,1195,"vedbo-high-back-armchair-gunnared-dark-grey-10424131",0],["POÄNG","כורסה לילדים",47,56,68,250,"poaeng-childrens-armchair-birch-veneer-knisa-light-beige-s49412561",0],["STRANDMON","כורסה לילדים",56,62,71,695,"strandmon-childrens-armchair-vissle-grey-70392542",0],["DYVLINGE","כורסה מסתובבת",63,75,68,895,"dyvlinge-swivel-easy-chair-kelinge-black-00555090",0],["HAVBERG","כורסה מסתובבת",66,99,92,1995,"havberg-swivel-easy-chair-grann-bomstad-golden-brown-70515109",0],["IKEA PS LÖMSK","כורסה מסתובבת",59,62,75,395,"ikea-ps-loemsk-childrens-swivel-armchair-white-beige-red-30609237",0],["LILLESÄTER","כורסה מסתובבת",70,79,71,1145,"lillesaeter-swivel-easy-chair-axvall-off-white-00618686",0],["EKOLSUND","כורסה מתכווננת",89,97,103,1345,"ekolsund-recliner-gunnared-light-brown-pink-s59297184",0],["MUREN","כורסה מתכווננת",85,94,97,1595,"muren-recliner-remmarn-light-grey-00438553",0],["LYCKSELE LÖVÅS","כורסה נפתחת",80,100,87,1245,"lycksele-loevas-chair-bed-vansbro-dark-grey-s99386994",0],["VÅRKUMLA","כורסה נפתחת",27,43,58,1395,"varkumla-chair-bed-vansta-blue-80587704",0],["LILLEHEM","כורסה עם שולחן צד",80,76,73,1875,"lillehem-armchair-with-side-table-gunnared-dark-grey-wood-s99569738",0],["TORNSBORG","כורסה/מיטה",168,209,135,1495,"tornsborg-armchair-bed-naggen-beige-pine-50582411",0],["POÄNG","כורסת נדנדה",68,94,95,795,"poaeng-rocking-chair-birch-veneer-kelinge-beige-s89625853",0],["NORDKROKEN","כורסת נדנדה מסתובבת",72,85,83,1390,"nordkroken-rocking-and-swivel-armchair-gransel-natural-s19616951",0],["AGEN","כיסא",58,56,79,295,"agen-chair-rattan-bamboo-50058376",0],["ÅLHULT","כיסא",45,54,94,295,"alhult-chair-black-bomstad-black-10600799",0],["ASKHOLMEN","כיסא",36,49,87,195,"askholmen-chair-outdoor-foldable-dark-brown-20557502",0],["BALTSAR","כיסא",78,32,200,695,"baltsar-chair-white-50532143",0],["BERGMUND","כיסא",52,59,96,450,"bergmund-chair-oak-effect-hallarp-beige-s39388081",0],["BUSLÄTT","כיסא",39,47,79,145,"buslaett-chair-white-pine-90601139",0],["GRÖNSTA","כיסא",54,48,79,345,"groensta-chair-in-outdoor-white-light-brown-wood-10637241",0],["GRÖTÅN","כיסא",47,44,80,195,"groetan-chair-tibbleby-dark-beige-10610425",0],["HAUGA","כיסא",40,49,87,195,"hauga-chair-white-10576718",0],["HÖGVED","כיסא",40,51,86,395,"hoegved-chair-birch-veneer-90606820",0],["IKEA PS 2026","כיסא",44,55,76,345,"ikea-ps-2026-chair-bright-green-knaebaeck-bright-green-50617967",0],["KARSKÄR","כיסא",43,49,85,395,"karskaer-chair-rubberwood-00611251",0],["KÄTTIL","כיסא",46,52,89,295,"kaettil-chair-white-knisa-light-grey-60500325",0],["KRYLBO","כיסא",55,51,75,345,"krylbo-chair-tibbleby-dark-red-30620579",0],["LÄCKÖ","כיסא",43,52,87,150,"laeckoe-chair-outdoor-grey-60151840",0],["LISABO","כיסא",46,51,80,395,"lisabo-chair-ash-tallmyra-white-black-30553706",0],["LYCKAN","כיסא",45,51,83,495,"lyckan-chair-yellow-birch-veneer-00569186",0],["NÄMMARÖ","כיסא",49,50,81,195,"naemmaroe-chair-outdoor-foldable-light-brown-stained-50503353",0],["NÄSINGE","כיסא",42,54,90,295,"naesinge-chair-white-tibbleby-beige-grey-60587502",0],["NORDMANSSKÄR","כיסא",44,58,85,245,"nordmansskaer-chair-black-tonerud-grey-s99618215",0],["ODGER","כיסא",45,51,81,395,"odger-chair-white-beige-60359996",0],["PINNTORP","כיסא",42,49,90,245,"pinntorp-chair-light-brown-stained-pine-00590480",0],["RÖNNINGE","כיסא",46,49,79,495,"roenninge-chair-birch-10422504",0],["ROSENTORP","כיסא",49,52,88,495,"rosentorp-chair-kilanda-light-beige-white-10614169",0],["SANDSBERG","כיסא",39,47,77,69,"sandsberg-chair-white-10605424",0],["SKÅLSTA","כיסא",52,50,81,195,"skalsta-chair-plastic-beige-tubular-metal-light-grey-beige-s99590768",0],["SKANSNÄS","כיסא",48,51,78,495,"skansnaes-chair-brown-beech-70563242",0],["SKOGSTA","כיסא",46,55,94,350,"skogsta-chair-acacia-70544866",0],["STEFAN","כיסא",42,49,90,295,"stefan-chair-brown-black-knisa-grey-beige-80512087",0],["STOCKHOLM 2025","כיסא",52,49,80,895,"stockholm-2025-chair-red-40590138",0],["TÄRNÖ","כיסא",39,40,79,95,"taernoe-chair-outdoor-foldable-black-light-brown-stained-90095428",0],["TEODORES","כיסא",46,54,80,195,"teodores-chair-white-90350937",0],["TOBIAS","כיסא",55,56,82,450,"tobias-chair-transparent-chrome-plated-80349671",0],["TONSTAD","כיסא",42,48,88,395,"tonstad-chair-brown-oak-effect-fridtuna-light-beige-00594020",0],["VIHALS","כיסא",45,47,79,125,"vihals-chair-white-50569103",0],["VOXLÖV","כיסא",43,53,85,495,"voxloev-chair-light-bamboo-50450236",0],["YNGVAR","כיסא",53,51,71,495,"yngvar-chair-anthracite-80417636",0],["GRÖNSTA","כיסא בר",45,44,76,450,"groensta-bar-stool-counter-height-grey-dark-brown-wood-in-outdoor-80637228",0],["NÄMMARÖ","כיסא בר",37,37,73,275,"naemmaroe-bar-stool-outdoor-light-brown-stained-70510296",0],["ANTILOP","כיסא גבוה עם מגש",56,60,90,95,"antilop-highchair-with-tray-white-white-s79597515",0],["BLÅMES","כיסא גבוה עם מגש",52,53,93,395,"blames-highchair-with-tray-black-50165079",0],["SANDKATT","כיסא גבוה עם מגש",60,68,91,195,"sandkatt-highchair-with-tray-beige-anthracite-60616646",0],["LÄKTARE","כיסא המתנה",55,50,83,325,"laektare-conference-chair-birch-veneer-white-s09503191",0],["LÅNGFJÄLL","כיסא המתנה",68,68,92,695,"langfjaell-conference-chair-gunnared-beige-white-s19252366",0],["FJÄLLBERGET","כיסא המתנה עם גלגלים",71,71,86,995,"fjaellberget-conference-chair-with-castors-black-stained-ash-veneer-gunnared-dark-grey-20396420",0],["LÅNGFJÄLL","כיסא המתנה עם ידיות",68,68,92,795,"langfjaell-conference-chair-with-armrests-gunnared-beige-white-s49252765",0],["AGAM","כיסא לילדים",41,43,79,295,"agam-junior-chair-black-70253541",0],["INGOLF","כיסא לילדים",41,45,77,345,"ingolf-junior-chair-antique-stain-60353838",0],["URBAN","כיסא לילדים",45,48,79,245,"urban-junior-chair-white-00165213",0],["VILDGÅS","כיסא לילדים",46,49,79,95,"vildgas-junior-chair-white-white-70589384",0],["BALTSAR","כיסא מסתובב",58,56,85,750,"baltsar-swivel-chair-white-10511538",0],["ALEFJÄLL","כיסא משרדי",64,64,95,1250,"alefjaell-office-chair-smidig-black-20644123",0],["FLINTAN","כיסא משרדי",71,71,114,395,"flintan-office-chair-black-10489028",0],["MARKUS","כיסא משרדי",62,60,140,895,"markus-office-chair-vissle-dark-grey-70261150",0],["GRÖNFJÄLL","כיסא משרדי עם ידיות",71,71,123,1595,"groenfjaell-office-chair-with-armrests-letafors-grey-black-00503440",0],["HATTEFJÄLL","כיסא משרדי עם ידיות",68,68,114,1150,"hattefjaell-office-chair-with-armrests-gunnared-beige-white-60538955",0],["JÄRVFJÄLLET","כיסא משרדי עם ידיות",68,68,140,1195,"jaervfjaellet-office-chair-with-armrests-glose-black-80510639",0],["MARKUS","כיסא משרדי עם ידיות",71,71,114,990,"markus-office-chair-with-armrests-with-floor-protector-dark-grey-s99628035",0],["SMÖRKULL","כיסא משרדי עם ידיות",65,66,115,795,"smoerkull-office-chair-with-armrests-graesnaes-dark-grey-80503436",0],["NÄMMARÖ","כיסא מתכוונן",60,71,105,345,"naemmaroe-reclining-chair-outdoor-foldable-light-brown-stained-50510301",0],["FRÖSVI","כיסא מתקפל",44,51,77,145,"froesvi-folding-chair-black-10534318",0],["GUNDE","כיסא מתקפל",41,45,78,59,"gunde-folding-chair-black-00217797",0],["IKEA PS 2026","כיסא מתקפל",45,51,76,295,"ikea-ps-2026-folding-chair-birch-blue-black-red-10617894",0],["VIHALS","כיסא מתקפל",43,47,80,79,"vihals-folding-chair-black-90651742",0],["FRÖSET","כיסא נוח",59,57,74,445,"froeset-easy-chair-black-stained-oak-veneer-40423559",0],["GÄVLE","כיסא נוח",54,68,70,195,"gaevle-easy-chair-diseroed-grey-60588846",0],["IKEA PS 2026","כיסא נוח",73,84,70,695,"ikea-ps-2026-easy-chair-with-inflatable-seat-back-cushion-knaebaeck-bright-green-90623202",0],["LINNEBÄCK","כיסא נוח",55,70,72,295,"linnebaeck-easy-chair-orrsta-light-grey-70487229",0],["MOFALLA","כיסא נוח",58,57,74,295,"mofalla-easy-chair-80555091",0],["STOCKHOLM 2025","כיסא נוח",71,79,63,1250,"stockholm-2025-easy-chair-birch-veneer-80594785",0],["VEINGE","כיסא נוח",76,92,79,795,"veinge-easy-chair-skiftebo-blue-90565160",0],["ASKHOLMEN","כיסא עם ידיות",59,56,82,275,"askholmen-chair-with-armrests-outdoor-dark-brown-50535684",0],["GRÖNSTA","כיסא עם ידיות",59,49,78,395,"groensta-chair-with-armrests-in-outdoor-white-light-brown-wood-10637236",0],["MÅRENÄS","כיסא עם ידיות",59,56,81,595,"marenaes-chair-with-armrests-black-gunnared-dark-grey-s99514388",0],["NÄMMARÖ","כיסא עם ידיות",56,62,78,345,"naemmaroe-chair-with-armrests-outdoor-light-brown-stained-90511105",0],["SALNÖ","כיסא עם ידיות",58,58,84,495,"salnoe-chair-with-armrests-rattan-50551202",0],["STOCKHOLM","כיסא עם ידיות",58,50,76,695,"stockholm-chair-with-armrests-tinted-laquer-birch-veneer-tresund-beige-30621201",0],["MANDAL","לוח ראש מיטה",240,28,61,995,"mandal-headboard-birch-white-70176312",0],["ANTILOP","מגש לכיסא גבוה",42,42,0,20,"antilop-highchair-tray-grey-blue-70601357",0],["ANTILOP","מושב לכיסא גבוה",39,37,35,50,"antilop-seat-shell-for-highchair-70279942",0],["BAGGEBO","מזנון",78,30,92,295,"baggebo-sideboard-white-40553616",0],["BOASTAD","מזנון",161,52,75,1995,"boastad-sideboard-black-oak-veneer-30507012",0],["FJÄLLBO","מזנון",111,47,95,1395,"fjaellbo-sideboard-black-00502799",0],["FÖRSÄLJARE","מזנון",140,46,78,995,"foersaeljare-sideboard-dark-beige-wood-light-beige-90595888",0],["HAUGA","מזנון",140,46,84,1195,"hauga-sideboard-white-40621489",0],["HAVSTA","מזנון",121,47,89,1795,"havsta-sideboard-basic-unit-white-40529235",0],["HEMNES","מזנון",157,47,88,1895,"hemnes-sideboard-white-stain-light-brown-70476259",0],["IDANÄS","מזנון",124,50,95,1595,"idanaes-sideboard-white-80496025",0],["LANESUND","מזנון",67,74,76,2750,"lanesund-sideboard-grey-brown-90466546",0],["SKRUVBY","מזנון",120,38,90,995,"skruvby-sideboard-white-60568725",0],["STOCKHOLM 2025","מזנון",161,42,83,2295,"stockholm-2025-sideboard-oak-veneer-10586604",0],["TONSTAD","מזנון",121,47,90,1595,"tonstad-sideboard-oak-veneer-20489297",0],["VIHALS","מזנון",140,37,75,845,"vihals-sideboard-white-30491718",0],["BJÖRKSNÄS","מיטה",180,214,43,2595,"bjoerksnaes-bed-frame-birch-birch-veneer-luroey-s29501695",0],["NEIDEN","מיטה",94,205,0,395,"neiden-bed-frame-pine-luroey-s59248612",0],["TARVA","מיטה",168,209,0,945,"tarva-bed-frame-pine-luroey-s69002426",0],["VIHALS","מיטה",86,206,75,795,"vihals-day-bed-frame-white-00595086",0],["VITVAL","מיטה",90,197,20,450,"vitval-underbed-white-10448325",0],["KURA","מיטה דו-צדדית",99,209,116,1195,"kura-reversible-bed-white-pine-80253809",0],["GRYSNA","מיטה מרופדת",96,208,0,1100,"grysna-upholstered-bed-frame-vissle-beige-multicolour-s69628433",0],["SLATTUM","מיטה מרופדת",144,206,0,1090,"slattum-upholstered-bed-frame-vissle-dark-grey-incl-slipcover-for-headboard-oereryd-grey-beige-s99613487",0],["TÄRNKULLEN","מיטה מרופדת",179,210,0,1895,"taernkullen-upholstered-bed-frame-tibbleby-beige-grey-lindbaden-s19564382",0],["IDANÄS","מיטה מרופדת עם אחסון",170,224,0,3495,"idanaes-upholstered-ottoman-bed-naggen-beige-70588087",0],["BUSUNGE","מיטה מתארכת",138,90,0,1195,"busunge-extendable-bed-white-70305700",0],["UTÅKER","מיטה ניתנת לערימה",83,205,23,995,"utaker-stackable-bed-pine-00360484",0],["UTÅKER","מיטה ניתנת לערימה עם 2 מזרנים",83,205,23,1885,"utaker-stackable-bed-with-2-mattresses-pine-afjaell-firm-s99521510",0],["BRIMNES","מיטה נפתחת עם 2 מגירות",87,205,58,1395,"brimnes-day-bed-frame-with-2-drawers-white-00228705",0],["FLEKKE","מיטה נפתחת עם 2 מגירות",89,209,83,1995,"flekke-day-bed-frame-with-2-drawers-white-00320134",0],["HEMNES","מיטה נפתחת עם 3 מגירות",89,209,83,1995,"hemnes-day-bed-frame-with-3-drawers-white-90349326",0],["BRIMNES","מיטה נפתחת+2 מגירות/2 מזרנים",86,205,57,2285,"brimnes-day-bed-w-2-drawers-2-mattresses-white-afjaell-firm-s89521153",0],["FLEKKE","מיטה נפתחת+2 מגירות/2 מזרנים",91,207,86,2885,"flekke-day-bed-w-2-drawers-2-mattresses-white-afjaell-medium-firm-s79521455",0],["HEMNES","מיטה נפתחת+3 מגיר/2 מזרנ",89,209,83,2885,"hemnes-day-bed-w-3-drawers-2-mattresses-white-afjaell-medium-firm-s09521500",0],["VIHALS","מיטה עם 2 ארגזי אחסון/מיטה תחתונה",166,206,0,1785,"vihals-bed-frame-2-stor-box-1-trundle-bed-white-luroey-s09582013",0],["FYRESDAL","מיטה עם 2 מזרנים",88,207,94,2285,"fyresdal-day-bed-with-2-mattresses-black-afjaell-medium-firm-s09521468",0],["FÅGELFJÄLLET","מיטה עם 4 ארגזי אחסון",172,207,101,1745,"fagelfjaellet-bed-frame-with-4-storage-boxes-off-white-s99630910",0],["KLIPPUGGLA","מיטה עם אחסון",96,206,0,1090,"klippuggla-bed-frame-with-storage-white-incl-guard-rail-s09627827",0],["MALM","מיטה עם אחסון",175,210,0,2950,"malm-ottoman-bed-white-20404806",0],["SLÄKT","מיטה עם אחסון",96,206,0,2240,"slaekt-bed-frame-with-storage-incl-headboard-vissle-beige-s69612045",0],["TONSTAD","מיטה עם אחסון",169,209,0,3145,"tonstad-bed-frame-with-storage-oak-veneer-luroey-s39496641",0],["SMÅSTAD","מיטת גלריה",148,60,182,3175,"smastad-loft-bed-white-blue-with-desk-with-3-drawers-s89542023",0],["TUFFING","מיטת גלריה",97,208,179,895,"tuffing-loft-bed-frame-dark-grey-90299449",0],["VITVAL","מיטת גלריה",97,207,195,1495,"vitval-loft-bed-frame-white-light-grey-10411242",0],["SMÅSTAD","מיטת גלריה עם שולחן ואחסון",95,37,90,2495,"smastad-loft-bed-frame-w-desk-and-storage-white-50454036",0],["TUFFING","מיטת קומתיים",97,207,131,895,"tuffing-bunk-bed-frame-dark-grey-00239233",0],["VITVAL","מיטת קומתיים",97,207,162,1695,"vitval-bunk-bed-frame-white-light-grey-80411272",0],["VITVAL","מיטת קומתיים עם מיטה תחתונה",97,207,162,2145,"vitval-bunk-bed-frame-with-underbed-white-light-grey-s19302922",0],["PAX","מסגרת ארון",100,58,236,545,"pax-wardrobe-frame-white-80458207",0],["FÅGELFJÄLLET","מסגרת מיטה",172,207,101,1045,"fagelfjaellet-bed-frame-off-white-50607157",0],["GULLABERG","מסגרת מיטה",171,208,113,1595,"gullaberg-bed-frame-white-90608126",0],["IDANÄS","מסגרת מיטה",171,207,0,1695,"idanaes-bed-frame-white-40458898",0],["KLEPPSTAD","מסגרת מיטה",146,207,86,995,"kleppstad-bed-frame-white-vissle-beige-00492677",0],["MELLGRUND","מסגרת מיטה",167,208,146,900,"mellgrund-bed-frame-off-white-20603759",0],["NEIDEN","מסגרת מיטה",94,205,0,295,"neiden-bed-frame-pine-40395245",0],["RÅDMANSÖ","מסגרת מיטה",168,220,0,1545,"radmansoe-bed-frame-brown-walnut-effect-80599170",0],["SLÄKT","מסגרת מיטה",96,206,0,940,"slaekt-bed-frame-incl-bed-accessory-grey-s99608419",0],["SMYGA","מסגרת מיטה",97,208,0,1195,"smyga-bed-frame-light-grey-60480780",0],["STJÄRNÖ","מסגרת מיטה",168,209,135,1545,"stjaernoe-bed-frame-anthracite-50570187",0],["STORKLINTA","מסגרת מיטה",99,209,101,845,"storklinta-bed-frame-oak-effect-60615604",0],["TAXÅSKLINT","מסגרת מיטה",168,210,76,945,"taxasklint-bed-frame-pine-40621521",0],["VEVELSTAD","מסגרת מיטה",96,207,27,495,"vevelstad-bed-frame-white-40518270",0],["VIHALS","מסגרת מיטה",96,206,66,595,"vihals-bed-frame-white-40602424",0],["MALM","מסגרת מיטה גבוהה",135,209,100,900,"malm-bed-frame-high-white-40249485",0],["GLADSTAD","מסגרת מיטה מרופדת",147,212,0,1595,"gladstad-upholstered-bed-frame-kabusa-light-grey-60490449",0],["IDANÄS","מסגרת מיטה מרופדת",167,222,0,2595,"idanaes-upholstered-bed-frame-naggen-beige-50588069",0],["SAGESUND","מסגרת מיטה מרופדת",166,223,0,2295,"sagesund-upholstered-bed-frame-diseroed-brown-30490380",0],["SLATTUM","מסגרת מיטה מרופדת",124,206,0,895,"slattum-upholstered-bed-frame-vissle-dark-grey-10578741",0],["TÄLLÅSEN","מסגרת מיטה מרופדת",175,213,0,1495,"taellasen-upholstered-bed-frame-kulsta-grey-green-70538926",0],["TUFJORD","מסגרת מיטה מרופדת",184,223,0,3095,"tufjord-upholstered-bed-frame-tallmyra-white-black-60573251",0],["GLADSTAD","מסגרת מיטה מרופדת עם 2 ארגזי אחסון",167,212,0,2290,"gladstad-upholstered-bed-2-storage-boxes-kabusa-light-grey-s29406797",0],["GLADSTAD","מסגרת מיטה מרופדת עם 4 ארגזי אחסון",167,212,0,2785,"gladstad-upholstered-bed-4-storage-boxes-kabusa-light-grey-s59407012",0],["VEVELSTAD","מסגרת מיטה עם 2 לוחות ראש מיטה",166,207,27,1495,"vevelstad-bed-frame-with-2-headboards-white-tolkning-rattan-s39441738",0],["SLÄKT","מסגרת מיטה עם 3 ארגזי אחסון",96,206,0,1695,"slaekt-bed-frame-with-3-storage-boxes-white-s89386070",0],["VEVELSTAD","מסגרת מיטה עם 3 לוחות ראש מיטה",96,206,0,1620,"vevelstad-bed-frame-with-3-headboards-white-tolkning-rattan-s99441820",0],["BRIMNES","מסגרת מיטה עם אחסון וראש מיטה",166,234,111,2220,"brimnes-bed-frame-w-storage-and-headboard-white-luroey-s89157455",0],["NORDLI","מסגרת מיטה עם אחסון וראש מיטה",240,202,30,3240,"nordli-bed-frame-w-storage-and-headboard-white-s69241422",0],["SLÄKT","מסגרת מיטה עם אחסון+בסיס משלבי עץ",96,206,0,1895,"slaekt-bed-frame-w-storage-slatted-bedbase-white-s29291956",0],["SLÄKT","מסגרת מיטה עם ארגז אחסון",96,206,0,1440,"slaekt-bed-frame-with-underbed-and-storage-white-s89227731",0],["SLÄKT / NATTAPA","מסגרת מיטה עם בסיס ומעקה בטיחות",96,206,0,740,"slaekt-nattapa-bed-frame-w-guard-rail-slat-bd-base-white-s69563889",0],["MINNEN","מסגרת מיטה עם בסיס לוחות",137,86,0,695,"minnen-ext-bed-frame-with-slatted-bed-base-white-s29123958",0],["SUNDVIK","מסגרת מיטה עם בסיס לוחות",137,92,0,1100,"sundvik-ext-bed-frame-with-slatted-bed-base-white-s49046068",0],["KRITTER","מסגרת מיטה עם בסיס מפסי עץ",75,165,0,595,"kritter-bed-frame-with-slatted-bed-base-white-s69185435",0],["SLÄKT","מסגרת מיטה עם בסיס מפסי עץ",96,206,0,645,"slaekt-bed-frame-with-slatted-bed-base-white-s79227755",0],["SNIGLAR","מסגרת מיטה עם בסיס מפסי עץ",77,165,0,375,"sniglar-bed-frame-with-slatted-bed-base-beech-s19185433",0],["MANDAL","מסגרת מיטה עם לוח ראש מיטה",140,202,0,2990,"mandal-bed-frame-with-headboard-birch-white-s09094947",0],["VEVELSTAD","מסגרת מיטה עם לוח ראש מיטה",96,207,27,870,"vevelstad-bed-frame-with-1-headboard-white-tolkning-rattan-s99441778",0],["VIHALS","מסגרת מיטה עם מיטה תחתונה",166,201,0,1490,"vihals-bed-frame-with-1-trundle-bed-white-luroey-s49582030",0],["BRIMNES","מסגרת מיטה עם תא אחסון",176,209,100,1495,"brimnes-bed-frame-with-storage-white-luroey-s29902933",0],["IDANÄS","מסגרת מיטה עם תא אחסון",171,207,24,2945,"idanaes-bed-frame-with-storage-dark-brown-stained-90458867",0],["MANDAL","מסגרת מיטה עם תא אחסון",120,202,0,1795,"mandal-bed-frame-with-storage-birch-white-10272076",0],["NORDLI","מסגרת מיטה עם תא אחסון",140,202,30,2195,"nordli-bed-frame-with-storage-white-40349847",0],["SMYGA","מסגרת מיטה עם תא אחסון",97,208,0,1690,"smyga-bed-frame-with-storage-light-grey-s59444142",0],["MALM","מסגרת מיטה, גב גבוה עם 2 תאי אחסון",176,209,100,1790,"malm-bed-frame-high-w-2-storage-boxes-white-luroey-s79175983",0],["MALM","מסגרת מיטה, גב גבוה עם 4 תאי אחסון",196,209,100,2335,"malm-bed-frame-high-w-4-storage-boxes-white-luroey-s39002442",0],["IDÅSEN","משטח עליון לשולחן",205,94,0,545,"idasen-table-top-brown-40360991",0],["LAGKAPTEN","משטח עליון לשולחן",200,60,0,225,"lagkapten-table-top-white-stained-oak-effect-30460830",0],["LINNMON","משטח עליון לשולחן",100,45,0,75,"linnmon-table-top-dark-grey-10596226",0],["SKÅLSTA","משטח עליון לשולחן",140,80,0,375,"skalsta-table-top-walnut-effect-60611663",0],["PURRPINGLA","מתלה 6 תאי אחסון",22,34,80,59,"purrpingla-hanging-storage-w-6-compartments-textile-beige-40612263",0],["GREJSIMOJS","מתלה בגדים",48,48,125,245,"grejsimojs-clothes-stand-10602996",1],["KOMPLEMENT","מתלה בגדים",46,33,4,55,"komplement-clothes-rail-white-50446452",0],["MULIG","מתלה בגדים",99,46,152,75,"mulig-clothes-rack-white-60179434",0],["RIGGA","מתלה בגדים",111,51,175,145,"rigga-clothes-rack-white-50231630",0],["HJÄLPA","מתלה בגדים מתכוונן",122,60,83,20,"hjaelpa-adjustable-clothes-rail-white-40497828",0],["TURBO","מתלה בגדים, לשימוש בבית ומחוץ לבית",117,59,148,295,"turbo-clothes-rack-in-outdoor-black-40177233",0],["ÄLGANÄS","מתלה לכובעים ומעילים",33,33,173,145,"aelganaes-hat-and-coat-stand-black-90585894",1],["BONDSKÄRET","מתלה לכובעים ומעילים",60,60,175,225,"bondskaeret-hat-and-coat-stand-yellow-40554381",0],["EKRAR","מתלה לכובעים ומעילים",63,63,169,150,"ekrar-hat-and-coat-stand-white-10415594",1],["NIPÅSEN","מתלה לכובעים ומעילים",56,56,181,225,"nipasen-hat-and-coat-stand-black-50586150",1],["KOMPLEMENT","מתלה מכנסיים נשלף",97,56,4,195,"komplement-pull-out-trouser-hanger-white-00446534",0],["MACKAPÄR","מתלה מעילים עם יחידת אחסון לנעליים",78,32,200,345,"mackapaer-coat-rack-with-shoe-storage-unit-white-50530988",0],["RAGGBERG","מתלה מעילים עם מדף",40,21,17,95,"raggberg-coat-rack-with-shelf-pine-00611128",0],["STUK","מתלה עם 7 תאי אחסון",30,30,90,45,"stuk-hanging-storage-with-7-compartments-white-black-10621546",0],["VIHALS","סט 2 ארגזי אחסון למיטה",201,58,24,295,"vihals-bed-storage-box-set-of-2-white-30595117",0],["JÄTTEBO","ספה 2.5 מושבים מודולרית עם שזלונג",190,160,71,4645,"jaettebo-2-5-seat-mod-sofa-w-chaise-longue-left-samsala-grey-beige-s99471341",0],["UPPÅKRA","ספה 4.5 מושבים מודולרית",358,180,95,6700,"uppakra-4-5-seat-modular-sofa-with-chaise-longue-left-axvall-dark-grey-blue-s99614081",0],["LILLESÄTER","ספה 5 מושבים",337,90,69,4985,"lillesaeter-5-seat-sofa-gunnared-bright-green-yellow-s99614279",0],["KIVIK","ספה בצורת ח, 6 מושבים",328,257,83,9285,"kivik-u-shaped-sofa-6-seat-kelinge-grey-turquoise-s29443064",0],["ÄPPLARYD","ספה דו-מושבית",199,93,0,3595,"aepplaryd-2-seat-sofa-lejde-light-grey-80506227",0],["EKHOLMA","ספה דו-מושבית",167,85,0,2195,"ekholma-2-seat-sofa-hakebo-beige-s19535587",0],["EKTORP","ספה דו-מושבית",179,88,0,2095,"ektorp-2-seat-sofa-kilanda-light-beige-s49509025",0],["GLOSTAD","ספה דו-מושבית",121,78,0,795,"glostad-2-seat-sofa-knisa-dark-grey-50489012",0],["GULLVALLA","ספה דו-מושבית",142,83,0,1295,"gullvalla-2-seat-sofa-silkeryd-dark-grey-beige-30618500",0],["KIVIK","ספה דו-מושבית",190,95,83,3995,"kivik-2-seat-sofa-grann-bomstad-black-50519518",0],["KLIPPAN","ספה דו-מושבית",177,88,66,1995,"klippan-2-seat-sofa-bomstad-black-40399314",0],["LÄCKÖ","ספה דו-מושבית",115,56,87,495,"laeckoe-2-seat-sofa-outdoor-grey-50522733",0],["LANDSKRONA","ספה דו-מושבית",164,89,78,2595,"landskrona-2-seat-sofa-gunnared-dark-grey-wood-s49270279",0],["MANNARP","ספה דו-מושבית",158,95,0,1745,"mannarp-2-seat-sofa-gunnared-beige-s19619148",0],["NÄMMARÖ","ספה דו-מושבית",126,74,86,1390,"naemmaroe-2-seat-sofa-light-brown-stained-outdoor-froesoen-duvholmen-beige-s99603997",0],["ROCKSJÖN","ספה דו-מושבית",142,77,80,1495,"rocksjoen-2-seat-sofa-kilanda-light-beige-s59508860",0],["SALTMYRAN","ספה דו-מושבית",147,79,0,995,"saltmyran-2-seat-sofa-oereryd-grey-beige-10596995",0],["SLATORP","ספה דו-מושבית",176,95,75,2795,"slatorp-2-seat-sofa-hakebo-dark-grey-40594377",0],["SÖDERHAMN","ספה דו-מושבית",186,99,0,3645,"soederhamn-2-seat-sofa-with-chaise-longue-viarp-beige-brown-s29305760",0],["STOCKHOLM 2025","ספה דו-מושבית",178,99,70,3995,"stockholm-2025-2-seat-sofa-alhamn-dark-brown-90591748",0],["VALNÄS","ספה דו-מושבית",206,94,0,2995,"valnaes-2-seat-sofa-knaebaeck-light-beige-s09615320",0],["VIMLE","ספה דו-מושבית",171,98,0,2695,"vimle-2-seat-sofa-gunnared-beige-s89399893",0],["VISKAFORS","ספה דו-מושבית",194,90,74,3995,"viskafors-2-seat-sofa-lejde-grey-green-birch-s49443218",0],["JÄTTEBO","ספה דו-מושבית מודולרית",190,95,71,4080,"jaettebo-2-seat-modular-sofa-samsala-dark-blue-s79608236",0],["LILLEHEM","ספה דו-מושבית מודולרית",152,76,73,1995,"lillehem-2-seat-modular-sofa-gunnared-dark-grey-metal-s19471255",0],["GLOSTAD","ספה דו-מושבית עם שזלונג",121,78,0,1090,"glostad-2-seat-sofa-with-chaise-longue-knisa-dark-grey-s49543920",0],["LILLEHEM","ספה מדולרית תלת-מושבית עם שולחן צד",274,80,73,3290,"lillehem-3-seat-modular-sofa-with-side-table-gunnared-dark-grey-wood-s89569748",0],["LILLEHEM","ספה מודולרית דו-מושבית עם שולחן צד",202,76,73,2515,"lillehem-2-seat-modular-sofa-with-side-table-vissle-beige-metal-s69536080",0],["LILLEHEM","ספה מודולרית, 6 מושבים+שולחן צד",220,342,73,5635,"lillehem-6-seat-modular-sofa-with-side-table-gunnared-dark-grey-wood-s99574754",0],["EKHOLMA","ספה פינתית, 4 מושבים+יח' קצה פתוחה",236,195,0,3795,"ekholma-corner-sofa-4-seat-with-open-end-kilanda-light-beige-s29562976",0],["ÄPPLARYD","ספה תלת-מושבית",231,93,0,3995,"aepplaryd-3-seat-sofa-lejde-light-grey-30506239",0],["EKHOLMA","ספה תלת-מושבית",207,85,0,2595,"ekholma-3-seat-sofa-hakebo-dark-grey-s49535595",0],["EKTORP","ספה תלת-מושבית",218,88,0,2545,"ektorp-3-seat-sofa-kilanda-light-beige-s69509010",0],["GLOSTAD","ספה תלת-מושבית",171,78,0,995,"glostad-3-seat-sofa-knisa-dark-grey-40573285",0],["GULLVALLA","ספה תלת-מושבית",182,83,0,1495,"gullvalla-3-seat-sofa-silkeryd-grey-green-80618499",0],["KIVIK","ספה תלת-מושבית",228,95,83,2695,"kivik-3-seat-sofa-tresund-light-beige-s89482830",0],["LANDSKRONA","ספה תלת-מושבית",204,89,78,2995,"landskrona-3-seat-sofa-gunnared-light-green-wood-s39270326",0],["LILLESÄTER","ספה תלת-מושבית",201,90,69,3250,"lillesaeter-3-seat-sofa-axvall-off-white-40619071",0],["MANNARP","ספה תלת-מושבית",198,95,0,1995,"mannarp-3-seat-sofa-saxemara-black-blue-s69619160",0],["NÄMMARÖ","ספה תלת-מושבית",264,92,70,2100,"naemmaroe-3-seat-sofa-outdoor-with-footstool-light-brown-stained-s09643605",0],["SALTMYRAN","ספה תלת-מושבית",187,79,0,1195,"saltmyran-3-seat-sofa-oereryd-grey-beige-40618514",0],["SALTSJÖBADEN","ספה תלת-מושבית",205,88,90,2995,"saltsjoebaden-3-seat-sofa-fridtuna-light-beige-s09627506",0],["SLATORP","ספה תלת-מושבית",246,95,75,2995,"slatorp-3-seat-sofa-vissle-yellow-green-50594367",0],["SÖDERHAMN","ספה תלת-מושבית",198,99,0,3385,"soederhamn-3-seat-sofa-viarp-beige-brown-s69305697",0],["STOCKHOLM","ספה תלת-מושבית",211,88,80,7695,"stockholm-three-seat-sofa-seglora-natural-80245051",0],["STOCKHOLM 2025","ספה תלת-מושבית",233,103,0,5495,"stockholm-2025-3-seat-sofa-sundhamn-beige-90586092",0],["VALNÄS","ספה תלת-מושבית",246,94,90,3395,"valnaes-3-seat-sofa-knaebaeck-light-beige-s89615335",0],["VIMLE","ספה תלת-מושבית",241,98,0,3345,"vimle-3-seat-sofa-gunnared-beige-s19399033",0],["VISKAFORS","ספה תלת-מושבית",224,90,74,4595,"viskafors-3-seat-sofa-lejde-grey-green-brown-s99443367",0],["LILLEHEM","ספה תלת-מושבית עם שזלונג",224,76,73,3120,"lillehem-3-seat-modular-sofa-w-chaise-longue-gunnared-brown-red-wood-s89568292",0],["ÄPPLARYD","ספה תלת-מושבית, כולל שזלונג",290,93,0,5595,"aepplaryd-3-seat-sofa-with-chaise-longue-lejde-light-grey-s09418051",0],["EKTORP","ספה תלת-מושבית, כולל שזלונג",252,88,88,3645,"ektorp-3-seat-sofa-with-chaise-longue-mangbyn-brown-multicolour-s99628728",0],["KIVIK","ספה תלת-מושבית, כולל שזלונג",198,95,0,4590,"kivik-3-seat-sofa-with-chaise-longue-tresund-anthracite-s99482839",0],["MANNARP","ספה תלת-מושבית, כולל שזלונג",229,95,97,2895,"mannarp-3-seat-sofa-with-chaise-longue-saxemara-black-blue-s79619169",0],["SLATORP","ספה תלת-מושבית, כולל שזלונג",256,95,75,4590,"slatorp-3-seat-sofa-with-chaise-longue-hakebo-yellow-brown-s99577578",0],["VIMLE","ספה תלת-מושבית, כולל שזלונג",266,98,0,4795,"vimle-3-seat-sofa-with-chaise-longue-with-wide-armrests-gunnared-medium-grey-s99401292",0],["UPPÅKRA","ספת 1.5 מושבים",125,107,95,2250,"uppakra-1-5-seat-module-with-armrest-left-johanneshov-dark-grey-s99614000",0],["KIVIK","ספת 4 מושבים",318,163,83,7790,"kivik-4-seat-sofa-with-chaise-longue-grann-bomstad-black-s39443191",0],["LANDSKRONA","ספת 4 מושבים",280,89,0,4990,"landskrona-4-seat-sofa-with-chaise-longue-gunnared-light-green-wood-s99270465",0],["LILLESÄTER","ספת 4 מושבים",269,90,0,3990,"lillesaeter-4-seat-sofa-gunnared-bright-green-yellow-s69614271",0],["SÖDERHAMN","ספת 4 מושבים",285,99,0,4940,"soederhamn-4-seat-sofa-with-chaise-longue-and-open-end-viarp-beige-brown-s29305816",0],["STOCKHOLM 2025","ספת 4 מושבים",308,99,0,7585,"stockholm-2025-4-seat-sofa-alhamn-dark-brown-s69574312",0],["VIMLE","ספת 4 מושבים",322,98,0,7580,"vimle-4-seat-sofa-with-chaise-longue-grann-bomstad-black-s09306708",0],["LILLEHEM","ספת 4 מושבים מודולרית עם שולחן צד",346,80,73,3805,"lillehem-4-seat-modular-sofa-with-side-table-gunnared-brown-red-metal-s99536234",0],["MANNARP","ספת 4 מושבים עם שזלונג",269,95,0,3145,"mannarp-4-seat-sofa-with-chaise-longue-saxemara-black-blue-s89619178",0],["SLATORP","ספת 4 מושבים עם שזלונג",326,95,75,4990,"slatorp-4-seat-sofa-with-chaise-longues-hakebo-dark-grey-s99577601",0],["SÖDERHAMN","ספת 4 מושבים עם שזלונג",285,99,0,4290,"soederhamn-4-seat-sofa-with-chaise-longue-and-open-end-kelinge-dark-yellow-s99621680",0],["VIMLE","ספת 4 מושבים עם שזלונג",336,98,0,5445,"vimle-4-seat-sofa-with-chaise-longue-with-wide-armrests-gunnared-beige-s99401763",0],["LILLESÄTER","ספת 6 מושבים",405,90,69,7135,"lillesaeter-6-seat-sofa-axvall-off-white-s79614299",0],["LILLEHEM","ספת 6 מושבים מודולרית",440,80,73,4245,"lillehem-6-seat-modular-sofa-gunnared-brown-red-wood-s89536201",0],["FRIDHULT","ספת מיטה",126,76,61,1195,"fridhult-sofa-bed-knisa-light-grey-70351725",0],["HAMMARN","ספת מיטה",46,54,80,595,"hammarn-sofa-bed-knisa-dark-grey-black-90354327",0],["EKHOLMA","ספת מיטה דו-מושבית",189,105,0,3995,"ekholma-2-seat-sofa-bed-kilanda-light-beige-s69598563",0],["LINDÅKRA","ספת מיטה דו-מושבית",206,87,0,2295,"lindakra-2-seat-sofa-bed-vissle-dark-grey-20582610",0],["LYCKSELE LÖVÅS","ספת מיטה דו-מושבית",142,100,87,1695,"lycksele-loevas-2-seat-sofa-bed-ransta-natural-s99387007",0],["LYCKSELE MURBO","ספת מיטה דו-מושבית",142,100,87,1845,"lycksele-murbo-2-seat-sofa-bed-grindtorp-multicolour-s89561714",0],["SALTSJÖBADEN","ספת מיטה דו-מושבית",185,105,0,3895,"saltsjoebaden-2-seat-sofa-bed-vittangi-light-beige-white-s59621432",0],["SKÖNABÄCK","ספת מיטה דו-מושבית",158,75,0,1795,"skoenabaeck-2-seat-sofa-bed-knisa-dark-grey-70582542",0],["TORNSBORG","ספת מיטה דו-מושבית",154,95,82,1995,"tornsborg-2-seat-sofa-bed-naggen-beige-pine-90584658",0],["VIMLE","ספת מיטה דו-מושבית",204,98,0,5095,"vimle-2-seat-sofa-bed-with-wide-armrests-gunnared-medium-grey-s29545251",0],["ÄLVDALEN","ספת מיטה תלת-מושבית",194,82,81,1995,"aelvdalen-3-seat-sofa-bed-knisa-dark-grey-80462596",0],["BÅRSLÖV","ספת מיטה תלת-מושבית",236,109,75,3395,"barsloev-3-seat-sofa-bed-tibbleby-light-grey-turquoise-30541582",0],["FRIHETEN","ספת מיטה תלת-מושבית",225,105,83,2795,"friheten-3-seat-sofa-bed-faringe-light-grey-60551225",0],["GRÄLVIKEN","ספת מיטה תלת-מושבית",225,93,74,2495,"graelviken-3-seat-sofa-bed-grey-70340567",0],["GRUNNARP","ספת מיטה תלת-מושבית",232,89,80,2995,"grunnarp-3-seat-sofa-bed-gunnared-beige-30583384",0],["IKEA PS 2026","ספת מיטה תלת-מושבית",204,102,82,2995,"ikea-ps-2026-3-seat-sofa-bed-skiftebo-light-grey-beige-20620344",0],["NYHAMN","ספת מיטה תלת-מושבית",200,97,90,2045,"nyhamn-3-seat-sofa-bed-with-foam-mattress-skartofta-black-light-grey-s99499991",0],["VIMLE","ספת מיטה תלת-מושבית",275,98,0,6080,"vimle-3-seat-sofa-bed-with-wide-armrests-gunnared-medium-grey-s99545257",0],["VRETSTORP","ספת מיטה תלת-מושבית",244,96,91,3495,"vretstorp-3-seat-sofa-bed-hakebo-grey-green-s09491254",0],["ÄLVDALEN","ספת מיטה תלת-מושבית עם שזלונג",196,82,81,2395,"aelvdalen-3-seat-sofa-bed-with-chaise-longue-knisa-grey-beige-10530669",0],["BÅRSLÖV","ספת מיטה תלת-מושבית עם שזלונג",236,153,90,3795,"barsloev-3-seat-sofa-bed-with-chaise-longue-tibbleby-beige-grey-80541594",0],["VIMLE","ספת מיטה תלת-מושבית עם שזלונג",271,98,0,7395,"vimle-3-seat-sofa-bed-with-chaise-longue-knaebaeck-grey-green-s99631938",0],["KIVIK","ספת מיטה, מושב יחיד",90,97,86,2090,"kivik-1-seat-sofa-bed-tibbleby-beige-grey-s39470231",0],["FRIHETEN","ספת-מיטה עם אחסון",230,151,0,3195,"friheten-corner-sofa-bed-with-storage-skiftebo-dark-grey-s39216754",0],["FRIHETEN / KLAGSHAMN","ספת-מיטה עם אחסון",230,151,0,3640,"friheten-klagshamn-corner-sofa-bed-with-storage-skiftebo-dark-grey-s69444330",0],["LUBBAN","עגלת שולחן עם אחסון",50,50,66,395,"lubban-trolley-table-with-storage-rattan-anthracite-50434307",0],["VALNÄS","עגלת שולחן עם אחסון",76,56,61,895,"valnaes-trolley-table-with-storage-oak-veneer-60628036",0],["BESTÅ","קומבינציית ארון לקיר",60,22,38,315,"besta-wall-mounted-cabinet-combination-white-hanviken-white-s19429247",0],["LASTARE","קומבינציית ארון לקיר",60,32,60,335,"lastare-wall-mounted-cabinet-combination-white-with-2-shelves-s49603688",0],["LIXHULT","קומבינצית ארון",120,35,57,490,"lixhult-cabinet-combination-grey-s19279177",0],["KALLAX / LAGKAPTEN","קומבינצית שולחן כתיבה",77,179,147,835,"kallax-lagkapten-desk-combination-white-white-stained-oak-effect-s49481682",0],["KALLAX / LINNMON","קומבינצית שולחן כתיבה",77,139,147,735,"kallax-linnmon-desk-combination-white-s29481701",0],["ÅLHULT","שולחן",120,80,75,495,"alhult-table-beige-brown-00597919",0],["ASKHOLMEN","שולחן",143,75,73,470,"askholmen-table-outdoor-dark-brown-50535679",0],["BERGSHYTTAN","שולחן",240,93,75,1495,"bergshyttan-table-tinted-effect-birch-veneer-50601650",0],["DOCKSTA","שולחן",103,103,75,895,"docksta-table-white-white-s19324995",1],["GRÖTÅN","שולחן",105,105,75,695,"groetan-table-pine-brown-stained-40610424",1],["HAUGA","שולחן",74,74,75,545,"hauga-table-white-birch-veneer-90576719",0],["IKEA PS 2026","שולחן",96,96,76,450,"ikea-ps-2026-table-green-80617895",1],["LASTARE","שולחן",100,42,74,295,"lastare-table-white-20615837",0],["LINNMON / ADILS","שולחן",140,60,73,195,"linnmon-adils-table-white-s29932181",0],["LISABO","שולחן",105,105,74,995,"lisabo-table-ash-veneer-40416498",1],["MÖRBYLÅNGA","שולחן",220,100,74,3795,"moerbylanga-table-oak-veneer-brown-stained-20293766",0],["NÄMMARÖ","שולחן",130,130,75,795,"naemmaroe-table-outdoor-light-brown-stained-50586701",1],["NÄSINGE","שולחן",80,60,75,495,"naesinge-table-white-60587535",0],["NORRMJÖLE","שולחן",105,105,75,995,"norrmjoele-table-oak-effect-black-00620566",1],["SANDSBERG","שולחן",110,67,75,245,"sandsberg-table-black-s29420393",0],["SKÅLSTA","שולחן",140,80,75,695,"skalsta-table-oak-effect-straight-light-grey-beige-s39608337",0],["SKOGSTA","שולחן",160,81,74,1495,"skogsta-table-acacia-black-00452643",0],["STOCKHOLM 2025","שולחן",230,90,75,2995,"stockholm-2025-table-oak-veneer-oak-veneer-s79579984",0],["TÄRNÖ","שולחן",55,54,70,135,"taernoe-table-outdoor-black-light-brown-stained-70095429",0],["TONSTAD","שולחן",150,80,75,1100,"tonstad-table-off-white-60599939",0],["VIHALS","שולחן",125,74,75,295,"vihals-table-white-white-s39578509",0],["DANDERYD","שולחן אוכל",130,80,75,795,"danderyd-dining-table-white-40568726",0],["SKOGSTA","שולחן אוכל",120,120,74,1495,"skogsta-dining-table-acacia-black-20593802",1],["VOXLÖV","שולחן אוכל",180,90,75,1395,"voxloev-dining-table-light-bamboo-40434322",0],["KVISTBRO","שולחן אחסון",44,44,42,195,"kvistbro-storage-table-white-30349452",1],["BRIMNES","שולחן איפור",70,42,77,395,"brimnes-dressing-table-white-70290459",0],["GRÅFJÄLLET","שולחן איפור",100,42,135,450,"grafjaellet-dressing-table-anthracite-30570225",0],["MALM","שולחן איפור",120,41,78,650,"malm-dressing-table-white-70620346",0],["NORDKISA","שולחן איפור",76,47,76,595,"nordkisa-dressing-table-bamboo-20439472",0],["SYVDE","שולחן איפור",100,48,78,795,"syvde-dressing-table-white-80430746",0],["NÄMMARÖ","שולחן בר",120,40,105,525,"naemmaroe-bar-table-outdoor-light-brown-stained-10510303",0],["VIHALS","שולחן בר",125,74,92,525,"vihals-bar-table-counter-height-white-white-s89621789",0],["FRÖSKELÅS","שולחן גיימינג",144,71,72,995,"froeskelas-gaming-desk-white-60619683",0],["UTESPELARE","שולחן גיימינג",160,80,78,895,"utespelare-gaming-desk-black-80507627",0],["MÅLOMRÅDE","שולחן גיימינג לישיבה/עמידה",180,80,197,2595,"malomrade-gaming-desk-sit-stand-with-monitor-arms-electric-black-50585805",0],["UTVISNING","שולחן גיימינג עם מדף",120,60,92,645,"utvisning-gaming-desk-with-shelf-black-40586400",0],["GLADOM","שולחן הגשה",45,45,53,95,"gladom-tray-table-black-50411990",1],["NORBERG / VIHALS","שולחן ו- 1 כיסא",74,60,0,274,"norberg-vihals-table-and-1-chair-white-knisa-light-grey-s79640378",0],["IKEA PS 2026","שולחן ו-2 כיסאות",70,70,76,1535,"ikea-ps-2026-table-and-2-chairs-pine-knaebaeck-bright-green-s69634392",0],["LISABO / LISABO","שולחן ו-2 כיסאות",88,78,0,1485,"lisabo-lisabo-table-and-2-chairs-ash-tallmyra-white-black-s79554832",0],["SANDSBERG","שולחן ו-2 כיסאות",67,67,75,333,"sandsberg-table-and-2-chairs-black-black-black-s29608390",0],["VIHALS / VIHALS","שולחן ו-2 כיסאות",95,90,75,1045,"vihals-vihals-table-and-2-chairs-gateleg-table-white-white-s29590253",0],["BERGSHYTTAN / BERGSHYTTAN","שולחן ו-2 ספסלים",70,70,76,2885,"bergshyttan-bergshyttan-table-and-2-benches-tinted-effect-birch-veneer-tinted-effect-birch-veneer-s79608397",0],["MÖRBYLÅNGA / MÅRENÄS","שולחן ו-4 כיסאות עם ידיות",205,95,75,5775,"moerbylanga-marenaes-table-and-4-chairs-with-armrests-oak-veneer-brown-stained-black-gunnared-dark-grey-s89520101",0],["SKOGSTA / RAMSNÄS","שולחן ו-6 כיסאות",235,100,0,4565,"skogsta-ramsnaes-table-and-6-chairs-acacia-black-anthracite-vissle-dark-grey-s99623716",0],["STOCKHOLM 2025 / STOCKHOLM 2025","שולחן ו-6 כיסאות",230,90,75,7495,"stockholm-2025-stockholm-2025-table-and-6-chairs-oak-veneer-oak-rattan-s89579988",0],["STRANDTORP / BERGMUND","שולחן ו-6 כיסאות",205,95,75,4995,"strandtorp-bergmund-table-and-6-chairs-white-orrsta-light-grey-s39441093",0],["TONSTAD / KRYLBO","שולחן ו-6 כיסאות",200,85,75,3765,"tonstad-krylbo-table-and-6-chairs-oak-veneer-tonerud-dark-beige-s49596744",0],["STRANDTORP / BERGMUND","שולחן ו-8 כיסאות",205,95,75,5895,"strandtorp-bergmund-table-and-8-chairs-brown-gunnared-medium-grey-s09441061",0],["SUNDVIK","שולחן ילדים",76,50,50,245,"sundvik-childrens-table-blue-20628316",0],["GLADHÖJDEN","שולחן ישיבה/עמידה",100,60,115,995,"gladhoejden-desk-sit-stand-white-30493939",0],["MITTZON","שולחן ישיבה/עמידה",160,80,126,2385,"mittzon-desk-sit-stand-electric-white-s59529966",0],["MITTZON","שולחן ישיבות",68,140,75,790,"mittzon-conference-table-white-s29532989",0],["ALEX","שולחן כתיבה",100,48,76,695,"alex-desk-white-10473555",0],["ANFALLARE / ADILS","שולחן כתיבה",65,140,73,595,"anfallare-adils-desk-bamboo-white-s09417693",0],["ANFALLARE / ALEX","שולחן כתיבה",65,140,73,970,"anfallare-alex-desk-bamboo-white-s59417742",0],["ANFALLARE / HILVER","שולחן כתיבה",65,140,73,895,"anfallare-hilver-desk-bamboo-s29417710",0],["BETESHÄST","שולחן כתיבה",120,60,76,695,"beteshaest-desk-light-bamboo-80619804",0],["BOLLPOJKE","שולחן כתיבה",90,55,75,595,"bollpojke-desk-pine-white-00591366",0],["BRYTNING","שולחן כתיבה",85,53,75,375,"brytning-desk-white-20598531",0],["ENKROKEN","שולחן כתיבה",56,56,181,295,"enkroken-desk-white-50587079",1],["FJÄLLBO","שולחן כתיבה",140,70,75,950,"fjaellbo-desk-black-90587690",0],["FRYKSÅS","שולחן כתיבה",110,54,76,1495,"fryksas-desk-rattan-60574104",0],["GULLABERG","שולחן כתיבה",120,65,75,995,"gullaberg-desk-white-20609681",0],["IDÅSEN","שולחן כתיבה",80,160,79,1195,"idasen-desk-brown-dark-grey-s99281039",0],["KALLAX","שולחן כתיבה",111,39,77,395,"kallax-desk-white-30582445",0],["KOMPISHÄNG","שולחן כתיבה",100,55,0,395,"kompishaeng-desk-green-pine-00628751",0],["LAGKAPTEN / ADILS","שולחן כתיבה",60,120,73,245,"lagkapten-adils-desk-white-stained-oak-effect-white-s79416874",0],["LAGKAPTEN / ALEX","שולחן כתיבה",140,60,73,670,"lagkapten-alex-desk-white-white-stained-oak-effect-s69431974",0],["LAGKAPTEN / KRILLE","שולחן כתיבה",60,140,73,575,"lagkapten-krille-desk-white-stained-oak-effect-white-s29417263",0],["LAGKAPTEN / MITTBACK","שולחן כתיבה",60,140,96,685,"lagkapten-mittback-desk-white-birch-s19417193",0],["LAGKAPTEN / OLOV","שולחן כתיבה",60,120,93,385,"lagkapten-olov-desk-white-stained-oak-effect-black-s79416906",0],["LAGKAPTEN / SPÄND","שולחן כתיבה",60,120,73,275,"lagkapten-spaend-desk-white-stained-oak-effect-white-s69563634",0],["LINNMON / OLOV","שולחן כתיבה",45,100,93,315,"linnmon-olov-desk-black-brown-white-s99590221",0],["LINNMON / SPÄND","שולחן כתיבה",60,100,73,225,"linnmon-spaend-desk-white-s69563865",0],["LISABO","שולחן כתיבה",118,45,74,795,"lisabo-desk-ash-veneer-30299070",0],["MALM","שולחן כתיבה",140,65,73,895,"malm-desk-white-60214159",0],["MICKE","שולחן כתיבה",73,50,75,395,"micke-desk-white-30213076",0],["MITTPLAN","שולחן כתיבה",80,60,75,495,"mittplan-desk-white-10549428",0],["MITTZON","שולחן כתיבה",160,80,85,1295,"mittzon-desk-white-s09529087",0],["MULLSJÖ","שולחן כתיבה",135,70,76,995,"mullsjoe-desk-oak-veneer-30553240",0],["PÅHL","שולחן כתיבה",96,58,72,370,"pahl-desk-height-adjustable-white-light-green-s69617444",0],["RELATERA","שולחן כתיבה",118,60,75,695,"relatera-desk-white-s29552864",0],["RIDSPÖ","שולחן כתיבה",140,70,77,2195,"ridspoe-desk-oak-00485224",0],["ROSENTORP","שולחן כתיבה",120,60,75,995,"rosentorp-desk-white-60606237",0],["SMÅGÖRA","שולחן כתיבה",93,51,88,395,"smagoera-desk-white-90489883",0],["SMYGA","שולחן כתיבה",122,60,83,895,"smyga-desk-light-grey-40480781",0],["TONSTAD","שולחן כתיבה",75,60,75,750,"tonstad-desk-off-white-30538202",0],["TORALD","שולחן כתיבה",36,48,116,145,"torald-desk-white-90493955",0],["TROTTEN","שולחן כתיבה",160,80,75,745,"trotten-desk-white-s79621921",0],["VITTSJÖ","שולחן כתיבה",110,60,75,395,"vittsjoe-desk-black-brown-glass-70607439",0],["LAGKAPTEN / LINNMON","שולחן כתיבה בצורת L",160,140,73,470,"lagkapten-linnmon-l-shaped-desk-white-s69627971",0],["BOLLPOJKE / BLECKBERGET","שולחן כתיבה וכיסא",85,53,93,890,"bollpojke-bleckberget-desk-and-chair-white-orange-brown-s89622133",0],["BRYTNING / BLECKBERGET","שולחן כתיבה וכיסא",85,53,93,865,"brytning-bleckberget-desk-and-chair-white-orange-brown-s99621251",0],["GULLABERG / ALEFJÄLL","שולחן כתיבה וכיסא",84,41,0,2350,"gullaberg-alefjaell-desk-and-chair-white-black-s29628878",0],["PÅHL","שולחן כתיבה עם מדף",96,58,72,495,"pahl-desk-with-shelf-unit-height-adjustable-white-s09619342",0],["VITTSJÖ","שולחן למחשב נייד",100,36,74,195,"vittsjoe-laptop-table-white-glass-40619537",0],["ASKHOLMEN","שולחן מתקפל",37,70,71,545,"askholmen-gateleg-table-outdoor-dark-brown-10557526",0],["GUNDE","שולחן מתקפל",67,67,73,195,"gunde-folding-table-black-00546897",0],["NÄMMARÖ","שולחן מתקפל",108,37,75,375,"naemmaroe-folding-table-light-brown-stained-10586699",0],["NORDEN","שולחן מתקפל",26,80,74,1195,"norden-gateleg-table-white-10423886",0],["PINNTORP","שולחן מתקפל",67,75,75,795,"pinntorp-gateleg-table-light-brown-stained-white-stained-pine-70529465",0],["VIHALS","שולחן מתקפל",39,90,75,795,"vihals-gateleg-table-white-70593574",0],["NORBERG","שולחן מתקפל לקיר",74,60,0,195,"norberg-wall-mounted-drop-leaf-table-white-30180504",0],["NÄSINGE","שולחן מתקפל עם אחסון",48,85,75,995,"naesinge-gateleg-table-with-storage-white-20587537",0],["RESARÖ","שולחן נייד עם הארכה מתקפלת ואחסון",41,64,91,1150,"resaroe-mobile-drop-leaf-table-w-storage-pine-20533337",0],["ÅLHULT","שולחן נפתח",120,80,75,795,"alhult-extendable-table-black-brown-20600789",0],["KARSKÄR","שולחן נפתח",160,90,75,1795,"karskaer-extendable-table-rubberwood-50611263",0],["MELLANSEL","שולחן נפתח",220,95,75,2995,"mellansel-extendable-table-oak-veneer-90468423",0],["NÄSINGE","שולחן נפתח",130,80,75,995,"naesinge-extendable-table-white-00587492",0],["ROSENTORP","שולחן נפתח",160,110,75,2495,"rosentorp-extendable-table-white-20568256",0],["SKANSNÄS","שולחן נפתח",115,115,75,3295,"skansnaes-extendable-table-brown-beech-veneer-70563237",1],["STRANDTORP","שולחן נפתח",150,95,75,2295,"strandtorp-extendable-table-brown-80388587",0],["TARSELE","שולחן נפתח",150,80,77,2795,"tarsele-extendable-table-oak-veneer-black-70581359",0],["TJÄRKIL","שולחן נפתח",180,100,75,2795,"tjaerkil-extendable-table-black-walnut-veneer-70630454",0],["TONSTAD","שולחן נפתח",80,70,75,1100,"tonstad-extendable-table-oak-veneer-10562504",0],["VIHALS","שולחן נפתח",120,74,75,545,"vihals-extendable-table-white-20589777",0],["DANDERYD","שולחן עם הארכה",74,80,75,995,"danderyd-drop-leaf-table-oak-veneer-white-10516121",0],["HAUGA","שולחן עם הארכה מתקפלת",55,74,75,695,"hauga-drop-leaf-table-white-birch-veneer-20586000",0],["NORDVIKEN","שולחן עם הארכה מתקפלת",74,74,75,695,"nordviken-drop-leaf-table-black-70368716",0],["LÄRANDE","שולחן עם יחידת אחסון נשלפת",120,58,74,695,"laerande-desk-with-pull-out-storage-unit-white-00492795",0],["IKEA PS 2026","שולחן עם מגירה",70,70,75,845,"ikea-ps-2026-table-with-drawer-pine-clear-lacquered-40617878",0],["MALM","שולחן עם פנל נשלף",151,65,73,795,"malm-desk-with-pull-out-panel-white-70214192",0],["HOL","שולחן עם תא אחסון",98,50,50,495,"hol-storage-table-acacia-50161321",0],["ÄMMARYD","שולחן צד",220,168,0,275,"aemmaryd-side-table-white-80609126",0],["BAGGBODA","שולחן צד",71,50,47,395,"baggboda-side-table-white-20556507",0],["BORGEBY","שולחן צד",46,46,55,395,"borgeby-side-table-black-40619882",1],["BURVIK","שולחן צד",38,38,45,195,"burvik-side-table-white-60340389",1],["FRÖTORP","שולחן צד",48,48,45,450,"froetorp-side-table-anthracite-marble-effect-black-glass-10492276",1],["GRIMSARBO","שולחן צד",40,40,43,195,"grimsarbo-side-table-pine-plywood-bright-red-50606167",1],["HOL","שולחן צד",50,50,50,295,"hol-side-table-acacia-70161320",0],["HOLMERUD","שולחן צד",80,31,52,295,"holmerud-side-table-oak-effect-40541421",0],["IDANÄS","שולחן צד",46,36,63,495,"idanaes-side-table-white-00496048",0],["IKEA PS 2026","שולחן צד",50,40,51,195,"ikea-ps-2026-side-table-dark-red-80621067",0],["KOMPISHÄNG","שולחן צד",50,50,49,195,"kompishaeng-side-table-red-pine-50628819",1],["KONSTRUNDA","שולחן צד",30,30,45,295,"konstrunda-side-table-metal-20611349",1],["LACK","שולחן צד",55,55,45,65,"lack-side-table-white-30449908",0],["OLSERÖD","שולחן צד",53,50,63,195,"olseroed-side-table-anthracite-birch-effect-dark-yellow-20525356",0],["SKRUVBY","שולחן צד",40,32,58,245,"skruvby-side-table-white-80532009",0],["STOCKHOLM 2025","שולחן צד",40,40,43,395,"stockholm-2025-side-table-pine-veneer-black-30586561",1],["TÅNEBRO","שולחן צד",46,46,61,150,"tanebro-side-table-in-outdoor-light-pink-60638182",1],["TONSTAD","שולחן צד",64,40,45,595,"tonstad-side-table-off-white-20528473",0],["TORSJÖ","שולחן צד",45,45,55,345,"torsjoe-side-table-gold-effect-glass-60590415",1],["TRANERED","שולחן צד",44,44,75,345,"tranered-side-table-black-30609001",1],["TUNSTA","שולחן צד",70,50,37,395,"tunsta-side-table-anthracite-50299502",0],["UGGLERUM","שולחן צד",46,40,67,345,"ugglerum-side-table-brown-00627983",0],["VALNÄS","שולחן צד",53,53,55,695,"valnaes-side-table-oak-veneer-80628035",1],["YXSTABY","שולחן צד על גלגלים",50,50,55,595,"yxstaby-gaming-side-table-on-castors-oak-veneer-grey-90620005",0],["BRÄNNBOLL","שולחן צד עם גלגלים",69,39,40,195,"braennboll-side-table-on-castors-light-ash-effect-white-00586360",0],["TINGBY","שולחן צד עם גלגלים",50,50,45,195,"tingby-side-table-on-castors-grey-00349444",0],["STARKVIND","שולחן צד עם מטהר אוויר",54,54,55,895,"starkvind-table-with-air-purifier-stained-oak-veneer-white-smart-80461945",1],["ÄMMARYD","שולחן קפה",98,59,45,325,"aemmaryd-coffee-table-white-00609125",0],["BORGEBY","שולחן קפה",70,70,42,495,"borgeby-coffee-table-black-30500355",1],["FRÖTORP","שולחן קפה",88,88,35,750,"froetorp-coffee-table-anthracite-marble-effect-black-glass-70497582",1],["HOLMERUD","שולחן קפה",90,55,40,345,"holmerud-coffee-table-oak-effect-90540706",0],["IDANÄS","שולחן קפה",107,55,49,1195,"idanaes-coffee-table-white-20487873",0],["KRAGSTA","שולחן קפה",90,90,48,595,"kragsta-coffee-table-white-20286638",1],["LACK","שולחן קפה",90,55,45,125,"lack-coffee-table-black-brown-40104294",0],["MÅBÄRSSKÄR","שולחן קפה",201,58,24,150,"mabaersskaer-coffee-table-outdoor-indoor-white-30597164",0],["ÖRTRÄSK","שולחן קפה",110,68,35,795,"oertraesk-coffee-table-brown-ash-veneer-10635845",0],["STOCKHOLM","שולחן קפה",180,59,40,1295,"stockholm-coffee-table-walnut-veneer-70239710",0],["STOCKHOLM 2025","שולחן קפה",97,97,38,1250,"stockholm-2025-coffee-table-oak-veneer-glass-20586552",1],["TONSTAD","שולחן קפה",84,82,35,995,"tonstad-coffee-table-oak-veneer-10489311",0],["TORSJÖ","שולחן קפה",240,93,75,495,"torsjoe-coffee-table-gold-effect-glass-50590406",0],["TRANERED","שולחן קפה",90,90,41,745,"tranered-coffee-table-dark-brown-10608998",0],["UGGLERUM","שולחן קפה",130,65,43,695,"ugglerum-coffee-table-walnut-veneer-60627980",0],["VALNÄS","שולחן קפה",118,72,50,1195,"valnaes-coffee-table-oak-veneer-20628038",0],["VITTSJÖ","שולחן קפה",75,75,45,295,"vittsjoe-coffee-table-light-beige-glass-30604348",1],["ÖSTAVALL","שולחן קפה מתכוונן",90,60,63,650,"oestavall-adjustable-coffee-table-white-00530066",0],["VITTERYD","שולחן קפה מתכוונן",97,59,64,795,"vitteryd-adjustable-coffee-table-white-20530065",0],["DANDERYD / SKOGSTA","שולחן+4 כיסאות",130,80,75,2195,"danderyd-skogsta-table-and-4-chairs-white-acacia-s69545188",0],["HÄGERNÄS","שולחן+4 כיסאות",118,74,75,995,"haegernaes-table-and-4-chairs-black-stained-pine-20575997",0],["LISABO / LISABO","שולחן+4 כיסאות",140,78,0,2475,"lisabo-lisabo-table-and-4-chairs-ash-tallmyra-white-black-s99554826",0],["NORRMJÖLE / ODGER","שולחן+4 כיסאות",45,51,81,2575,"norrmjoele-odger-table-and-4-chairs-marble-effect-black-anthracite-s89634490",0],["SANDSBERG","שולחן+4 כיסאות",110,67,75,521,"sandsberg-table-and-4-chairs-black-black-black-s09608386",0],["SKÅLSTA","שולחן+4 כיסאות",140,80,75,1475,"skalsta-table-and-4-chairs-oak-effect-straight-light-grey-beige-plastic-beige-tubular-metal-light-grey-beige-s79608986",0],["SKANSNÄS / HÖGVED","שולחן+4 כיסאות",40,51,86,4575,"skansnaes-hoegved-table-and-4-chairs-brown-beech-birch-veneer-s09634390",0],["STRANDTORP / TOBIAS","שולחן+4 כיסאות",205,95,75,4095,"strandtorp-tobias-table-and-4-chairs-white-transparent-s39388670",0],["TONSTAD / KRYLBO","שולחן+4 כיסאות",150,80,75,2575,"tonstad-krylbo-table-and-4-chairs-oak-veneer-tonerud-dark-beige-s29596716",0],["VOXLÖV / ODGER","שולחן+4 כיסאות",180,90,0,2975,"voxloev-odger-table-and-4-chairs-bamboo-anthracite-s49388679",0],["VOXLÖV / VOXLÖV","שולחן+4 כיסאות",180,90,0,3375,"voxloev-voxloev-table-and-4-chairs-bamboo-bamboo-s29388656",0],["SKOGSTA / SKOGSTA","שולחן+4 כיסאות+ספסל",235,100,73,4590,"skogsta-skogsta-table-4-chairs-bench-acacia-black-black-acacia-black-s59608770",0],["NORDLI","שידת 12 מגירות",160,47,145,2535,"nordli-chest-of-12-drawers-white-s79239490",0],["HEMNES","שידת 2 מגירות",54,38,66,495,"hemnes-chest-of-2-drawers-white-stain-80242627",0],["KRONÖREN","שידת 2 מגירות",76,48,55,275,"kronoeren-chest-of-2-drawers-pine-90610799",0],["KULLEN","שידת 2 מגירות",35,40,49,195,"kullen-chest-of-2-drawers-black-brown-60322130",0],["NORDLI","שידת 2 מגירות",80,47,54,745,"nordli-chest-of-2-drawers-white-s99239494",0],["STORKLINTA","שידת 2 מגירות",40,50,53,325,"storklinta-chest-of-2-drawers-oak-effect-with-2-drawers-20631413",0],["NORDLI","שידת 2 מגירות מודולרית",80,47,45,495,"nordli-modular-chest-of-2-drawers-white-10383461",0],["BRIMNES","שידת 3 מגירות",78,46,95,645,"brimnes-chest-of-3-drawers-white-frosted-glass-00392041",0],["GODISHUS","שידת 3 מגירות",71,79,63,345,"godishus-chest-of-3-drawers-white-80598095",0],["GULLABERG","שידת 3 מגירות",99,48,100,995,"gullaberg-chest-of-3-drawers-white-80609895",0],["HAUGA","שידת 3 מגירות",70,46,84,595,"hauga-chest-of-3-drawers-white-20581521",0],["HAVSTA","שידת 3 מגירות",81,47,89,1395,"havsta-chest-of-3-drawers-white-70599477",0],["HEMNES","שידת 3 מגירות",108,50,96,1195,"hemnes-chest-of-3-drawers-white-stain-80424745",0],["KILBERGET","שידת 3 מגירות",86,41,78,595,"kilberget-chest-of-3-drawers-white-70609914",0],["LILLBERGET","שידת 3 מגירות",70,43,68,450,"lillberget-chest-of-3-drawers-white-80630477",0],["NORDLI","שידת 3 מגירות",40,47,76,675,"nordli-chest-of-3-drawers-white-s39239835",0],["RACKNÄS","שידת 3 מגירות",69,40,78,450,"racknaes-chest-of-3-drawers-white-wall-mounted-10594524",0],["RÅDMANSÖ","שידת 3 מגירות",90,48,81,895,"radmansoe-chest-of-3-drawers-brown-walnut-effect-20593604",0],["RAST","שידת 3 מגירות",60,35,59,295,"rast-chest-of-3-drawers-pine-20609860",0],["SMÅSTAD / PLATSA","שידת 3 מגירות",60,57,63,740,"smastad-platsa-chest-of-3-drawers-white-white-s99387521",0],["STORKLINTA","שידת 3 מגירות",70,50,75,595,"storklinta-chest-of-3-drawers-white-30627533",0],["NORDLI","שידת 3 מגירות מודולרית",40,47,68,480,"nordli-modular-chest-of-3-drawers-white-20383465",0],["HAUGA","שידת 3 מגירות עם מדף",70,46,116,745,"hauga-chest-of-3-drawers-with-shelf-white-50581529",0],["ANKARUDDEN","שידת 4 מגירות",80,48,107,850,"ankarudden-chest-of-4-drawers-oak-effect-80627149",0],["BRIMNES","שידת 4 מגירות",78,46,124,795,"brimnes-chest-of-4-drawers-white-frosted-glass-90392046",0],["FÅGELFJÄLLET","שידת 4 מגירות",82,51,101,850,"fagelfjaellet-chest-of-4-drawers-off-white-60611639",0],["IDANÄS","שידת 4 מגירות",104,50,118,1495,"idanaes-chest-of-4-drawers-white-10458767",0],["LASTARE","שידת 4 מגירות",60,42,100,645,"lastare-chest-of-4-drawers-white-40599351",0],["NORDLI","שידת 4 מגירות",40,47,99,995,"nordli-chest-of-4-drawers-white-s79239843",0],["STORKLINTA","שידת 4 מגירות",70,50,98,795,"storklinta-chest-of-4-drawers-white-40627537",0],["TONSTAD","שידת 4 מגירות",82,47,90,1495,"tonstad-chest-of-4-drawers-oak-veneer-30614615",0],["TYSSEDAL","שידת 4 מגירות",67,49,102,1295,"tyssedal-chest-of-4-drawers-white-10391324",0],["VIHALS","שידת 4 מגירות",70,47,90,795,"vihals-chest-of-4-drawers-white-anchor-unlock-function-00483239",0],["BJÖRKSNÄS","שידת 5 מגירות",90,47,90,1795,"bjoerksnaes-chest-of-5-drawers-birch-70407299",0],["KILBERGET","שידת 5 מגירות",76,41,102,850,"kilberget-chest-of-5-drawers-white-40609915",0],["KULLEN","שידת 5 מגירות",70,40,112,645,"kullen-chest-of-5-drawers-black-brown-40393661",0],["LILLBERGET","שידת 5 מגירות",70,43,108,645,"lillberget-chest-of-5-drawers-white-60630478",0],["NORDLI","שידת 5 מגירות",120,47,76,1420,"nordli-chest-of-5-drawers-white-s49248033",0],["RÅDMANSÖ","שידת 5 מגירות",70,48,132,1195,"radmansoe-chest-of-5-drawers-brown-walnut-effect-40593603",0],["STORKLINTA","שידת 5 מגירות",40,50,120,795,"storklinta-chest-of-5-drawers-white-40627542",0],["ANKARUDDEN","שידת 6 מגירות",139,48,87,1295,"ankarudden-chest-of-6-drawers-with-2-inner-drawers-oak-effect-20627147",0],["FÅGELFJÄLLET","שידת 6 מגירות",82,51,123,1245,"fagelfjaellet-chest-of-6-drawers-off-white-70611648",0],["GULLABERG","שידת 6 מגירות",89,48,122,1395,"gullaberg-chest-of-6-drawers-white-40609897",0],["HAUGA","שידת 6 מגירות",138,46,84,1195,"hauga-chest-of-6-drawers-white-00581536",0],["HAVSTA","שידת 6 מגירות",121,47,89,1995,"havsta-chest-of-6-drawers-grey-beige-30599479",0],["HEMNES","שידת 6 מגירות",108,50,131,1595,"hemnes-chest-of-6-drawers-white-stain-60239273",0],["IDANÄS","שידת 6 מגירות",162,50,95,1995,"idanaes-chest-of-6-drawers-white-10458710",0],["KILBERGET","שידת 6 מגירות",144,41,78,995,"kilberget-chest-of-6-drawers-white-20609916",0],["KULLEN","שידת 6 מגירות",140,40,72,795,"kullen-chest-of-6-drawers-black-brown-00309235",0],["LILLBERGET","שידת 6 מגירות",140,43,68,795,"lillberget-chest-of-6-drawers-white-40630479",0],["NORDLI","שידת 6 מגירות",120,47,76,1320,"nordli-chest-of-6-drawers-white-s09239498",0],["RÅDMANSÖ","שידת 6 מגירות",159,48,81,1495,"radmansoe-chest-of-6-drawers-brown-walnut-effect-90593605",0],["SMÅSTAD / PLATSA","שידת 6 מגירות",60,57,123,1180,"smastad-platsa-chest-of-6-drawers-white-white-s59387655",0],["STORKLINTA","שידת 6 מגירות",82,51,123,995,"storklinta-chest-of-6-drawers-white-70627545",0],["TONSTAD","שידת 6 מגירות",120,47,90,1995,"tonstad-chest-of-6-drawers-oak-veneer-50614624",0],["TYSSEDAL","שידת 6 מגירות",127,49,81,1795,"tyssedal-chest-of-6-drawers-white-20293714",0],["VIHALS","שידת 6 מגירות",70,47,120,995,"vihals-chest-of-6-drawers-white-anchor-unlock-function-30483247",0],["FÅGELFJÄLLET","שידת 8 מגירות",160,51,101,1595,"fagelfjaellet-chest-of-8-drawers-dark-grey-blue-20611641",0],["GULLABERG","שידת 8 מגירות",168,48,100,1695,"gullaberg-chest-of-8-drawers-white-20609902",0],["HEMNES","שידת 8 מגירות",160,50,96,1895,"hemnes-chest-of-8-drawers-white-stain-10239280",0],["NORDLI","שידת 8 מגירות",160,47,99,2335,"nordli-chest-of-8-drawers-white-s29239505",0],["VISTHUS","שידת 8 מגירות",122,49,96,1495,"visthus-chest-of-8-drawers-grey-white-10493445",0],["NORDLI","שידת 9 מגירות",160,47,76,1860,"nordli-chest-of-9-drawers-white-s89239507",0],["SMÅSTAD","שידת החתלה",90,79,100,1155,"smastad-changing-table-white-white-with-3-drawers-s29582856",0],["BJÖRKSNÄS","שידת לילה",48,38,69,545,"bjoerksnaes-bedside-table-birch-70407360",0],["BLANKHÄLLAN","שידת לילה",45,45,61,295,"blankhaellan-bedside-table-beige-pink-50620998",0],["BLÄSTÅSEN","שידת לילה",50,37,76,395,"blaestasen-bedside-table-white-00595067",0],["BRIMNES","שידת לילה",39,41,53,245,"brimnes-bedside-table-white-10234942",0],["FÅGELFJÄLLET","שידת לילה",42,41,56,295,"fagelfjaellet-bedside-table-off-white-40627684",0],["GILLERSBERG","שידת לילה",39,39,56,195,"gillersberg-bedside-table-bamboo-white-30608983",0],["GRÅFJÄLLET","שידת לילה",45,36,59,225,"grafjaellet-bedside-table-anthracite-20570221",0],["GULLABERG","שידת לילה",38,40,75,495,"gullaberg-bedside-table-with-1-drawer-with-door-white-20561764",0],["HEMNES","שידת לילה",46,35,70,295,"hemnes-bedside-table-grey-green-light-brown-stained-50610739",0],["KNARREVIK","שידת לילה",42,34,52,89,"knarrevik-bedside-table-black-20569977",0],["KRONÖREN","שידת לילה",39,32,55,89,"kronoeren-bedside-table-pine-00610807",0],["NORDKISA","שידת לילה",40,40,67,345,"nordkisa-bedside-table-bamboo-60447677",0],["PLÖJKER","שידת לילה",41,41,50,345,"ploejker-bedside-table-grey-beige-80595068",0],["RÅDMANSÖ","שידת לילה",54,38,58,450,"radmansoe-bedside-table-brown-walnut-effect-80593597",0],["TOLKNING","שידת לילה",52,52,70,495,"tolkning-bedside-table-handmade-20512660",1],["TONSTAD","שידת לילה",40,40,59,645,"tonstad-bedside-table-oak-veneer-80489322",0],["VIKHAMMER","שידת לילה",40,39,65,345,"vikhammer-bedside-table-white-00381764",0],["GRÅFJÄLLET","שידת לילה לתלייה",42,29,31,195,"grafjaellet-wall-mounted-bedside-table-anthracite-00603114",0],["STOMSÖ","שידת לילה לתלייה",36,29,20,195,"stomsoe-wall-mounted-bedside-table-birch-effect-white-blue-70567805",0],["HATTÅSEN","שידת לילה/יחידת מדפים",27,43,58,125,"hattasen-bedside-table-shelf-unit-white-80569234",0],["NORDLI","שידת מגירות",40,47,54,595,"nordli-chest-of-drawers-white-s19276522",0],["NORDLI","שידת מגירות מודולרית",40,47,45,400,"nordli-modular-chest-of-drawers-white-40401901",0]];
+const kindOf=t=>/ספ|כורס|הדום/.test(t)?'sofa':/מיטה|מיטת|עריסה/.test(t)?'bed':/שולחן/.test(t)?'table':'box';
+const ICATS=[['ספות',/ספה|ספת/],['כורסאות',/כורס|הדום/],['מיטות',/מיטה|מיטת|עריסה/],['ארונות',/ארון/],['שידות',/שיד/],['שולחנות אוכל',/שולחן\+|שולחן ו-|שולחן אוכל|שולחן נפתח|שולחן$/],['שולחנות קפה',/שולחן קפה|שולחן צד/],['עבודה',/שולחן כתיבה|כיסא משרדי|ישיבה\/עמידה/],['מדפים',/מדפים|ספרים|כוננית|מזנון|יחידת/],['ילדים',/ילד|עריסה|החתלה|קומתיים|גלריה/]];
+let icat=-1;
+ICATS.forEach(([n],i)=>{const b=document.createElement('button');b.type='button';b.textContent=n;b.onclick=()=>{icat=icat===i?-1:i;[...$('icats').children].forEach((c,j)=>c.classList.toggle('on',j===icat));renderIkea()};$('icats').appendChild(b)});
+function renderIkea(){const q=$('iq').value.trim().toLowerCase();const list=$('ilist');list.innerHTML='';
+ if(!IKEA.length){$('inote').textContent='הקטלוג לא נטען.';return}
+ const res=IKEA.filter(it=>(!q||(it[0]+' '+it[1]).toLowerCase().includes(q))&&(icat<0||ICATS[icat][1].test(it[1]))).slice(0,80);
+ for(const it of res){const [n,t,w,d,h,pr,u,rd]=it;const row=document.createElement('div');row.className='irow';
+  const tx=document.createElement('div');tx.className='t';const b=document.createElement('b');b.textContent=n;const sp=document.createElement('span');sp.textContent=' '+t;tx.append(b,sp);
+  const meta=document.createElement('div');meta.className='meta';const dm=document.createElement('span');dm.textContent=rd?`⌀${w}`:`${w}×${d}`+(h?`×${h}`:'');const pc=document.createElement('span');pc.textContent=pr?`₪${pr.toLocaleString('he-IL')}`:'';
+  const a=document.createElement('a');a.href='https://www.ikea.com/il/he/p/'+u+'/';a.target='_blank';a.rel='noopener';a.textContent='לעמוד המוצר';meta.append(dm,pc,a);
+  const add=document.createElement('button');add.type='button';add.textContent='+';add.setAttribute('aria-label','הוסף לתוכנית');add.onclick=()=>{if(!plan)return;const k=kindOf(t);sel=autoAdd({k:'ikea',n:`${n} ${t}`,w,d,h:h||80,t:k,round:!!rd,url:u},k==='bed'||/ארון|שיד/.test(t)?/שינה|הורים|ילדים|ממ/:/סלון/);updateFit();save();if(mode==='walk')setMode('3d')};
+  row.append(tx,add,meta);list.appendChild(row)}
+ $('inote').textContent=res.length?`${res.length===80?'80 ראשונים מתוך ':''}${IKEA.filter(it=>(!q||(it[0]+' '+it[1]).toLowerCase().includes(q))&&(icat<0||ICATS[icat][1].test(it[1]))).length} מוצרים · ${IKEA.length} בקטלוג`:'לא נמצאו מוצרים. נסו שם דגם (KIVIK, MALM) או סוג רהיט.'}
+$('iq').addEventListener('input',renderIkea);renderIkea();
+const tab=w=>{$('tIkea').setAttribute('aria-selected',String(w==='i'));$('tBasic').setAttribute('aria-selected',String(w==='b'));$('pIkea').hidden=w!=='i';$('pBasic').hidden=w!=='b'};
+$('tIkea').onclick=()=>tab('i');$('tBasic').onclick=()=>tab('b');
+
+/* ---------------- arrange ---------------- */
+const RULES_ARR=[
+ 'סלון הוא "פינת ישיבה על שטיח": ספה ראשית וכורסה או ספה שנייה ב־L או זו מול זו, סביב שולחן קפה. הקבוצה יכולה לצוף בחלל ולא חייבת להיצמד לקיר.',
+ 'הצד הפתוח של פינת הישיבה פונה למרפסת ולנוף. הספה ניצבת לקיר הזכוכית או בגבה לפנים הדירה, כך שהאור מגיע מהצד ואין סנוור.',
+ 'רצף ברור: מטבח, פינת אוכל, סלון, מרפסת. שולחן האוכל בין המטבח לסלון, קרוב למטבח ומקביל לציר הארוך של החלל. עגול ל־4 בדירה קטנה, מלבני ל־6 בדירות 4–5 חדרים.',
+ 'מעבר ישר ופנוי מהכניסה ועד המרפסת, 90 ס"מ לפחות, בלי רהיט שחוסם אותו.',
+ 'מיטה זוגית: ראש המיטה על קיר פנימי מלא, ממורכז, עם שתי שידות לילה. לא מתחת לחלון ולא בקו ישר מול הדלת. החלון בצד המיטה או מולה.',
+ 'ארונות לאורך קיר שלם, ליד דלת החדר או על קיר פנימי, ולא על קיר החוץ. בחדר הורים הארון יושב בדרך לחדר הרחצה.',
+ 'חדר ילדים: מיטת יחיד בפינה לאורך הקיר, ארון על קיר הכניסה, שולחן עבודה ליד החלון. מרכז החדר נשאר פנוי למשחק.',
+ 'ממ"ד מתוכנן כמו כל חדר שינה או עבודה, באותם חוקים.',
+ 'רהיטים לא נכנסים לקשת הפתיחה של דלתות ולא חוסמים חלונות ויציאות.',
+ 'מידות עבודה: מעבר ראשי 90 ס"מ ומשני 60 ס"מ. 60 ס"מ בשני הצדדים של מיטה זוגית. 80–90 ס"מ סביב שולחן אוכל. 40–45 ס"מ בין ספה לשולחן קפה. 90 ס"מ פנויים מול ארונות ומגירות.',
+ 'פחות זה יותר: עדיף חדר נושם על פני חדר מלא.'];
+$('rulesList').innerHTML='';RULES_ARR.forEach(r=>{const li=document.createElement('li');li.textContent=r;$('rulesList').appendChild(li)});
+function fillRooms(){const sl=$('roomSel');const cur=sl.value;sl.innerHTML='';const all=document.createElement('option');all.value='-1';all.textContent='כל הדירה';sl.appendChild(all);
+ plan.rooms.forEach((r,i)=>{const o=document.createElement('option');o.value=i;o.textContent=`${r.name} · ${polyArea(r.poly).toFixed(1)} מ״ר`;sl.appendChild(o)});
+ sl.value=cur&&+cur<plan.rooms.length?cur:'-1'}
+function roomContext(ri){const r=plan.rooms[ri];const {per}=attachOpenings(plan);const ops=[];
+ plan.walls.forEach((w,wi)=>{const L=len(w.a,w.b),dx=(w.b[0]-w.a[0])/L,dy=(w.b[1]-w.a[1])/L;for(const o of per[wi]){const c=[w.a[0]+dx*o.s,w.a[1]+dy*o.s];
+  const near=r.poly.some((p,i)=>segDist(c,p,r.poly[(i+1)%r.poly.length])<.35);if(near)ops.push({kind:o.kind==='door'?(o.w>1.3?'sliding_door':'door'):'window',center:c.map(v=>+v.toFixed(2)),width_m:+o.w.toFixed(2)})}});
+ return {room:ri,name:r.name,area_m2:+polyArea(r.poly).toFixed(1),polygon:r.poly.map(p=>p.map(v=>+v.toFixed(2))),openings:ops}}
+const KIND={
+ sofa:{l:'ספה',h:80,re:/^ספה|^ספת 4/,sz:'180–260×85–100 (פינתית עד 300×160)'},
+ armchair:{l:'כורסה',h:80,re:/^כורסה/,sz:'70–90×75–90'},
+ coffee_table:{l:'שולחן קפה',h:42,re:/שולחן קפה/,sz:'80–130×50–70'},
+ side_table:{l:'שולחן צד',h:50,re:/שולחן צד/,sz:'40–50×40–50'},
+ tv_unit:{l:'מזנון טלוויזיה',h:55,re:/מזנון/,sz:'140–200×40–50'},
+ dining_table:{l:'שולחן אוכל',h:75,re:/^שולחן$|שולחן נפתח|שולחן\+|שולחן ו-|שולחן אוכל|שולחן עם הארכה/,sz:'ל־4: 120–140×75–85, ל־6: 160–200×85–100 (כולל כיסאות צריך 60 ס"מ מכל צד)'},
+ bed_double:{l:'מיטה זוגית',h:100,re:/מסגרת מיטה|מיטה מרופדת|מיטה עם|^מיטה$/,min:135,sz:'מזרן 160×200, טביעה 170–180×205–215'},
+ bed_single:{l:'מיטת יחיד',h:90,re:/מסגרת מיטה|מיטת יחיד|^מיטה$|מיטה עם/,max:125,sz:'מזרן 90×190/200, טביעה 95–105×200–210'},
+ nightstand:{l:'שידת לילה',h:55,re:/שידת לילה|שולחן לילה/,sz:'40–50×35–45'},
+ wardrobe:{l:'ארון בגדים',h:220,re:/ארון בגדים|מסגרות ארון|^ארון$/,sz:'100–300×58–62'},
+ dresser:{l:'שידה',h:90,re:/^שידת \d|שידת מגירות/,sz:'80–160×45–50'},
+ desk:{l:'שולחן עבודה',h:75,re:/שולחן כתיבה/,sz:'100–140×60–75'},
+ shelf:{l:'כוננית',h:180,re:/יחידת מדפים|ארון ספרים|כוננית/,sz:'60–160×30–40'},
+ crib:{l:'עריסה',h:90,re:/עריסה|מיטת תינוק/,sz:'70×125'},
+ rug:{l:'שטיח',h:1,sz:'160×230 או 200×300'},plant:{l:'עציץ',h:120,sz:'40×40'},floor_lamp:{l:'מנורת רצפה',h:150,sz:'40×40'},
+ toilet:{l:'אסלה',h:40,sz:'38×55'},sink:{l:'כיור וארונית',h:85,sz:'60–100×45–50'},shower:{l:'מקלחון',h:200,sz:'80–120×80–90'},bathtub:{l:'אמבטיה',h:55,sz:'160–180×70–80'},
+ kitchen_counter:{l:'משטח מטבח',h:90,sz:'אורך×60, לאורך הקירות, אפשר כמה'},fridge:{l:'מקרר',h:185,sz:'70×72'},washer:{l:'מכונת כביסה',h:85,sz:'60×60'}};
+function matchIkea(kind,w,d){const K=KIND[kind];if(!K||!K.re)return [];const out=[];
+ IKEA.forEach((it,i)=>{if(!K.re.test(it[1]))return;const pw=it[2],pd=it[3];if(K.min&&Math.min(pw,pd)<K.min)return;if(K.max&&Math.min(pw,pd)>K.max)return;
+  for(const sw of [0,1]){const a=sw?pd:pw,b=sw?pw:pd;const over=Math.max(0,a-w)+Math.max(0,b-d);const sc=over*4+Math.abs(a-w)+Math.abs(b-d)+(sw?3:0);out.push({i,sw,sc})}});
+ out.sort((x,y)=>x.sc-y.sc);const seen=new Set(),res=[];for(const o of out){const key=IKEA[o.i][0]+IKEA[o.i][1]+IKEA[o.i][2]+'x'+IKEA[o.i][3];if(seen.has(key))continue;seen.add(key);res.push(o);if(res.length>=4)break}return res}
+let ctlArr=null,lastShop=[];
+$('arrBtn').onclick=async()=>{if(!plan)return;if(!sample){$('arrStatus').textContent='התכנון החכם עובד כשפותחים את האפליקציה בתוך Claude.';return}
+ const v=+$('roomSel').value;const scope=v<0?plan.rooms.map((r,i)=>i):[v];const keep=$('keep').checked;
+ const ctx=scope.map(roomContext);
+ const kept=keep?furn.filter(o=>scope.some(ri=>pip([o.x,o.y],plan.rooms[ri].poly))).map(o=>({id:o.id,kind:o.kind,w_cm:o.w,d_cm:o.d})):[];
+ const prompt=`אתה אדריכל פנים ישראלי. תכנן ריהוט מלא ל${scope.length>1?'כל החדרים בדירה':'חדר'} לפי חוקי התכנון של STS ARCH (עדיפות עליונה; נלמדו מתוכניות המשרד) ולפי סטנדרטים מקובלים (Neufert, ארגונומיה). בחר לכל פריט את המידה הכי מתאימה לחלל.
+
+חוקי התכנון:
+${RULES_ARR.map((r,i)=>(i+1)+'. '+r).join('\n')}
+
+סוגי פריטים מותרים (kind) וטווחי מידות בס"מ:
+${Object.entries(KIND).map(([k,v])=>k+' ('+v.l+'): '+v.sz).join('\n')}
+
+לכל חדר לפי ייעודו: סלון עם פינת ישיבה על שטיח, מזנון, 1–2 עציצים ומנורת רצפה; פינת אוכל; מטבח עם משטחים לאורך הקירות ומקרר; חדר רחצה עם אסלה, כיור ומקלחון או אמבטיה; שירותי אורחים עם אסלה וכיור קטן; חדרי שינה עם מיטה, שידות לילה וארון; ממ"ד כחדר שינה או עבודה; מרפסת שירות עם מכונת כביסה; מבואה כמעט ריקה. מרפסות: עציצים בלבד.
+
+מערכת צירים: מטרים, x ימינה, y למטה. החדרים (פוליגון ופתחים):
+${JSON.stringify(ctx)}
+${kept.length?'רהיטים קיימים שיש להשאיר ולמקם מחדש (השתמש ב־id שלהם):\n'+JSON.stringify(kept):''}
+
+סיבוב rot במעלות: ב־0 הרוחב w לאורך ציר x והחזית (צד הישיבה, רגלי המיטה, דלתות ארון, חזית משטח המטבח, צד השימוש של אסלה וכיור) פונה ל־+y. 90 = החזית ל־-x, 180 = ל־-y, 270 = ל־+x. x,y = מרכז הפריט. כל פריט כולו בתוך הפוליגון של החדר שלו, 2 ס"מ מהקירות, בלי חפיפה (שטיח מותר מתחת לרהיטים), בלי לחסום דלתות ומעברים.
+
+ענה ב־JSON בלבד:
+{"items":[{"room":0,"kind":"sofa","id":"(רק לרהיט קיים)","w_cm":220,"d_cm":95,"x":0,"y":0,"rot":0,"why":"נימוק קצר, עד 10 מילים"}],"summary":"2 משפטים על הרעיון"}`;
+ ctlArr?.abort();ctlArr=new AbortController();$('arrBtn').disabled=true;$('why').innerHTML='';$('shop').innerHTML='';
+ const st=$('arrStatus');st.className='status';st.textContent=scope.length>1?'מתכנן את כל הדירה: חדר אחרי חדר, מידות ומיקומים… עד שתי דקות':'מתכנן את החדר… עד דקה';const sp=document.createElement('span');sp.className='spin';st.prepend(sp);
+ try{const j=await sample.json(prompt,{modelTier:'complex',signal:ctlArr.signal});
+  const res=Array.isArray(j&&j.items)?j.items:[];
+  // clear the scope (unless kept)
+  for(const o of furn.slice())if(scope.some(ri=>pip([o.x,o.y],plan.rooms[ri].poly))&&!kept.some(k=>k.id===o.id)){furnG.remove(o.mesh);furn=furn.filter(f=>f!==o)}
+  sel=null;const shop=[];let adj=0;const whys=[];
+  const order=['rug','kitchen_counter'];res.sort((a,b)=>(order.includes(b.kind)?1:0)-(order.includes(a.kind)?1:0));
+  for(const r of res){const ri=+r.room,room=plan.rooms[ri];if(!room)continue;let x=+r.x,y=+r.y;if(!isFinite(x)||!isFinite(y))continue;
+   let rot=Math.round((((+r.rot||0)%360+360)%360)/90)*Math.PI/2;let o=r.id?furn.find(f=>f.id===String(r.id)):null;
+   if(o){o.x=x;o.y=y;o.r=rot;place(o)}
+   else{const K=KIND[r.kind];if(!K)continue;const w=clamp(+r.w_cm||60,20,600),d=clamp(+r.d_cm||60,15,600);
+    const m=K.re?matchIkea(r.kind,w,d):[];
+    if(m.length){const best=m[0],it=IKEA[best.i];o=addFurn({k:'ikea',kind:r.kind,n:`${it[0]} ${it[1]}`,w:it[2],d:it[3],h:it[4]||K.h,round:!!it[7],url:it[6]},x,y,rot+(best.sw?Math.PI/2:0));
+     shop.push({o,kind:r.kind,ideal:[w,d],alts:m,room:room.name})}
+    else o=addFurn({k:'fix',kind:r.kind,n:K.l,w,d,h:K.h},x,y,rot)}
+   if(!SOFT.has(o.kind)&&!fitOf(o).ok){if(nudge(o,room))adj++}
+   if(r.why)whys.push([o.n,String(r.why).slice(0,80)])}
+  updateFit();save();lastShop=shop;renderShop();
+  if(scope.length===1){focusRoom(scope[0])}else{focus=null;setMode('3d')}
+  $('why').innerHTML='';for(const [n,w] of whys.slice(0,14)){const li=document.createElement('li');const b=document.createElement('b');b.textContent=n+': ';li.append(b,document.createTextNode(w));$('why').appendChild(li)}
+  const sum=String(j&&j.summary||'').slice(0,300);st.textContent=(sum||`תוכננו ${res.length} פריטים.`)+(adj?` (${adj} תוקנו קצת כדי שייכנסו.)`:'');
+  showCTA('arrStatus','רוצים שאדריכל ידייק את זה לדירה שלכם?');
+  if($('speak').checked&&sum)say(sum)}
+ catch(e){if(e?.code==='rate_limited')showCTA('arrStatus','רוצים להמשיך עם אדריכל אמיתי?');st.className='status err';st.textContent=e?.code==='not_granted'?'צריך לאשר לאפליקציה להשתמש ב־Claude.':e?.code==='rate_limited'?'הגעתם למכסה היומית של תכנונים. נסו שוב מחר.':e?.code==='invalid_json'?'התכנון לא הצליח הפעם. נסו שוב או חדר אחד בכל פעם.':e?.code==='cancelled'?'':'משהו השתבש. נסו שוב.'}
+ finally{$('arrBtn').disabled=false}};
+function renderShop(){const box=$('shop');box.innerHTML='';if(!lastShop.length)return;let total=0;
+ const h=document.createElement('div');h.className='shophead';box.appendChild(h);
+ for(const s of lastShop){const it=IKEA.find(x=>`${x[0]} ${x[1]}`===s.o.n&&x[2]===s.o.w&&x[3]===s.o.d)||IKEA[s.alts[0].i];total+=it[5]||0;
+  const row=document.createElement('div');row.className='shop';
+  const t=document.createElement('div');t.className='st';const lab=document.createElement('span');lab.className='eyebrow';lab.textContent=`${s.room} · ${KIND[s.kind].l} · מומלץ ${s.ideal[0]}×${s.ideal[1]}`;
+  const nm=document.createElement('a');nm.href='https://www.ikea.com/il/he/p/'+it[6]+'/';nm.target='_blank';nm.rel='noopener';nm.innerHTML='<b></b> <span></span>';nm.querySelector('b').textContent=it[0];nm.querySelector('span').textContent=it[1];
+  const meta=document.createElement('div');meta.className='sm';meta.textContent=`${it[2]}×${it[3]} ס״מ · ₪${(it[5]||0).toLocaleString('he-IL')}`;t.append(lab,nm,meta);row.appendChild(t);
+  if(s.alts.length>1){const al=document.createElement('div');al.className='alts';for(const a of s.alts.slice(1)){const x=IKEA[a.i];const b=document.createElement('button');b.type='button';b.textContent=`${x[0]} ${x[2]}×${x[3]}`;b.title=x[1];
+    b.onclick=()=>{s.o.n=`${x[0]} ${x[1]}`;s.o.w=x[2];s.o.d=x[3];s.o.h=x[4]||s.o.h;s.o.url=x[6];s.o.round=!!x[7];rebuildMesh(s.o);const room=plan.rooms.find(r=>r.name===s.room);if(room&&!fitOf(s.o).ok)nudge(s.o,room);updateFit();save();renderShop()};al.appendChild(b)}row.appendChild(al)}
+  box.appendChild(row)}
+ h.textContent=`רשימת קניות · ${lastShop.length} פריטים · ₪${total.toLocaleString('he-IL')}`}
+function focusRoom(ri){const r=plan.rooms[ri];if(!r)return;focus=centroid(r.poly);setMode('3d');const xs=r.poly.map(p=>p[0]),ys=r.poly.map(p=>p[1]);const sp=Math.max(Math.max(...xs)-Math.min(...xs),Math.max(...ys)-Math.min(...ys))+1.2;
+ ctl.target.set(focus[0],.6,focus[1]);persp.position.set(focus[0]+sp*1.25,sp*1.35+1,focus[1]+sp*1.25);ctl.update()}
+$('roomSel').addEventListener('change',()=>{const v=+$('roomSel').value;if(v>=0)focusRoom(v);else{focus=null;setMode('3d')}});
+function nudge(o,room){const x0=o.x,y0=o.y,r0=o.r;for(let rad=.05;rad<=1.2;rad+=.05)for(let a=0;a<16;a++){const t=a/16*Math.PI*2;o.x=x0+Math.cos(t)*rad;o.y=y0+Math.sin(t)*rad;for(const rr of [r0,r0+Math.PI/2]){o.r=rr;if(pip([o.x,o.y],room.poly)&&fitOf(o).ok){place(o);return true}}}o.x=x0;o.y=y0;o.r=r0;place(o);return false}
+
+/* ---------------- upload + AI ---------------- */
+let file=null,sample=null;
+const WORKER_URL='';/*WORKER_URL*/
+async function toB64(f){const img=await createImageBitmap(f);const k=Math.min(1,1568/Math.max(img.width,img.height));const c=document.createElement('canvas');c.width=Math.round(img.width*k);c.height=Math.round(img.height*k);
+ const g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,c.width,c.height);g.drawImage(img,0,0,c.width,c.height);return c.toDataURL('image/jpeg',.88).split(',')[1]}
+function parseJSON(t){t=String(t||'').trim();const fence=t.match(/```(?:json)?\s*([\s\S]*?)```/);if(fence)t=fence[1];try{return JSON.parse(t)}catch(e){}
+ const a=Math.min(...['{','['].map(ch=>{const i=t.indexOf(ch);return i<0?1e9:i})),b=Math.max(t.lastIndexOf('}'),t.lastIndexOf(']'));if(a<b){try{return JSON.parse(t.slice(a,b+1))}catch(e){}}throw {code:'invalid_json',text:t}}
+function workerSample(){const call=async(input,opts={})=>{const kind=opts.images?'plan':Array.isArray(input)?'ask':'design';
+  const body={kind,messages:Array.isArray(input)?input:[{role:'user',content:String(input)}]};if(opts.images)body.image={media_type:'image/jpeg',data:await toB64(opts.images)};
+  let r;try{r=await fetch(WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:opts.signal})}catch(e){throw {code:e&&e.name==='AbortError'?'cancelled':'upstream_error'}}
+  const j=await r.json().catch(()=>({}));if(!r.ok)throw {code:r.status===429?'rate_limited':'upstream_error',reason:j.error};
+  if(opts.onText)opts.onText({text:j.text,delta:j.text});return {text:j.text,truncated:!!j.truncated}};
+ call.json=async(input,opts)=>parseJSON((await call(input,opts)).text);return call}
+function setStatus(t,kind){const s=$('status');s.className='status'+(kind==='err'?' err':'');s.textContent=t;if(kind==='busy'){const sp=document.createElement('span');sp.className='spin';s.prepend(sp)}}
+function takeFile(f){if(!f||!/^image\//.test(f.type))return setStatus('צריך קובץ תמונה: JPG, PNG או WebP.','err');file=f;const u=URL.createObjectURL(f);$('thumb').style.backgroundImage=`url(${u})`;$('dropT').textContent=f.name.slice(0,40);$('dropS').textContent='מוכן. לחצו "בנו לי תלת־ממד".';$('build').disabled=!sample;if(!sample)setStatus('קריאת תוכנית מתמונה עובדת כשפותחים את האפליקציה בתוך Claude.','err')}
+$('file').onchange=e=>takeFile(e.target.files[0]);
+const dr=$('drop');['dragenter','dragover'].forEach(t=>dr.addEventListener(t,e=>{e.preventDefault();dr.classList.add('over')}));['dragleave','drop'].forEach(t=>dr.addEventListener(t,e=>{e.preventDefault();dr.classList.remove('over')}));
+dr.addEventListener('drop',e=>takeFile(e.dataTransfer.files[0]));
+window.addEventListener('paste',e=>{const it=[...(e.clipboardData?.items||[])].find(i=>i.type.startsWith('image/'));if(it)takeFile(it.getAsFile())});
+
+const EXTRACT=`You are an experienced Israeli architect reading a residential floor plan image (from a developer brochure, Yad2 listing or a photo). Convert it into clean 2D geometry for a 3D model.
+
+Units: METERS. Coordinate system: origin at the top-left corner of the apartment's outer walls, x to the right, y DOWN (as in the image). Set the scale from dimension annotations if present (Israeli plans are usually in cm), otherwise from typical sizes: interior doors 0.8–0.9 m, entrance door 1.0 m, interior walls 0.1–0.15 m thick, exterior walls 0.2–0.3 m, ממ"ד walls 0.3 m, bedrooms usually 9–14 m².
+
+Reply with ONLY one JSON object:
+{"name":"short Hebrew title, e.g. דירת 4 חדרים",
+ "walls":[{"a":[x,y],"b":[x,y],"t":0.12,"ext":false}],
+ "openings":[{"kind":"door"|"window","center":[x,y],"w":0.9}],
+ "rooms":[{"name":"סלון","poly":[[x,y],[x,y],[x,y]]}],
+ "notes":"one short Hebrew sentence about what was uncertain"}
+
+Rules:
+- walls are straight CENTERLINE segments; walls that meet must share the exact same endpoint coordinates; split a wall where another wall joins it. Include every exterior and interior wall. Balcony railings: add "h":1.05.
+- openings: every door, sliding door and window, with "center" ON the wall centerline and "w" its width.
+- rooms: closed polygons following the wall centerlines, with the room labels written on the plan, in Hebrew (סלון, מטבח, חדר שינה, חדר הורים, ממ"ד, רחצה, שירותים, מרפסת, מבואה...).
+- round coordinates to 0.05 m. Ignore furniture drawn on the plan, text, north arrows and dimension lines.
+- If the image is not a floor plan, reply {"error":"short Hebrew reason"}.`;
+let ctlAI=null;
+$('build').onclick=async()=>{if(!file||!sample)return;ctlAI?.abort();ctlAI=new AbortController();$('build').disabled=true;
+ setStatus('קורא את התוכנית: קירות, פתחים וחדרים. זה לוקח עד דקה…','busy');
+ try{const j=await sample.json(EXTRACT,{images:file,modelTier:'complex',signal:ctlAI.signal});
+  if(j&&j.error){setStatus('זה לא נראה כמו תוכנית דירה: '+String(j.error).slice(0,120),'err');return}
+  const pl=sanitize(j);clearFurn();build(pl);setMode('3d');
+  showCTA('status','רוצים שאדריכל יעבור על התוכנית?');setStatus(`מוכן: ${pl.walls.length} קירות, ${pl.rooms.length} חללים.${pl.notes?' '+pl.notes:''} אם המידות לא נכונות, השתמשו בכיול קנה מידה.`);save();
+ }catch(e){const c=e&&e.code;
+  setStatus(c==='not_granted'?'צריך לאשר לאפליקציה להשתמש ב־Claude כדי לקרוא את התוכנית.':c==='invalid_json'||(e&&e.message==='few_walls')?'לא הצלחתי לקרוא את התוכנית הזו. נסו צילום ישר וחד יותר, בלי הרבה טקסט מסביב.':c==='image_rejected'?'הקובץ לא נתמך או גדול מדי. נסו JPG או PNG.':c==='rate_limited'?'הגעתם למכסה היומית של קריאת תוכניות. נסו שוב מחר.':c==='cancelled'?'בוטל.':'משהו השתבש בדרך. נסו שוב.','err')}
+ finally{$('build').disabled=!file}};
+
+/* ---------------- assistant ---------------- */
+const QS=['מה הבעיות בתוכנית הזו?','איפה הכי כדאי לשים את הספה?','איזה חדר הכי מתאים לחדר עבודה?','הדירה מתאימה למשפחה עם תינוק?'];
+QS.forEach(q=>{const b=document.createElement('button');b.type='button';b.textContent=q;b.onclick=()=>{$('askI').value=q;ask(q)};$('qchips').appendChild(b)});
+function planBrief(){const rooms=plan.rooms.map(r=>{const xs=r.poly.map(p=>p[0]),ys=r.poly.map(p=>p[1]);return `- ${r.name}: ${polyArea(r.poly).toFixed(1)} מ"ר, בערך ${(Math.max(...xs)-Math.min(...xs)).toFixed(1)}×${(Math.max(...ys)-Math.min(...ys)).toFixed(1)} מ'`}).join('\n');
+ const {per}=attachOpenings(plan);const doors=per.flat().filter(o=>o.kind==='door').length,wins=per.flat().filter(o=>o.kind==='window').length;
+ const f=furn.map(o=>{const rm=plan.rooms.find(r=>pip([o.x,o.y],r.poly));return `- ${o.n} ${o.w}×${o.d} ס"מ ב${rm?rm.name:'מחוץ לחדרים'}: ${o.fit&&!o.fit.ok?'לא נכנס ('+o.fit.why+')':'נכנס'}${o.fit&&o.fit.ok&&o.fit.clear<3?', מרווח '+Math.round(o.fit.clear*100)+' ס"מ':''}`}).join('\n')||'- אין';
+ return `תוכנית: ${plan.name}\nחללים:\n${rooms}\nדלתות: ${doors}, חלונות: ${wins}. כיוון צפון: לא ידוע.\nרהיטים שהמשתמש הציב:\n${f}`}
+const RULES=`אתה אדריכל ישראלי ותיק שעוזר לחבר להבין תוכנית דירה. ענה בעברית פשוטה וחמה, כמו בשיחה, ב־2 עד 5 משפטים (עד 90 מילים). בלי כותרות, בלי רשימות, בלי כוכביות ובלי אימוג'י, כי התשובה מוקראת בקול. הישען רק על נתוני התוכנית שבהודעה; אם חסר מידע (למשל כיוון צפון או גובה קומה) אמור את זה במשפט אחד. תן עצה מעשית אחת לפחות.`;
+let turns=[],ctlQ=null;
+async function ask(q){q=q.trim();if(!q||!plan)return;if(!sample){$('aiNote').hidden=false;return}
+ ctlQ?.abort();ctlQ=new AbortController();const out=$('answer');out.textContent='חושב…';$('askB').disabled=true;speechSynthesis?.cancel?.();
+ turns.push({role:'user',content:`נתוני התוכנית:\n${planBrief()}\n\nהשאלה: ${q}`});turns=turns.slice(-6);
+ try{const {text}=await sample([{role:'user',content:RULES},...turns],{cache:false,signal:ctlQ.signal,modelTier:'default',onText:({text})=>{out.textContent=text}});
+  turns.push({role:'assistant',content:text});if($('speak').checked)say(text)}
+ catch(e){out.textContent=e?.text||'';turns.pop();if(e?.code!=='cancelled')out.textContent+=(out.textContent?'\n':'')+(e?.code==='not_granted'?'צריך לאשר לאפליקציה להשתמש ב־Claude.':e?.code==='rate_limited'?'הגעתם למכסה היומית של שאלות. נסו שוב מחר.':'לא הצלחתי לענות הפעם. נסו שוב.')}
+ finally{$('askB').disabled=false}}
+$('askF').onsubmit=e=>{e.preventDefault();ask($('askI').value)};
+function say(t){try{const u=new SpeechSynthesisUtterance(t);u.lang='he-IL';const v=speechSynthesis.getVoices().find(v=>/^he|iw/i.test(v.lang));if(v)u.voice=v;u.rate=1.02;speechSynthesis.speak(u)}catch(e){}}
+
+/* ---------------- services funnel ---------------- */
+const SERVICES=[
+ {id:'call',t:'שיחת היכרות',p:'חינם',d:'15 דקות בזום מול התוכנית שלכם. בלי התחייבות.'},
+ {id:'consult',t:'ייעוץ אדריכל',p:'החל מ־₪450',d:'שעה מול התוכנית או בדירה, לפני קנייה, שכירות או שיפוץ.'},
+ {id:'room',t:'תכנון ריהוט לחדר',p:'החל מ־₪650',d:'העמדה מדויקת, שרטוט מידות ורשימת קניות מוכנה.'},
+ {id:'apt',t:'תכנון דירה מלא',p:'החל מ־₪2,900',d:'כל החדרים, חומרים וגוונים, רשימת קניות וליווי עד הביצוע.'}];
+let svcSel='call';
+function renderSvc(){const box=$('svcList');box.innerHTML='';for(const v of SERVICES){const b=document.createElement('button');b.type='button';b.setAttribute('role','radio');b.setAttribute('aria-checked',String(v.id===svcSel));
+ const t=document.createElement('b');t.textContent=v.t;const pr=document.createElement('span');pr.className='pr';pr.textContent=v.p;const d=document.createElement('span');d.className='d';d.textContent=v.d;b.append(t,pr,d);b.onclick=()=>{svcSel=v.id;renderSvc()};box.appendChild(b)}}
+renderSvc();
+function planSummary(){if(!plan)return '';const rooms=plan.rooms.map(r=>`${r.name} ${polyArea(r.poly).toFixed(0)}מ"ר`).join(', ');return `${plan.name} · ${Math.round(plan.rooms.filter(r=>!/מרפסת/.test(r.name)).reduce((a,r)=>a+polyArea(r.poly),0))} מ"ר · ${rooms}`.slice(0,300)}
+$('leadF').onsubmit=async e=>{e.preventDefault();const st=$('lStatus');const name=$('lName').value.trim(),phone=$('lPhone').value.trim(),email=$('lEmail').value.trim();
+ if(!name||!(phone||email)){st.className='status err';st.textContent='צריך שם, וטלפון או מייל.';return}
+ const svc=SERVICES.find(v=>v.id===svcSel);
+ if(!WORKER_URL){st.className='status';st.textContent='בגרסה הזו הטופס עוד לא מחובר. אפשר לפנות דרך האתר: sts-arch.com';return}
+ $('lSend').disabled=true;st.className='status';st.textContent='שולח…';
+ try{const r=await fetch(WORKER_URL.replace(/\/$/,'')+'/lead',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,phone,email,service:svc.t,note:$('lNote').value.trim(),plan:planSummary()})});
+  if(!r.ok)throw 0;st.textContent='תודה! נחזור אליכם תוך יום עבודה.';$('leadF').reset()}
+ catch(err){st.className='status err';st.textContent='השליחה לא עברה. נסו שוב, או פנו דרך sts-arch.com.'}finally{$('lSend').disabled=false}};
+function showCTA(where,text){const old=document.getElementById('cta-'+where);if(old)old.remove();const c=document.createElement('div');c.className='cta';c.id='cta-'+where;
+ const t=document.createElement('span');t.textContent=text;const b=document.createElement('button');b.className='btn accent';b.type='button';b.textContent='לשיחת היכרות';
+ b.onclick=()=>{svcSel='call';renderSvc();$('svcSec').scrollIntoView({behavior:'smooth',block:'start'});setTimeout(()=>$('lName').focus(),400)};c.append(t,b);$(where).after(c)}
+
+/* ---------------- boot ---------------- */
+const st=ls.get('tp_state2');
+try{if(st&&st.plan){loadState({plan:sanitize(st.plan),furn:st.furn});setStatus('התוכנית האחרונה שלכם נטענה.')}else loadDemo()}catch(e){loadDemo()}
+setMode('3d');
+(async()=>{let cs=null;try{cs=window.claude?await window.claude.use('sample'):null}catch(e){cs=null}
+ if(cs){sample=cs;const lim=await cs.limits().catch(()=>null);if(!lim||!lim.images){$('dropS').textContent='קריאת תמונות לא זמינה כאן. אפשר לשחק עם דירת הדוגמה.'}}
+ else if(WORKER_URL)sample=workerSample();
+ if(!sample){$('aiNote').hidden=false;$('askB').disabled=true;$('arrStatus').textContent='התכנון החכם עוד לא מחובר בגרסה הזו.';$('dropS').textContent='קריאת תמונה עוד לא מחוברת בגרסה הזו. בינתיים אפשר לשחק עם דירת הדוגמה.';return}
+ $('aiNote').hidden=true;$('askB').disabled=false;if(file)$('build').disabled=false})();
+})();
+</script>
+
+</body></html>
