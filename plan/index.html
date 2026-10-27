@@ -147,7 +147,7 @@ main{position:fixed;inset:0;background:#EFEFED}
 .lead{display:grid;gap:6px;margin-top:10px}
 .lead input,.lead textarea{border:1px solid var(--line);background:var(--paper);padding:8px 10px;font:inherit;min-width:0;resize:vertical}
 .hact{display:flex;gap:8px;margin-top:10px}.hact .btn{flex:1;justify-content:center}
-.toast{position:fixed;left:16px;top:118px;z-index:6;max-width:300px;background:var(--paper);border:1px solid var(--ink);box-shadow:3px 3px 0 rgba(20,33,46,.35);padding:12px 14px;font-size:13px;line-height:1.45}.toast b{display:block;font-size:14px;margin-bottom:4px}.toast .row{display:flex;gap:8px;margin-top:10px}.toast .x{position:absolute;top:4px;left:8px;border:0;background:none;font-size:16px;cursor:pointer;color:var(--ink-soft)}
+.toast{position:fixed;left:16px;top:auto;bottom:126px;z-index:6;max-width:300px;background:var(--paper);border:1px solid var(--ink);box-shadow:3px 3px 0 rgba(20,33,46,.35);padding:12px 14px;font-size:13px;line-height:1.45}.toast b{display:block;font-size:14px;margin-bottom:4px}.toast .row{display:flex;gap:8px;margin-top:10px}.toast .x{position:absolute;top:4px;left:8px;border:0;background:none;font-size:16px;cursor:pointer;color:var(--ink-soft)}
 @media (max-width:760px){.toast{top:auto;bottom:calc(50vh + 70px);left:10px;right:10px;max-width:none}}
 .cta{margin-top:10px;border:1px solid var(--ink);padding:10px;display:flex;justify-content:space-between;gap:10px;align-items:center;font-size:13px;background:var(--paper);box-shadow:2px 2px 0 rgba(20,33,46,.25)}
 .hero{background:var(--board);border-bottom:1px solid var(--ink)}
@@ -405,7 +405,7 @@ const DEMO={name:"דירת 4 חדרים (דוגמה)",
   {name:"חדר רחצה",poly:[[9.6,3.6],[12,3.6],[12,6.2],[9.6,6.2]]},
   {name:"מטבח",poly:[[7,6.2],[12,6.2],[12,9],[7,9]]},
   {name:"מרפסת שמש",poly:[[0,9],[4.6,9],[4.6,10.8],[0,10.8]]}]};
-const DEMO_FURN=[{"kind":"rug","n":"שטיח","w":380,"d":322,"h":1,"x":2.1,"y":6.933,"r":3.1416},{"kind":"sofa","n":"ספה תלת־מושבית","w":240,"d":95,"h":80,"x":0.675,"y":6.933,"r":4.7124},{"kind":"sofa","n":"ספה דו־מושבית","w":180,"d":90,"h":80,"x":2.35,"y":5.771,"r":0},{"kind":"coffee_table","n":"שולחן קפה","w":110,"d":40,"h":40,"x":2.22,"y":7.033,"r":4.7124},{"kind":"coffee_table","n":"שולחן קפה","w":110,"d":40,"h":40,"x":1.74,"y":7.033,"r":4.7124},{"kind":"floor_lamp","n":"מנורת רצפה","w":40,"d":40,"h":150,"x":0.4,"y":8.395,"r":0},{"kind":"dining_table","n":"שולחן אוכל ל־6","w":180,"d":90,"h":75,"x":5.1,"y":5.1,"r":0},{"kind":"plant","n":"עציץ","w":50,"d":50,"h":120,"x":3.64,"y":8.595,"r":3.1416},{"kind":"kitchen_counter","n":"מטבח 360","w":360,"d":60,"h":90,"x":9.5,"y":8.545,"r":3.1416},{"kind":"fridge","n":"מקרר","w":70,"d":72,"h":185,"x":10.74,"y":8.485,"r":3.1416},{"kind":"bed_double","n":"מיטה זוגית 160×200","w":180,"d":212,"h":100,"x":1.215,"y":1.565,"r":4.7124},{"kind":"nightstand","n":"שידת לילה","w":45,"d":40,"h":55,"x":0.355,"y":2.735,"r":4.7124},{"kind":"nightstand","n":"שידת לילה","w":45,"d":40,"h":55,"x":0.355,"y":0.395,"r":4.7124},{"kind":"wardrobe","n":"ארון 200","w":200,"d":60,"h":220,"x":1.64,"y":3.12,"r":3.1416},{"kind":"desk","n":"שולחן עבודה","w":120,"d":60,"h":75,"x":3.235,"y":0.455,"r":0},{"kind":"wardrobe","n":"ארון 100","w":100,"d":60,"h":220,"x":6.52,"y":3.12,"r":3.1416},{"kind":"bed_single","n":"מיטת יחיד 90×200","w":97,"d":205,"h":90,"x":7.935,"y":1.21,"r":0},{"kind":"desk","n":"שולחן עבודה","w":110,"d":60,"h":75,"x":6.515,"y":0.455,"r":0},{"kind":"wardrobe","n":"ארון 200","w":200,"d":60,"h":220,"x":10.805,"y":3.12,"r":3.1416},{"kind":"bed_single","n":"מיטת יחיד 90×200","w":97,"d":205,"h":90,"x":11.36,"y":1.185,"r":0},{"kind":"desk","n":"שולחן עבודה","w":110,"d":60,"h":75,"x":10.3,"y":0.455,"r":0},{"kind":"shower","n":"מקלחון","w":90,"d":90,"h":200,"x":4.615,"y":0.605,"r":0},{"kind":"sink","n":"כיור וארונית","w":80,"d":46,"h":85,"x":5.39,"y":0.59,"r":1.5708},{"kind":"bathtub","n":"אמבטיה","w":180,"d":75,"h":55,"x":10.6,"y":4.065,"r":0},{"kind":"sink","n":"כיור וארונית","w":80,"d":46,"h":85,"x":10.1,"y":5.88,"r":3.1416},{"kind":"toilet","n":"אסלה","w":38,"d":55,"h":40,"x":11.57,"y":5.845,"r":1.5708},{"kind":"plant","n":"עציץ","w":50,"d":50,"h":120,"x":4.26,"y":10.45,"r":1.5708},{"kind":"plant","n":"עציץ","w":50,"d":50,"h":120,"x":0.35,"y":10.46,"r":3.1416},{"kind":"plant","n":"עציץ","w":45,"d":45,"h":120,"x":8.315,"y":4.005,"r":0}];
+const DEMO_FURN=[{"kind":"rug","n":"שטיח","w":380,"d":322,"h":1,"x":2.1,"y":6.933,"r":3.1416},{"kind":"sofa","n":"ספה תלת־מושבית","w":240,"d":95,"h":80,"x":0.675,"y":6.933,"r":4.7124},{"kind":"sofa","n":"ספה דו־מושבית","w":180,"d":90,"h":80,"x":2.35,"y":5.771,"r":0},{"kind":"coffee_table","n":"שולחן קפה","w":110,"d":40,"h":40,"x":2.22,"y":7.033,"r":4.7124},{"kind":"coffee_table","n":"שולחן קפה","w":110,"d":40,"h":40,"x":1.74,"y":7.033,"r":4.7124},{"kind":"floor_lamp","n":"מנורת רצפה","w":40,"d":40,"h":150,"x":0.4,"y":8.395,"r":0},{"kind":"dining_table","n":"שולחן אוכל ל־6","w":180,"d":90,"h":75,"x":5.1,"y":5.1,"r":0},{"kind":"plant","n":"עציץ","w":50,"d":50,"h":120,"x":3.64,"y":8.595,"r":3.1416},{"kind":"kitchen_counter","n":"מטבח 360","w":360,"d":60,"h":90,"x":9.5,"y":8.545,"r":3.1416},{"kind":"fridge","n":"מקרר","w":70,"d":72,"h":185,"x":9.95,"y":6.65,"r":0},{"kind":"bed_double","n":"מיטה זוגית 160×200","w":180,"d":212,"h":100,"x":1.215,"y":1.8,"r":4.7124},{"kind":"nightstand","n":"שידת לילה","w":45,"d":40,"h":55,"x":0.355,"y":2.97,"r":4.7124},{"kind":"nightstand","n":"שידת לילה","w":45,"d":40,"h":55,"x":0.355,"y":0.63,"r":4.7124},{"kind":"wardrobe","n":"ארון 150","w":150,"d":60,"h":220,"x":3.61,"y":1.1,"r":1.5708},{"kind":"wardrobe","n":"ארון 100","w":100,"d":60,"h":220,"x":6.52,"y":3.12,"r":3.1416},{"kind":"bed_single","n":"מיטת יחיד 90×200","w":97,"d":205,"h":90,"x":7.935,"y":1.21,"r":0},{"kind":"desk","n":"שולחן עבודה","w":110,"d":60,"h":75,"x":6.28,"y":0.74,"r":4.7124},{"kind":"wardrobe","n":"ארון 200","w":200,"d":60,"h":220,"x":10.805,"y":3.12,"r":3.1416},{"kind":"bed_single","n":"מיטת יחיד 90×200","w":97,"d":205,"h":90,"x":9.265,"y":1.21,"r":0},{"kind":"desk","n":"שולחן עבודה","w":110,"d":60,"h":75,"x":11.285,"y":0.455,"r":0},{"kind":"shower","n":"מקלחון","w":80,"d":80,"h":200,"x":5.235,"y":0.555,"r":0},{"kind":"toilet","n":"אסלה","w":38,"d":55,"h":40,"x":4.435,"y":0.43,"r":0},{"kind":"sink","n":"כיור קטן","w":50,"d":38,"h":85,"x":4.28,"y":1.77,"r":4.7124},{"kind":"bathtub","n":"אמבטיה","w":170,"d":75,"h":55,"x":10.55,"y":4.065,"r":0},{"kind":"toilet","n":"אסלה","w":38,"d":55,"h":40,"x":11.57,"y":5.715,"r":1.5708},{"kind":"sink","n":"כיור וארונית","w":80,"d":46,"h":85,"x":10.1,"y":5.88,"r":3.1416},{"kind":"plant","n":"עציץ","w":50,"d":50,"h":120,"x":4.25,"y":10.46,"r":3.1416},{"kind":"plant","n":"עציץ","w":50,"d":50,"h":120,"x":0.35,"y":10.46,"r":3.1416},{"kind":"plant","n":"עציץ","w":45,"d":45,"h":120,"x":8.315,"y":4.005,"r":0}];
 
 /* ---------------- furniture catalog (cm) ---------------- */
 const CAT=[
@@ -569,7 +569,7 @@ function build(pl){
      const nm=Math.max(1,Math.round(ow/.6));for(let k=1;k<nm;k++)fb(.035,WIN_TOP-SILL,o.s0+ow*k/nm,(SILL+WIN_TOP)/2);fb(ow,.035,oc,SILL+(WIN_TOP-SILL)*.62);
      // curtains on the room side
      const cx=w.a[0]+dx*oc,cy=w.a[1]+dy*oc;const side=inside([cx-dy*.4,cy+dx*.4])?1:inside([cx+dy*.4,cy-dx*.4])?-1:0;
-     if(side){for(const sx of [-1,1]){const cw=.28;const cg=new THREE.Group();for(let f=0;f<5;f++){const p=new THREE.Mesh(new THREE.BoxGeometry(cw/5+.015,wh-.12,.05),M.curtain);p.position.set(-cw/2+f*cw/5+cw/10,(wh-.12)/2,(f%2?.025:-.01));p.castShadow=true;cg.add(p)}
+     const cRoom=plan.rooms.find(rr=>pip([cx-dy*.4*side,cy+dx*.4*side],rr.poly));const wet=cRoom&&/רחצה|מקלחת|שירות|אמבט|מטבח/.test(cRoom.name);if(side&&!wet){for(const sx of [-1,1]){const cw=.28;const cg=new THREE.Group();for(let f=0;f<5;f++){const p=new THREE.Mesh(new THREE.BoxGeometry(cw/5+.015,wh-.12,.05),M.curtain);p.position.set(-cw/2+f*cw/5+cw/10,(wh-.12)/2,(f%2?.025:-.01));p.castShadow=true;cg.add(p)}
        cg.position.set(oc+sx*(ow/2+.05),0,side*(w.t/2+.09));grp.add(cg)}}
      pushSolid(w,o.s0,o.s1)}
    cur=o.s1}
@@ -704,12 +704,37 @@ function rebuildMesh(o){furnG.remove(o.mesh);o.mesh=makeMesh(o);o.mesh.userData.
 const SOFT=new Set(['rug']);
 function place(o){o.mesh.position.set(o.x,o.kind==='rug'?.006:0,o.y);o.mesh.rotation.y=-o.r}
 function corners(o){return rectCorners(o.x,o.y,o.w/100,o.d/100,o.r)}
+
+/* ---------------- use zones (clear floor area each piece needs to be usable) ----------------
+   NKBA bath & kitchen planning guidelines, Neufert / common bedroom clearances, in metres */
+const ZN={toilet:{front:.55,width:.76,fromBack:true},sink:{front:.6,width:.7},shower:{front:.6},bathtub:{front:.6},
+ bed_double:{sides:.6,foot:.5,head:.45},bed_single:{oneSide:.6},crib:{front:.6},wardrobe:{front:.75},dresser:{front:.7},desk:{front:.75},
+ kitchen_counter:{front:1.0},island:{front:.85,back:.85},fridge:{front:.9},washer:{front:.65},dining_table:{around:.75},tv_unit:{front:.6},shelf:{front:.6}};
+function zonesOf(o){const z=ZN[o.kind];if(!z)return [];const w=o.w/100,d=o.d/100,c=Math.cos(o.r),s=Math.sin(o.r);
+ const R=(u0,u1,v0,v1)=>[[u0+.012,v0+.012],[u1-.012,v0+.012],[u1-.012,v1-.012],[u0+.012,v1-.012]].map(([u,v])=>[o.x+u*c-v*s,o.y+u*s+v*c]);const G=[];
+ if(z.around){const a=z.around;G.push({p:[R(-w/2-a,w/2+a,-d/2-a,-d/2),R(-w/2-a,w/2+a,d/2,d/2+a),R(-w/2-a,-w/2,-d/2,d/2),R(w/2,w/2+a,-d/2,d/2)],all:true});return G}
+ if(z.front){const W=Math.max(w,z.width||0);G.push({p:[R(-W/2,W/2,z.fromBack?-d/2:d/2,d/2+z.front)],all:true})}
+ if(z.back)G.push({p:[R(-w/2,w/2,-d/2-z.back,-d/2)],all:true});
+ if(z.sides)G.push({p:[R(w/2,w/2+z.sides,-d/2+z.head,d/2)],all:true},{p:[R(-w/2-z.sides,-w/2,-d/2+z.head,d/2)],all:true});
+ if(z.foot)G.push({p:[R(-w/2,w/2,d/2,d/2+z.foot)],all:true});
+ if(z.oneSide)G.push({p:[R(w/2,w/2+z.oneSide,-d/2+.45,d/2),R(-w/2-z.oneSide,-w/2,-d/2+.45,d/2)],all:false});
+ return G}
+const inRooms=p=>plan.rooms.some(r=>pip(p,r.poly));
+function zoneFree(poly,self,other,ignore){const cen=[(poly[0][0]+poly[2][0])/2,(poly[0][1]+poly[2][1])/2];const pts=[...poly.map(([x,y])=>[x*.92+cen[0]*.08,y*.92+cen[1]*.08]),cen];
+ if(!pts.every(inRooms))return false;for(const sd of solids)if(sd&&satOverlap(poly,sd.poly))return false;
+ for(const f of furn){if(f===self||f===ignore||SOFT.has(f.kind)||f.kind==='nightstand'&&self.kind.startsWith('bed'))continue;if(other&&f!==other)continue;if(satOverlap(poly,corners(f)))return false}return true}
+function zoneCheck(o){if(o.k==='plan'||SOFT.has(o.kind))return null;
+ for(const g of zonesOf(o)){const ok=g.all?g.p.every(p=>zoneFree(p,o)):g.p.some(p=>zoneFree(p,o));if(!ok)return 'אין מרחב שימוש מול '+o.n}
+ const A=corners(o);for(const f of furn){if(f===o||f.k==='plan'||SOFT.has(f.kind))continue;if(o.kind==='nightstand'&&f.kind.startsWith('bed'))continue;
+  for(const g of zonesOf(f)){if(g.all){if(g.p.some(p=>satOverlap(A,p)))return 'חוסם את מרחב השימוש של '+f.n}else{const fr=g.p.filter(p=>zoneFree(p,f,null,o));if(fr.length&&fr.every(p=>satOverlap(A,p)))return 'חוסם את מרחב השימוש של '+f.n}}}
+ return null}
 function fitOf(o){const A=corners(o);if(SOFT.has(o.kind))return {ok:true,clear:1};
  const inside=A.every(p=>plan.rooms.some(r=>pip(p,r.poly)))||(!plan.rooms.length);
  for(const s of solids){if(!s)continue;if(satOverlap(A,s.poly))return {ok:false,why:'נוגע בקיר'}}
  const KJ=new Set(['kitchen_counter','fridge']);for(const f of furn){if(f===o||SOFT.has(f.kind))continue;if(KJ.has(o.kind)&&KJ.has(f.kind))continue;if(satOverlap(A,corners(f)))return {ok:false,why:'מתנגש ב'+f.n}}
  if(!inside)return {ok:false,why:'בולט מחוץ לחדר'};
  if(o.k!=='plan'&&getCZ().some(z=>satOverlap(A,z)))return {ok:false,why:'חוסם מעבר לדלת'};
+ {const zc=zoneCheck(o);if(zc)return {ok:false,why:zc}}
  {const ri=plan.rooms.findIndex(r=>pip([o.x,o.y],r.poly));if(ri>=0&&!pathOK(ri)){const i=furn.indexOf(o);if(i>=0){furn.splice(i,1);const was=pathOK(ri);furn.splice(i,0,o);if(was)return {ok:false,why:'חוסם את המעבר בין הדלתות'}}}}
  let m=1e9;for(const s of solids)if(s)m=Math.min(m,polyDist(A,s.poly));for(const f of furn)if(f!==o&&!SOFT.has(f.kind))m=Math.min(m,polyDist(A,corners(f)));
  return {ok:true,clear:m}}
@@ -912,7 +937,7 @@ const RULES_ARR=[
  'חדר ילדים וממ"ד: ארון לכל רוחב קיר הכניסה, לצד הדלת. מיטת יחיד בפינה לאורך קיר צד, הראש לכיוון קיר החלון. שולחן עבודה מתחת לחלון.',
  'חדר רחצה: אמבטיה לכל רוחב קיר הקצה. אסלה וכיור על הקיר הארוך, הכיור ראשון מהדלת. מקלחת הורים: מקלחון 90×120 בקצה, כיור ואסלה.',
  'מעבר ישר ופנוי מהכניסה ועד המרפסת, 90 ס"מ לפחות. רהיטים לא נכנסים לקשת הפתיחה של דלתות.',
- 'מידות עבודה: מעבר ראשי 90 ס"מ, משני 60. 60 ס"מ בכל צד של מיטה זוגית. 75 ס"מ מול ארונות. 40–45 ס"מ בין ספה לשולחן קפה.',
+ 'מרחבי שימוש (NKBA, נויפרט): אסלה 38 ס"מ לפחות מהציר לכל קיר או כלי ו־55–76 פנויים מלפנים, לא מול הדלת. כיור ומקלחון 60–76 פנויים מלפנים. אמבטיה 60 לאורכה. מיטה זוגית 60 בכל צד ו־50 למרגלות. 75–90 מול ארונות, 75 לכיסא שולחן עבודה, 100–107 מעבר במטבח, 90 מול מקרר, 75 סביב שולחן אוכל. מעבר ראשי 90, משני 60, 40–45 בין ספה לשולחן קפה.',
  'פנג שואי, עמדת שליטה: מהמיטה, מהשולחן ומהספה רואים את הדלת, אבל לא בקו ישר מולה ולא עם הגב אליה.',
  'פנג שואי, תמיכה וזרימה: ראש מיטה וגב ספה על קיר מלא, כניסה פתוחה ונקייה, צמחים בפינות ושילוב של עץ, טקסטיל ואור טבעי.',
  'פחות זה יותר: חדר שנושם עדיף על חדר מלא.'];
@@ -999,7 +1024,7 @@ function okHere(o,ri,front){const f=fitOf(o);if(!f.ok)return false;const room=pl
  if(front){const fx=-Math.sin(o.r),fy=Math.cos(o.r);const p=[o.x+fx*(o.d/200+front),o.y+fy*(o.d/200+front)];if(!pip(p,room.poly))return false}return true}
 // place a piece with its back on a wall. opts: avoid (opening kinds behind it), side (long side on the wall), corner, score(e,t,o)
 function wallPlace(spec,ri,opts={}){const avoid=opts.avoid||['door','slide'];const E=roomEdges(ri);const along=(opts.side?spec.d/100:spec.w/100)+(opts.extra||0),depth=opts.side?spec.w/100:spec.d/100;const cands=[];
- for(const e of E)for(const [s,t] of freeT(e,avoid,opts.pad??.08)){if(t-s<along+.02)continue;const ts=opts.corner?[s+along/2+.01,t-along/2-.01]:[(s+t)/2,s+along/2+.01,t-along/2-.01];
+ for(const e of E)for(const [s,t] of freeT(e,avoid,opts.pad??.08)){if(t-s<along+.02)continue;const ts=opts.corner?[s+along/2+.01,t-along/2-.01]:[(s+t)/2,s+along/2+.01,t-along/2-.01];if(opts.step){for(let u=s+along/2+.01;u<=t-along/2-.01;u+=opts.step)ts.push(u)}
   for(const tt of ts){const x=e.a[0]+e.d[0]*tt+e.n[0]*(depth/2+e.gap),y=e.a[1]+e.d[1]*tt+e.n[1]*(depth/2+e.gap);let r=rotFor(e.n);if(opts.side)r+=Math.PI/2*(opts.flip?-1:1);
    cands.push({x,y,r,e,t:tt,sc:(opts.score?opts.score(e,tt,{x,y,r}):0)+(tt===(s+t)/2&&opts.center?2:0)})}}
  cands.sort((a,b)=>b.sc-a.sc);if(opts.list)return cands;const o=addFurn(Object.assign({k:'b'},spec),0,0,0);
@@ -1095,13 +1120,22 @@ function furnishRoom(ri,why){const room=plan.rooms[ri],type=roomType(room.name),
    say(bed,'בפינה לאורך הקיר, הראש לכיוון החלון: מרכז החדר פנוי.')}
   const dk=wallPlace(SP('desk','שולחן עבודה',dbl?120:110,60),ri,{avoid:['door','slide'],front:.8,score:(e,t,q)=>(e===winE?6:0)-(bed?Math.max(0,1.2-Math.hypot(q.x-bed.x,q.y-bed.y)):0)});
   if(!dbl||A>=15)say(dk,'מול החלון לאור טבעי, גב לחדר ולא לדלת.');else dropF(dk)}
- else if(type==='bath'){
-  const endE=E.filter(e=>!e.ops.some(o=>o.kind==='door')).sort((a,b)=>a.L-b.L).find(e=>e.L>=1.6);
-  if(endE&&A>=4.2){const L=Math.min(180,Math.floor((endE.L-.04)*10)*10);const bt=wallPlace(SP('bathtub','אמבטיה',L,75),ri,{avoid:['door','slide'],corner:true,score:(e)=>e===endE?10:0});say(bt,'אמבטיה לכל רוחב קיר הקצה.')}
-  else{const sh=(A>=5?wallPlace(SP('shower','מקלחון',90,120),ri,{avoid:['door','slide'],corner:true,score:(e,t,q)=>distTo(q.x,q.y,dpts)}):null)||wallPlace(SP('shower','מקלחון',90,90),ri,{avoid:['door','slide'],corner:true,score:(e,t,q)=>distTo(q.x,q.y,dpts)})||wallPlace(SP('shower','מקלחון',90,90),ri,{avoid:['door','slide'],corner:true,score:(e,t,q)=>distTo(q.x,q.y,dpts)});say(sh,'מקלחון בקצה הרחוק מהדלת.')}
-  const sk=wallPlace(SP('sink','כיור וארונית',80,46),ri,{avoid:['door','slide'],front:.6,score:(e,t,q)=>-distTo(q.x,q.y,dpts)})||wallPlace(SP('sink','כיור וארונית',60,45),ri,{avoid:['door','slide'],front:.5});say(sk,'הכיור הוא הראשון שפוגשים בכניסה.');
-  const tl=wallPlace(SP('toilet','אסלה',38,55),ri,{avoid:['door','slide'],front:.55,score:(e,t,q)=>distTo(q.x,q.y,dpts)-(e.ops.some(o=>o.kind==='door')?3:0)});say(tl,'האסלה לא בקו ישר מול הדלת.')}
- else if(type==='wc'){wallPlace(SP('toilet','אסלה',38,55),ri,{avoid:['door','slide'],front:.45,score:(e,t,q)=>distTo(q.x,q.y,dpts)});wallPlace(SP('sink','כיור קטן',45,35),ri,{avoid:['door','slide'],front:.4})}
+ else if(type==='bath'||type==='wc'){
+  // layout solver: try combinations of fixtures and keep the best one where every fixture has its full use zone
+  const doorD=(q)=>distTo(q.x,q.y,dpts);const faceDoor=(q)=>{const fx=-Math.sin(q.r),fy=Math.cos(q.r);return dpts.some(d=>{const vx=d[0]-q.x,vy=d[1]-q.y;return vx*fx+vy*fy>0&&Math.abs(vx*fy-vy*fx)<.35})};
+  const big=A>=4.2;const wet=type==='wc'?[]:[
+   ...(big?[{spec:SP('bathtub','אמבטיה',170,75),opts:{avoid:['door','slide'],corner:true},sc:q=>doorD(q)+3},{spec:SP('bathtub','אמבטיה',160,70),opts:{avoid:['door','slide'],corner:true},sc:q=>doorD(q)+2}]:[]),
+   ...(A>=5?[{spec:SP('shower','מקלחון',120,90),opts:{avoid:['door','slide'],corner:true},sc:q=>doorD(q)+1.5}]:[]),
+   {spec:SP('shower','מקלחון',90,90),opts:{avoid:['door','slide'],corner:true},sc:q=>doorD(q)+1},{spec:SP('shower','מקלחון',80,80),opts:{avoid:['door','slide'],corner:true},sc:q=>doorD(q)}];
+  const steps=[];if(wet.length)steps.push({vars:wet,why:'בקצה הרחוק מהדלת, עם 60 ס"מ פנויים לכניסה.'});
+  steps.push({vars:[{spec:SP('toilet','אסלה',38,55),opts:{avoid:['door','slide'],step:.08},sc:q=>doorD(q)*.6-(faceDoor(q)?3:0)},{spec:SP('toilet','אסלה תלויה',36,50),opts:{avoid:['door','slide'],step:.08},sc:q=>doorD(q)*.6-(faceDoor(q)?3:0)-.5}],why:'38 ס"מ לפחות מציר האסלה לכל קיר או כלי, ו־55 ס"מ פנויים מלפנים. לא מול הדלת.'});
+  steps.push({vars:(type==='wc'?[{spec:SP('sink','כיור קטן',45,35),opts:{avoid:['door','slide'],step:.08},sc:q=>-doorD(q)}]:[{spec:SP('sink','כיור וארונית',80,46),opts:{avoid:['door','slide'],step:.08},sc:q=>-doorD(q)+.5},{spec:SP('sink','כיור וארונית',60,45),opts:{avoid:['door','slide'],step:.08},sc:q=>-doorD(q)},{spec:SP('sink','כיור קטן',50,38),opts:{avoid:['door','slide'],step:.08},sc:q=>-doorD(q)-.5}]),why:'הכיור קרוב לכניסה, 60 ס"מ פנויים מולו.'});
+  let best=null,budget=6000;const placed=[];
+  let done=false;const rec=(i,score)=>{if(budget<=0||done)return;if(i===steps.length){if(!best||score>best.score)best={score,list:placed.map(o=>({...ser(o)}))};if(placed.length===steps.length)done=true;return}
+   let any=false;for(const v of steps[i].vars){const cs=wallPlace(v.spec,ri,{...v.opts,list:true}).map(c=>({...c,sc2:v.sc(c)})).sort((a,b)=>b.sc2-a.sc2);for(const c of cs.slice(0,i===0?10:i===1?28:40)){if(done)return;if(--budget<=0)return;const q={x:c.x,y:c.y,r:c.r};const o={...v.spec,k:'b',x:c.x,y:c.y,r:((c.r%(2*Math.PI))+2*Math.PI)%(2*Math.PI),id:'t'+budget};furn.push(o);if(!okHere(o,ri)){furn.pop();continue}any=true;placed.push(o);rec(i+1,score+10+v.sc(q));placed.pop();furn=furn.filter(f=>f!==o);}if(done)return}
+   if(!any){if(!best||score-20>best.score)best={score:score-20,list:placed.map(o=>({...ser(o)}))};rec(i+1,score-20)}};
+  rec(0,0);
+  if(best)for(const f of best.list){const o=addFurn({...f,id:undefined},f.x,f.y,f.r);const st=steps.find(st=>st.vars.some(v=>v.spec.kind===o.kind));say(o,st?st.why:'')}}
  else if(type==='laundry'){wallPlace(SP('washer','מכונת כביסה',60,60),ri,{avoid:['door','slide'],front:.6,corner:true})}
  else if(type==='balcony'){let n=0;for(let k=0;k<3&&n<2;k++){if(wallPlace(SP('plant','עציץ',50,50),ri,{avoid:['door','slide'],corner:true,score:()=>Math.random()}))n++}
   if(A>=6){const t=freePlace(SP('dining_table','שולחן מרפסת עגול',90,90,{round:true}),ri,()=>Math.random(),.6);say(t,'שולחן עגול למרפסת, כמו בתוכניות של שון.')}}
