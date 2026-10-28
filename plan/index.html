@@ -266,7 +266,7 @@ details summary{cursor:pointer}
 <div class="fitbar" id="fitbar" hidden></div>
 <div class="itembar" id="itemBar" hidden><div class="ibt"><span id="ibName"></span><span class="chip" id="ibChip"></span></div><div class="ibi" id="ibInfo"></div><div class="ibi fs" id="ibFs"></div><div class="swap" id="ibSwapP" hidden></div><div class="sw" id="ibFab"></div><div class="sw" id="ibWood"></div><div class="ibb"><button id="ibHome" title="להחזיר את הרהיט למקום שבחר שון" hidden>↺ למקום של שון</button><button id="ibSwap" title="להחליף לדגם אחר באותו מקום">⇄ החלף</button><button id="ibRot" title="סיבוב (R)">↻ סובב</button><button id="ibDel" title="מחיקה (Delete)">✕ הסר</button></div></div>
 <div class="placehint" id="placeHint" hidden></div>
-<button class="wallbtn" id="vLow" aria-pressed="true" title="קירות מלאים או בגובה 50 ס״מ · קיצור: H"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20h18M5 20V9h4v11M15 20v-6h4v6"/></svg><span>הגבה קירות</span></button>
+<button class="wallbtn" id="vLow" aria-pressed="false" title="קירות מלאים או בגובה 50 ס״מ · קיצור: H"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20h18M5 20V9h4v11M15 20v-6h4v6"/></svg><span>הנמך קירות</span></button>
 <button class="fab" id="fab">רהט לי את הדירה · לפי שון טסה</button>
 
 <div class="walkpad" id="pad" hidden>
@@ -377,7 +377,7 @@ details summary{cursor:pointer}
 <script>
 (()=>{
 const $=id=>document.getElementById(id);
-const H=2.7, DOOR_H=2.1, SILL=0.9, WIN_TOP=2.15, LOW_H=0.5;let lowWalls=true;
+const H=2.7, DOOR_H=2.1, SILL=0.9, WIN_TOP=2.15, LOW_H=0.5;let lowWalls=false;
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 const ls={get(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
 
@@ -818,7 +818,7 @@ cv.addEventListener('pointerdown',e=>{if(mode==='walk')return;
  if(e.button!==0)return;setNdc(e);
  if(calib.on){const h=ray.intersectObjects(wallMeshes,false)[0];if(h){e.stopImmediatePropagation();pickCalib(h.object.userData.wall)}return}
  const hits=ray.intersectObjects(furnG.children,true).filter(h=>h.object.isMesh&&h.object.visible);if(hits.length){let o=hits[0].object;while(o&&!o.userData.f)o=o.parent;
-  if(o&&o.userData.f!==sel&&e.pointerType!=='mouse'){const f=o.userData.f,sx=e.clientX,sy=e.clientY;const up=ev=>{cv.removeEventListener('pointerup',up);if(Math.hypot(ev.clientX-sx,ev.clientY-sy)<6){sel=f;showSel()}};cv.addEventListener('pointerup',up);return}
+  if(o&&o.userData.f!==sel&&(e.pointerType!=='mouse'||SOFT.has(o.userData.f.kind))){const f=o.userData.f,sx=e.clientX,sy=e.clientY;const up=ev=>{cv.removeEventListener('pointerup',up);if(Math.hypot(ev.clientX-sx,ev.clientY-sy)<6){sel=f;showSel()}};cv.addEventListener('pointerup',up);return}
   if(o){e.stopImmediatePropagation();sel=o.userData.f;ray.ray.intersectPlane(floorP,hit);drag={o:sel,dx:sel.x-hit.x,dy:sel.y-hit.z,moved:false,x0:e.clientX,y0:e.clientY};cv.setPointerCapture(e.pointerId);controlsOn(false);cv.style.cursor='grabbing';showSel();return}}
  // empty click deselects (a pan still works)
  const sx=e.clientX,sy=e.clientY;const up=ev=>{cv.removeEventListener('pointerup',up);if(Math.hypot(ev.clientX-sx,ev.clientY-sy)<5){sel=null;showSel()}};cv.addEventListener('pointerup',up)},{capture:true});
@@ -901,7 +901,7 @@ requestAnimationFrame(loop);
 
 /* ---------------- persistence ---------------- */
 function save(){if(!plan)return;ls.set('tp_state3',{plan:{name:plan.name,walls:plan.walls,rooms:plan.rooms,openings:plan.openings,notes:plan.notes,srcFurn:plan.srcFurn},furn:furn.map(f=>({plain:f.plain,k:f.k,kind:f.kind,n:f.n,w:f.w,d:f.d,h:f.h,t:f.t,round:f.round,url:f.url,fab:f.fab,wood:f.wood,hand:f.hand,home:f.home,x:f.x,y:f.y,r:f.r})),wallColor,defaultFloor,lowWalls,seanSnap})}
-function loadState(st){if(st.wallColor){wallColor=st.wallColor;M.wall.color.set(wallColor)}if(st.defaultFloor&&FLOORS[st.defaultFloor])defaultFloor=st.defaultFloor;lowWalls=st.lowWalls!==false;$('vLow').setAttribute('aria-pressed',String(lowWalls));$('vLow').querySelector('span').textContent=lowWalls?'הגבה קירות':'הנמך קירות';clearFurn();build(st.plan);for(const f of st.furn||[])addFurn(f,f.x,f.y,f.r);seanSnap=st.seanSnap||null;undoStack=[];updateFit();syncUndo()}
+function loadState(st){if(st.wallColor){wallColor=st.wallColor;M.wall.color.set(wallColor)}if(st.defaultFloor&&FLOORS[st.defaultFloor])defaultFloor=st.defaultFloor;lowWalls=false;$('vLow').setAttribute('aria-pressed',String(lowWalls));$('vLow').querySelector('span').textContent=lowWalls?'הגבה קירות':'הנמך קירות';clearFurn();build(st.plan);for(const f of st.furn||[])addFurn(f,f.x,f.y,f.r);seanSnap=st.seanSnap||null;undoStack=[];updateFit();syncUndo()}
 function clearFurn(){while(furnG.children.length)furnG.remove(furnG.children[0]);furn=[];sel=null}
 function loadDemo(){clearFurn();build(sanitize(DEMO));for(const f of DEMO_FURN)addFurn({k:'demo',...f},f.x,f.y,f.r);undoStack=[];markSean();updateFit();setStatus('');save()}
 $('demo').onclick=()=>{loadDemo();setMode('3d')};
