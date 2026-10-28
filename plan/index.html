@@ -48,7 +48,7 @@ main{position:fixed;inset:0;background:#EFEFED}
 .ibi{font-size:11.5px;color:var(--ink-soft);margin:4px 0 6px;line-height:1.4}
 .sw{display:flex;gap:4px;margin:0 0 6px;align-items:center}.sw b{font-size:10.5px;font-weight:400;color:var(--ink-soft);min-width:34px}.sw button{width:18px;height:18px;border:1px solid var(--line);cursor:pointer;padding:0}.sw button[aria-pressed="true"]{outline:2px solid var(--ink);outline-offset:1px}
 #floorChips button{display:inline-flex;align-items:center;gap:6px}.fth{width:18px;height:18px;border:1px solid var(--line);background-size:cover;display:inline-block}
-.swap{max-height:230px;overflow:auto;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin:4px 0 8px;padding:6px 0}.swap b{display:block;font:500 10px 'IBM Plex Mono',monospace;letter-spacing:.06em;color:var(--ink-soft);margin:6px 0 4px}.swap .o{display:flex;justify-content:space-between;gap:8px;width:100%;text-align:right;border:0;border-bottom:1px solid var(--board);background:none;padding:5px 2px;font-size:12px;cursor:pointer}.swap .o:hover,.swap .o[aria-current=true]{background:var(--board)}.swap .o small{direction:ltr;unicode-bidi:isolate;font-family:'IBM Plex Mono',monospace;color:var(--ink-soft);white-space:nowrap}.swap form{display:flex;gap:4px;align-items:center;font-size:12px}.swap input{width:58px;padding:3px;border:1px solid var(--line);font:inherit}.swap form button{border:1px solid var(--ink);background:var(--ink);color:#fff;padding:3px 8px;cursor:pointer}
+.swap{max-height:230px;overflow:auto;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin:4px 0 8px;padding:6px 0}.swap b{display:block;font:500 10px 'IBM Plex Mono',monospace;letter-spacing:.06em;color:var(--ink-soft);margin:6px 0 4px}.swap .o{display:flex;justify-content:space-between;gap:8px;width:100%;text-align:right;border:0;border-bottom:1px solid var(--board);background:none;padding:5px 2px;font-size:12px;cursor:pointer}.swap .o:hover,.swap .o[aria-current=true]{background:var(--board)}.swap .o.nofit{color:var(--ink-soft)}.swap .o small{direction:ltr;unicode-bidi:isolate;font-family:'IBM Plex Mono',monospace;color:var(--ink-soft);white-space:nowrap}.swap form{display:flex;gap:4px;align-items:center;font-size:12px}.swap input{width:58px;padding:3px;border:1px solid var(--line);font:inherit}.swap form button{border:1px solid var(--ink);background:var(--ink);color:#fff;padding:3px 8px;cursor:pointer}
 .ibb{display:flex;gap:6px}.ibb button{flex:1;border:1px solid var(--ink);background:var(--paper);padding:4px 6px;font-size:12px;cursor:pointer}.ibb button:hover{background:var(--ink);color:#fff}
 .placehint{position:fixed;bottom:56px;left:calc((100vw - 392px)/2);transform:translateX(-50%);z-index:5;background:var(--ink);color:#fff;padding:8px 14px;font-size:13px;white-space:nowrap;box-shadow:3px 3px 0 rgba(20,33,46,.25)}
 @media (max-width:760px){.placehint{left:50%;bottom:auto;top:calc(env(safe-area-inset-top,0px) + 56px)}}
@@ -244,7 +244,7 @@ details summary{cursor:pointer}
 
 .undobar{position:fixed;left:calc((100vw - 392px)/2);transform:translateX(-50%);bottom:74px;z-index:4;display:flex;background:var(--paper);border:1px solid var(--ink);box-shadow:3px 3px 0 rgba(20,33,46,.35)}
 .undobar button{border:0;background:none;padding:9px 12px;font:inherit;font-size:13px;cursor:pointer;color:var(--ink);white-space:nowrap}.undobar button+button{border-right:1px solid var(--line)}.undobar button:hover{background:var(--board)}.undobar button[hidden]{display:none}
-.ibb{flex-wrap:wrap}#ibHome{flex-basis:100%;background:var(--board)}
+.ibb{flex-wrap:wrap}#ibHome{flex-basis:100%;background:var(--board)}#ibFix{flex-basis:100%;background:var(--accent);color:#fff;border-color:var(--accent)}
 @media (max-width:760px){.undobar{left:10px;transform:none;bottom:auto;top:calc(env(safe-area-inset-top,0px) + 56px);box-shadow:none}.undobar button{padding:9px 10px}body.sheet-open .undobar{display:none}}
 </style>
 
@@ -257,14 +257,15 @@ details summary{cursor:pointer}
   <button id="vPlan" aria-pressed="false">תוכנית</button>
   <button id="v3d" aria-pressed="true">תלת־ממד</button>
   <button id="vWalk" aria-pressed="false">סיור</button>
+  <button id="ovBtn" aria-pressed="false" hidden title="להשוות לתוכנית המקורית">מקור</button>
   <button id="calibBtn">כיול</button>
 </nav>
-<div class="hint" id="hint">גרירה לסיבוב · קליק ימני להזזה · גלגלת לזום</div>
+<div class="hint" id="hint">גרירה להזזה · קליק ימני וגרירה לסיבוב · גלגלת לזום</div>
 <div class="undobar" id="undoBar" hidden><button type="button" id="undoBtn" title="Ctrl+Z">↶ ביטול</button><button type="button" id="seanBtn">חזרה לסידור של שון</button></div>
 <div class="vctl" id="vctl" role="group" aria-label="סיבוב המודל"><button type="button" id="rotL" title="סובב 90° (Q)" aria-label="סובב שמאלה"><svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.6-5.9M4 4v5h5"/></svg></button><button type="button" id="homeV" title="מבט התחלתי (0)" aria-label="מבט התחלתי"><svg viewBox="0 0 24 24"><path d="M4 11l8-7 8 7M6 10v10h12V10"/></svg></button><button type="button" id="rotR" title="סובב 90° (E)" aria-label="סובב ימינה"><svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.6-5.9M20 4v5h-5"/></svg></button></div>
 <div class="calib" id="calib" hidden><span id="calibT">לחצו על קיר בתוכנית</span><input id="calibI" type="number" placeholder="ס״מ" hidden><button class="btn" id="calibOk" hidden>החל</button><button class="btn" id="calibX">ביטול</button></div>
 <div class="fitbar" id="fitbar" hidden></div>
-<div class="itembar" id="itemBar" hidden><div class="ibt"><span id="ibName"></span><span class="chip" id="ibChip"></span></div><div class="ibi" id="ibInfo"></div><div class="ibi fs" id="ibFs"></div><div class="swap" id="ibSwapP" hidden></div><div class="sw" id="ibFab"></div><div class="sw" id="ibWood"></div><div class="ibb"><button id="ibHome" title="להחזיר את הרהיט למקום שבחר שון" hidden>↺ למקום של שון</button><button id="ibSwap" title="להחליף לדגם אחר באותו מקום">⇄ החלף</button><button id="ibRot" title="סיבוב (R)">↻ סובב</button><button id="ibDel" title="מחיקה (Delete)">✕ הסר</button></div></div>
+<div class="itembar" id="itemBar" hidden><div class="ibt"><span id="ibName"></span><span class="chip" id="ibChip"></span></div><div class="ibi" id="ibInfo"></div><div class="ibi fs" id="ibFs"></div><div class="swap" id="ibSwapP" hidden></div><div class="sw" id="ibFab"></div><div class="sw" id="ibWood"></div><div class="ibb"><button id="ibFix" hidden>הזז למקום תקין</button><button id="ibHome" title="להחזיר את הרהיט למקום שבחר שון" hidden>↺ למקום של שון</button><button id="ibSwap" title="להחליף לדגם אחר באותו מקום">⇄ החלף</button><button id="ibRot" title="סיבוב (R)">↻ סובב</button><button id="ibDel" title="מחיקה (Delete)">✕ הסר</button></div></div>
 <div class="placehint" id="placeHint" hidden></div>
 <button class="wallbtn" id="vLow" aria-pressed="false" title="קירות מלאים או בגובה 50 ס״מ · קיצור: H"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20h18M5 20V9h4v11M15 20v-6h4v6"/></svg><span>הנמך קירות</span></button>
 <button class="fab" id="fab">רהט לי את הדירה · לפי שון טסה</button>
@@ -747,7 +748,7 @@ function showSel(){const box=$('selBox');furn.forEach(o=>o.mesh.userData.outline
  if(!f.ok){chip.className='chip bad';chip.textContent='לא נכנס';$('selInfo').textContent=f.why+'. גררו למקום אחר או סובבו.'}
  else if(f.clear<.6){chip.className='chip warn';chip.textContent='נכנס, צפוף';$('selInfo').textContent=`מרווח ${Math.round(f.clear*100)} ס״מ בלבד. למעבר נוח צריך בערך 60–80 ס״מ.`}
  else{chip.className='chip ok';chip.textContent='נכנס';$('selInfo').textContent=`מרווח מינימלי ${f.clear>3?'גדול':Math.round(f.clear*100)+' ס״מ'} מהקיר או מהרהיט הקרוב.`}
- box.hidden=true;renderSwatches();try{$('ibHome').hidden=!offHome(sel)}catch(e){}if(swapFor!==sel)swapFor=null;$('ibSwapP').hidden=!swapFor;$('ibName').textContent=`${sel.n} · ${sel.w}×${sel.d}`;$('ibChip').className=chip.className;$('ibChip').textContent=chip.textContent;$('ibInfo').textContent=$('selInfo').textContent+' גררו כדי להזיז.';const fsT=fengShui(sel);$('ibFs').textContent=fsT;$('ibFs').hidden=!fsT;$('ibFs').classList.toggle('warn',fsT.startsWith('⚠'));
+ box.hidden=true;renderSwatches();try{$('ibHome').hidden=!offHome(sel)}catch(e){}$('ibFix').hidden=f.ok;if(swapFor!==sel)swapFor=null;$('ibSwapP').hidden=!swapFor;$('ibName').textContent=`${sel.n} · ${sel.w}×${sel.d}`;$('ibChip').className=chip.className;$('ibChip').textContent=chip.textContent;$('ibInfo').textContent=$('selInfo').textContent+' גררו כדי להזיז.';const fsT=fengShui(sel);$('ibFs').textContent=fsT;$('ibFs').hidden=!fsT;$('ibFs').classList.toggle('warn',fsT.startsWith('⚠'));
  const fb=$('fitbar');fb.hidden=true;if(false)fb.textContent=`${sel.n}: ${chip.textContent}${f.ok&&f.clear<3?` · מרווח ${Math.round(f.clear*100)} ס״מ`:''}`;fb.style.background=!f.ok?'var(--bad)':f.clear<.6?'var(--warn)':'var(--ink)'}
 function roomCenter(pref){const r=plan.rooms.find(r=>pref.test(r.name))||plan.rooms.slice().sort((a,b)=>polyArea(b.poly)-polyArea(a.poly))[0];return r?centroid(r.poly):[bounds.cx,bounds.cy]}
 function autoAdd(it,pref){const rooms=plan.rooms.filter(r=>pref.test(r.name)).concat(plan.rooms.filter(r=>!pref.test(r.name)&&!/מרפסת|רחצה|מקלחת|שירות/.test(r.name)));
@@ -780,7 +781,8 @@ let swapFor=null;
 function swapTo(o,spec){engage();pushUndo();const oldD=o.d;Object.assign(o,spec);if(HUG.has(o.kind)){const dd=(o.d-oldD)/100;o.x+=-Math.sin(o.r)*dd/2;o.y+=Math.cos(o.r)*dd/2}
  rebuildMesh(o);updateFit();save();renderSwap()}
 function renderSwap(){const p=$('ibSwapP');if(!sel||swapFor!==sel){p.hidden=true;return}p.hidden=false;p.innerHTML='';const o=sel,k=o.kind;
- const row=(label,dims,spec,cur)=>{const b=document.createElement('button');b.type='button';b.className='o';b.innerHTML='<span></span><small></small>';b.firstChild.textContent=label;b.lastChild.textContent=dims;if(cur)b.setAttribute('aria-current','true');b.onclick=()=>swapTo(o,spec);p.appendChild(b)};
+ const fitsAs=spec=>{const i=furn.indexOf(o);const t={...o,...spec};if(HUG.has(t.kind)){const dd=(t.d-o.d)/100;t.x+=-Math.sin(t.r)*dd/2;t.y+=Math.cos(t.r)*dd/2}furn.splice(i,1);furn.push(t);let ok=false;try{ok=fitOf(t).ok}catch(e){}furn.pop();furn.splice(i,0,o);return ok};
+ const row=(label,dims,spec,cur)=>{const b=document.createElement('button');b.type='button';b.className='o';b.innerHTML='<span></span><small></small>';const fits=cur||fitsAs(spec);b.firstChild.textContent=(fits?'✓ ':'✕ ')+label;if(!fits)b.classList.add('nofit');b.lastChild.textContent=dims;if(cur)b.setAttribute('aria-current','true');b.onclick=()=>swapTo(o,spec);p.appendChild(b)};
  const head=t=>{const b=document.createElement('b');b.textContent=t;p.appendChild(b)};
  const base=KIND[k]?KIND[k].l:'רהיט';
  if(SIZES[k]){head('מידות סטנדרטיות');for(const [n,w,d,rd] of SIZES[k])row(n,rd?`⌀${w}`:`${w}×${d}`,{k:'b',n,w,d,round:!!rd,url:undefined},o.w===w&&o.d===d)}
@@ -796,7 +798,7 @@ $('vLow').onclick=()=>{lowWalls=!lowWalls;furn.forEach(o=>{if(o.kind==='kitchen_
 /* ---------------- interaction (map-like) ----------------
    left-drag = pan, right-drag = rotate/tilt, wheel = zoom; one finger pans, two fingers rotate/zoom.
    left-click on a piece = select and drag it; "+" puts the piece on the cursor until you click the floor. */
-ctl.mouseButtons={LEFT:THREE.MOUSE.ROTATE,MIDDLE:THREE.MOUSE.DOLLY,RIGHT:THREE.MOUSE.PAN};
+ctl.mouseButtons={LEFT:THREE.MOUSE.PAN,MIDDLE:THREE.MOUSE.DOLLY,RIGHT:THREE.MOUSE.ROTATE};
 ctl.touches={ONE:THREE.TOUCH.PAN,TWO:THREE.TOUCH.DOLLY_ROTATE};ctl.screenSpacePanning=false;
 Object.assign(ctl,{rotateSpeed:.62,dampingFactor:.085,minPolarAngle:Math.PI*.05,maxPolarAngle:Math.PI*.44,panSpeed:.9,zoomSpeed:1.15});
 ctlO.mouseButtons={LEFT:THREE.MOUSE.PAN,MIDDLE:THREE.MOUSE.DOLLY,RIGHT:THREE.MOUSE.PAN};ctlO.touches={ONE:THREE.TOUCH.PAN,TWO:THREE.TOUCH.DOLLY_PAN};
@@ -861,7 +863,7 @@ $('calibOk').onclick=()=>{const v=+$('calibI').value;if(!(v>20)||calib.wall<0)re
 let mode='3d';const walk={x:0,y:0,yaw:0,pitch:0,keys:{}};
 function setMode(m){mode=m;persp.near=m==='walk'?.08:.5;persp.updateProjectionMatrix();camAnim=null;if($('vctl'))$('vctl').hidden=m!=='3d';sun.castShadow=m!=='plan';['vPlan','v3d','vWalk'].forEach(id=>$(id).setAttribute('aria-pressed',String({vPlan:'plan',v3d:'3d',vWalk:'walk'}[id]===m)));
  cam=m==='plan'?ortho:persp;ctl.enabled=m==='3d';ctlO.enabled=m==='plan';$('pad').hidden=m!=='walk';
- $('hint').textContent=m==='plan'?'גרירה להזזה · גלגלת לזום':m==='walk'?'גררו להסתכל · חיצים ללכת':'גרירה לסיבוב · קליק ימני להזזה · גלגלת לזום';
+ $('hint').textContent=m==='plan'?'גרירה להזזה · גלגלת לזום':m==='walk'?'גררו להסתכל · חיצים ללכת':'גרירה להזזה · קליק ימני וגרירה לסיבוב · גלגלת לזום';
  if(m==='walk'){const rv=+$('roomSel').value;const c=rv>=0&&plan.rooms[rv]?centroid(plan.rooms[rv].poly):roomCenter(/סלון/);walk.x=c[0];walk.y=c[1];walk.yaw=Math.PI;walk.pitch=0;sel=null;showSel()}
  frameView(false)}
 $('vPlan').onclick=()=>setMode('plan');$('v3d').onclick=()=>setMode('3d');$('vWalk').onclick=()=>setMode('walk');
@@ -1159,7 +1161,7 @@ function furnishRoom(ri,why){const room=plan.rooms[ri],type=roomType(room.name),
   if(A>=6){const t=freePlace(SP('dining_table','שולחן מרפסת עגול',90,90,{round:true}),ri,()=>Math.random(),.6);say(t,'שולחן עגול למרפסת, כמו בתוכניות של שון.')}}
  else if(type==='entry'){const p=wallPlace(SP('plant','עציץ',45,45),ri,{avoid:['door','slide'],corner:true});say(p,'מבואה נקייה, רק צמח אחד.')}
 }
-window.__p3={cam:()=>({t:ctl.target.toArray(),az:ctl.getAzimuthalAngle()}),tog:(w)=>{if(w==='ssao')comp=null;if(w==='ground')ground.visible=false;if(w==='shadow'){sun.castShadow=false}return 1},pick:(x,y)=>{const r=main.getBoundingClientRect();const rc=new THREE.Raycaster();rc.setFromCamera({x:(x-r.left)/r.width*2-1,y:-(y-r.top)/r.height*2+1},cam);const h=rc.intersectObjects(S.children,true).filter(i=>i.object.isMesh)[0];if(!h)return 'none';let o=h.object,path=[];while(o){path.push((o.type)+(o.geometry?':'+o.geometry.type:'')+(o.userData&&o.userData.f?':'+o.userData.f.n:'')+(o.material&&o.material.color?':'+o.material.color.getHexString():''));o=o.parent}return path.join(' < ')+' @'+h.point.toArray().map(v=>v.toFixed(2))},why:()=>furn.map(o=>{const f=fitOf(o);return f.ok?null:o.n+': '+f.why}).filter(Boolean),px:(j)=>{const R=planFromPx(j);const _pl=sanitize(R.plan);_pl.srcFurn=R.furniture;loadState({plan:_pl,furn:R.furniture});syncSrc();furn.forEach(settle);updateFit();setMode('3d');return JSON.stringify(R.scale)+' rooms:'+plan.rooms.map(r=>r.name+' '+polyArea(r.poly).toFixed(1)).join(', ')},fit:(kind,w,d,x,y,r)=>{const o=addFurn({k:'b',kind,n:kind,w,d,h:60},x,y,r);const f=fitOf(o);const inR=corners(o).map(p=>plan.rooms.findIndex(r=>pip(p,r.poly)));dropF(o);return JSON.stringify(f)+' '+inR},load:(pl)=>{loadState({plan:sanitize(pl),furn:[]});return plan.rooms.length},run:()=>runLocal(plan.rooms.map((r,i)=>i)),addI:(q,x,y,r)=>{const it=IKEA.find(z=>(z[0]+' '+z[1]+' '+z[6]).includes(q));if(!it)return 'none';const o=addFurn({k:'ikea',n:it[0]+' '+it[1],w:it[2],d:it[3],h:it[4]||80,url:it[6],round:!!it[7]},x,y,r);return o.kind+' '+it[6]},roomEdges:i=>roomEdges(i),freeT:(e,a,p)=>freeT(e,a,p),rooms:()=>plan.rooms.map(r=>r.name),furn:()=>furn.map(o=>[o.n,o.x.toFixed(2),o.y.toFixed(2),(o.r*180/Math.PI).toFixed(0)]),dump:()=>furn.map(o=>({kind:o.kind,n:o.n,w:o.w,d:o.d,h:o.h,x:+o.x.toFixed(3),y:+o.y.toFixed(3),r:+o.r.toFixed(4),...(o.round?{round:true}:{}),...(o.plain?{plain:1}:{}),...(o.flip?{flip:1}:{})}))};
+window.__p3={ov:async(j)=>{const R=planFromPx(j);const b=await (await fetch('tidhar.png')).blob();await makeOverlay(b,R.scale);ovMesh.visible=true;setMode('plan');return 1},cam:()=>({t:ctl.target.toArray(),az:ctl.getAzimuthalAngle()}),tog:(w)=>{if(w==='ssao')comp=null;if(w==='ground')ground.visible=false;if(w==='shadow'){sun.castShadow=false}return 1},pick:(x,y)=>{const r=main.getBoundingClientRect();const rc=new THREE.Raycaster();rc.setFromCamera({x:(x-r.left)/r.width*2-1,y:-(y-r.top)/r.height*2+1},cam);const h=rc.intersectObjects(S.children,true).filter(i=>i.object.isMesh)[0];if(!h)return 'none';let o=h.object,path=[];while(o){path.push((o.type)+(o.geometry?':'+o.geometry.type:'')+(o.userData&&o.userData.f?':'+o.userData.f.n:'')+(o.material&&o.material.color?':'+o.material.color.getHexString():''));o=o.parent}return path.join(' < ')+' @'+h.point.toArray().map(v=>v.toFixed(2))},why:()=>furn.map(o=>{const f=fitOf(o);return f.ok?null:o.n+': '+f.why}).filter(Boolean),px:(j)=>{const R=planFromPx(j);const _pl=sanitize(R.plan);_pl.srcFurn=R.furniture;loadState({plan:_pl,furn:R.furniture});syncSrc();furn.forEach(settle);updateFit();setMode('3d');return JSON.stringify(R.scale)+' rooms:'+plan.rooms.map(r=>r.name+' '+polyArea(r.poly).toFixed(1)).join(', ')},fit:(kind,w,d,x,y,r)=>{const o=addFurn({k:'b',kind,n:kind,w,d,h:60},x,y,r);const f=fitOf(o);const inR=corners(o).map(p=>plan.rooms.findIndex(r=>pip(p,r.poly)));dropF(o);return JSON.stringify(f)+' '+inR},load:(pl)=>{loadState({plan:sanitize(pl),furn:[]});return plan.rooms.length},run:()=>runLocal(plan.rooms.map((r,i)=>i)),addI:(q,x,y,r)=>{const it=IKEA.find(z=>(z[0]+' '+z[1]+' '+z[6]).includes(q));if(!it)return 'none';const o=addFurn({k:'ikea',n:it[0]+' '+it[1],w:it[2],d:it[3],h:it[4]||80,url:it[6],round:!!it[7]},x,y,r);return o.kind+' '+it[6]},roomEdges:i=>roomEdges(i),freeT:(e,a,p)=>freeT(e,a,p),rooms:()=>plan.rooms.map(r=>r.name),furn:()=>furn.map(o=>[o.n,o.x.toFixed(2),o.y.toFixed(2),(o.r*180/Math.PI).toFixed(0)]),dump:()=>furn.map(o=>({kind:o.kind,n:o.n,w:o.w,d:o.d,h:o.h,x:+o.x.toFixed(3),y:+o.y.toFixed(3),r:+o.r.toFixed(4),...(o.round?{round:true}:{}),...(o.plain?{plain:1}:{}),...(o.flip?{flip:1}:{})}))};
 function localFurnish(scope){LZ=doorZones();sel=null;
  for(const o of furn.slice())if(scope.some(ri=>pip([o.x,o.y],plan.rooms[ri].poly))){furnG.remove(o.mesh);furn=furn.filter(f=>f!==o)}
  const why=[];const order=['living','kitchen','master','kid','bath','wc','laundry','balcony','entry','other'];
@@ -1185,7 +1187,7 @@ function runLocal(scope,note){if(furn.length)pushUndo();const before=new Set(fur
  if(scope.length===1)focusRoom(scope[0]);else{focus=null;setMode('3d')}
  $('why').innerHTML='';for(const [n,w] of why.slice(0,18)){const li=document.createElement('li');const b=document.createElement('b');b.textContent=n+': ';li.append(b,document.createTextNode(w));$('why').appendChild(li)}
  $('whyD').hidden=!why.length;$('whyD').querySelector('summary').textContent=`למה ככה? · ${why.length} החלטות`;
- st.textContent=(note||'')+'מוכן. לחצו על רהיט כדי להחליף מידה, דגם או צבע.';nudge2()}
+ st.textContent=(note||'')+'מוכן. לחצו על רהיט כדי להחליף מידה, דגם או צבע.';$('whyD').querySelector('summary').textContent='למה ככה? מעבר פנוי לכל דלת · מרחב שימוש לכל רהיט · אור טבעי מהצד';showCTA('arrStatus','רוצה ששון ידייק את התכנון?')}
 $('arrBtn').onclick=async()=>{if(!plan)return;
  const v=+$('roomSel').value;const scope=v<0?plan.rooms.map((r,i)=>i):[v];{runLocal(scope);return}const keep=$('keep').checked;
  const ctx=scope.map(roomContext);
@@ -1329,14 +1331,14 @@ function planFromPx(j){const med=a=>{a=a.filter(v=>isFinite(v)&&v>0).sort((x,y)=
  const furniture=(j.furniture||[]).filter(f=>Array.isArray(f.box)&&f.box.length===4&&f.box.every(isFinite)&&(KIND[f.kind]||f.kind==='corner_sofa')).map(f=>{const [x0,y0,x1,y1]=f.box;const a=M([Math.min(x0,x1),Math.min(y0,y1)]),b=M([Math.max(x0,x1),Math.max(y0,y1)]);
   const bw=b[0]-a[0],bh=b[1]-a[1];const r=FROT[f.facing]??0;const side=f.facing==='left'||f.facing==='right';const w=Math.round((side?bh:bw)*100),d=Math.round((side?bw:bh)*100);
   return {k:'plan',kind:f.kind,n:(KIND[f.kind]||{l:'ספה פינתית'}).l,w:Math.max(20,w),d:Math.max(15,d),h:(KIND[f.kind]||{h:80}).h,x:(a[0]+b[0])/2,y:(a[1]+b[1])/2,r,...(f.round?{round:true}:{}),...(f.hand?{hand:f.hand}:{})}}).filter(f=>f.w>=20&&f.w<=700&&f.d<=500);
- return {plan:{name:String(j.name||'התוכנית שלי').slice(0,40),walls,openings,rooms:outRooms,notes:String(j.notes||'').slice(0,200)},furniture,scale:{k,how,n:S.length}}}
+ return {plan:{name:String(j.name||'התוכנית שלי').slice(0,40),walls,openings,rooms:outRooms,notes:String(j.notes||'').slice(0,200)},furniture,scale:{k,how,n:S.length,ox,oy}}}
 
 let ctlAI=null;
 $('build').onclick=async()=>{if(!file||!sample)return;ctlAI?.abort();ctlAI=new AbortController();$('build').disabled=true;
  setStatus('קורא את התוכנית: קירות, פתחים וחדרים. זה לוקח עד דקה…','busy');
  try{const j=await sample.json(EXTRACT,{images:file,modelTier:'complex',signal:ctlAI.signal});
   if(j&&j.error){setStatus('זה לא נראה כמו תוכנית דירה: '+String(j.error).slice(0,120),'err');return}
-  const R=planFromPx(j);const pl=sanitize(R.plan);pl.srcFurn=R.furniture;if(!pl.walls.length)throw {message:'few_walls'};clearFurn();build(pl);
+  const R=planFromPx(j);const pl=sanitize(R.plan);pl.srcFurn=R.furniture;if(!pl.walls.length)throw {message:'few_walls'};clearFurn();build(pl);makeOverlay(file,R.scale);
   for(const f of R.furniture){const o=addFurn(f,f.x,f.y,f.r);settle(o)}updateFit();setMode('3d');
   setStatus(`מוכן: ${pl.rooms.length} חללים, קנה מידה לפי ${R.scale.how}.${R.furniture.length?` ${R.furniture.length} רהיטים יובאו מהתוכנית.`:''}${pl.notes?' '+pl.notes:''}`);save();
  }catch(e){const c=e&&e.code;
@@ -1476,9 +1478,18 @@ function changedFromSean(){if(!seanSnap)return false;if(seanSnap.length!==furn.l
 function syncUndo(){const ub=$('undoBar');if(!ub)return;const can=undoStack.length>0,diff=changedFromSean();$('undoBtn').hidden=!can;$('seanBtn').hidden=!diff;ub.hidden=!(can||diff);
  if(sel){$('ibHome').hidden=!offHome(sel)}}
 $('undoBtn').onclick=undo;
+$('ibFix').onclick=()=>{if(!sel)return;const ri=plan.rooms.findIndex(r=>pip([sel.x,sel.y],r.poly));pushUndo();let ok=ri>=0&&nudge(sel,plan.rooms[ri]);if(!ok){for(const r of plan.rooms)if(nudge(sel,r)){ok=true;break}}updateFit();save();showSel()};
 $('seanBtn').onclick=()=>{if(!seanSnap)return;pushUndo();restore(seanSnap.map(f=>({...f,...f.home})))};
 $('ibHome').onclick=()=>{if(!sel||!sel.home)return;pushUndo();const id=sel.id;Object.assign(sel,sel.home);rebuildMesh(sel);updateFit();save();sel=furn.find(o=>o.id===id);showSel();syncUndo()};
 addEventListener('keydown',e=>{if(e.target.closest('input,textarea,select'))return;if((e.ctrlKey||e.metaKey)&&(e.key==='z'||e.key==='Z'||e.key==='ז')&&!e.shiftKey){e.preventDefault();undo()}});
+
+/* original plan overlay: check the trace against the uploaded image */
+let ovMesh=null;
+async function makeOverlay(f,sc){try{if(ovMesh){S.remove(ovMesh);ovMesh=null}const img=await createImageBitmap(f);const W=img.width,Hh=img.height;
+ const ks=Math.min(1,1568/Math.max(W,Hh),Math.sqrt(1.15e6/(W*Hh)));const w=W*ks*sc.k,h=Hh*ks*sc.k;const c=document.createElement('canvas');c.width=Math.min(2048,W);c.height=Math.round(c.width*Hh/W);c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+ const t=new THREE.CanvasTexture(c);ovMesh=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({map:t,transparent:true,opacity:.55,depthTest:false}));ovMesh.rotation.x=-Math.PI/2;ovMesh.position.set(-sc.ox*sc.k+w/2,.05,-sc.oy*sc.k+h/2);ovMesh.renderOrder=10;ovMesh.visible=false;S.add(ovMesh);
+ $('ovBtn').hidden=false;$('ovBtn').setAttribute('aria-pressed','false')}catch(e){}}
+$('ovBtn').onclick=()=>{if(!ovMesh)return;const on=!ovMesh.visible;ovMesh.visible=on;$('ovBtn').setAttribute('aria-pressed',String(on));if(on)setMode('plan')};
 /* ---------------- boot ---------------- */
 const shared=location.hash.startsWith('#d=')?location.hash.slice(3):null;
 const st=ls.get('tp_state3');
