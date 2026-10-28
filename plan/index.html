@@ -747,7 +747,7 @@ function showSel(){const box=$('selBox');furn.forEach(o=>o.mesh.userData.outline
  if(!f.ok){chip.className='chip bad';chip.textContent='לא נכנס';$('selInfo').textContent=f.why+'. גררו למקום אחר או סובבו.'}
  else if(f.clear<.6){chip.className='chip warn';chip.textContent='נכנס, צפוף';$('selInfo').textContent=`מרווח ${Math.round(f.clear*100)} ס״מ בלבד. למעבר נוח צריך בערך 60–80 ס״מ.`}
  else{chip.className='chip ok';chip.textContent='נכנס';$('selInfo').textContent=`מרווח מינימלי ${f.clear>3?'גדול':Math.round(f.clear*100)+' ס״מ'} מהקיר או מהרהיט הקרוב.`}
- box.hidden=true;renderSwatches();try{$('ibHome').hidden=!offHome(sel)}catch(e){}if(swapFor!==sel)swapFor=null;$('ibSwapP').hidden=!swapFor;$('ibName').textContent=`${sel.n} · ${sel.w}×${sel.d}`;$('ibChip').className=chip.className;$('ibChip').textContent=chip.textContent;$('ibInfo').textContent=$('selInfo').textContent+' גררו את הרהיט כדי להזיז אותו.';const fsT=fengShui(sel);$('ibFs').textContent=fsT;$('ibFs').hidden=!fsT;$('ibFs').classList.toggle('warn',fsT.startsWith('⚠'));
+ box.hidden=true;renderSwatches();try{$('ibHome').hidden=!offHome(sel)}catch(e){}if(swapFor!==sel)swapFor=null;$('ibSwapP').hidden=!swapFor;$('ibName').textContent=`${sel.n} · ${sel.w}×${sel.d}`;$('ibChip').className=chip.className;$('ibChip').textContent=chip.textContent;$('ibInfo').textContent=$('selInfo').textContent+' גררו כדי להזיז.';const fsT=fengShui(sel);$('ibFs').textContent=fsT;$('ibFs').hidden=!fsT;$('ibFs').classList.toggle('warn',fsT.startsWith('⚠'));
  const fb=$('fitbar');fb.hidden=true;if(false)fb.textContent=`${sel.n}: ${chip.textContent}${f.ok&&f.clear<3?` · מרווח ${Math.round(f.clear*100)} ס״מ`:''}`;fb.style.background=!f.ok?'var(--bad)':f.clear<.6?'var(--warn)':'var(--ink)'}
 function roomCenter(pref){const r=plan.rooms.find(r=>pref.test(r.name))||plan.rooms.slice().sort((a,b)=>polyArea(b.poly)-polyArea(a.poly))[0];return r?centroid(r.poly):[bounds.cx,bounds.cy]}
 function autoAdd(it,pref){const rooms=plan.rooms.filter(r=>pref.test(r.name)).concat(plan.rooms.filter(r=>!pref.test(r.name)&&!/מרפסת|רחצה|מקלחת|שירות/.test(r.name)));
@@ -817,14 +817,14 @@ cv.addEventListener('pointerdown',e=>{if(mode==='walk')return;
  if(placing){e.stopImmediatePropagation();if(e.button===2){cancelPlacing();return}moveTo(placing,e);commitPlacing();return}
  if(e.button!==0)return;setNdc(e);
  if(calib.on){const h=ray.intersectObjects(wallMeshes,false)[0];if(h){e.stopImmediatePropagation();pickCalib(h.object.userData.wall)}return}
- const hits=ray.intersectObjects(furnG.children,true);if(hits.length){let o=hits[0].object;while(o&&!o.userData.f)o=o.parent;
-  if(o&&o.userData.f!==sel){const f=o.userData.f,sx=e.clientX,sy=e.clientY;const up=ev=>{cv.removeEventListener('pointerup',up);if(Math.hypot(ev.clientX-sx,ev.clientY-sy)<6){sel=f;showSel()}};cv.addEventListener('pointerup',up);return}
+ const hits=ray.intersectObjects(furnG.children,true).filter(h=>h.object.isMesh&&h.object.visible);if(hits.length){let o=hits[0].object;while(o&&!o.userData.f)o=o.parent;
+  if(o&&o.userData.f!==sel&&e.pointerType!=='mouse'){const f=o.userData.f,sx=e.clientX,sy=e.clientY;const up=ev=>{cv.removeEventListener('pointerup',up);if(Math.hypot(ev.clientX-sx,ev.clientY-sy)<6){sel=f;showSel()}};cv.addEventListener('pointerup',up);return}
   if(o){e.stopImmediatePropagation();sel=o.userData.f;ray.ray.intersectPlane(floorP,hit);drag={o:sel,dx:sel.x-hit.x,dy:sel.y-hit.z,moved:false,x0:e.clientX,y0:e.clientY};cv.setPointerCapture(e.pointerId);controlsOn(false);cv.style.cursor='grabbing';showSel();return}}
  // empty click deselects (a pan still works)
  const sx=e.clientX,sy=e.clientY;const up=ev=>{cv.removeEventListener('pointerup',up);if(Math.hypot(ev.clientX-sx,ev.clientY-sy)<5){sel=null;showSel()}};cv.addEventListener('pointerup',up)},{capture:true});
 cv.addEventListener('pointermove',e=>{if(placing){moveTo(placing,e);return}
  if(drag){if(!drag.moved&&Math.hypot(e.clientX-drag.x0,e.clientY-drag.y0)>3){drag.moved=true;pushUndo()}if(drag.moved)moveTo(drag.o,e,drag.dx,drag.dy);return}
- if(mode!=='walk'&&e.buttons===0){setNdc(e);const hs=ray.intersectObjects(furnG.children,true);let o=hs.length?hs[0].object:null;while(o&&!o.userData.f)o=o.parent;cv.style.cursor=o?(o.userData.f===sel?'move':'pointer'):''}});
+ if(mode!=='walk'&&e.buttons===0){setNdc(e);const hs=ray.intersectObjects(furnG.children,true).filter(h=>h.object.isMesh);let o=hs.length?hs[0].object:null;while(o&&!o.userData.f)o=o.parent;cv.style.cursor=o?'move':''}});
 const endDrag=()=>{if(!drag)return;drag=null;cv.style.cursor='';controlsOn(true);updateFit();save()};
 cv.addEventListener('pointerup',endDrag);cv.addEventListener('pointercancel',endDrag);
 window.addEventListener('keydown',e=>{if(e.target.closest('input,textarea,select'))return;
