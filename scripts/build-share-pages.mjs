@@ -43,13 +43,13 @@ for (const bld of buildings) {
 <meta property="og:title" content="${esc(bld.he)} · אדריכלות תל אביבית">
 <meta property="og:description" content="${esc(desc)}">
 <meta property="og:url" content="${url}">
-<meta property="og:image" content="https://seantassa.github.io/tlv-atlas/promo/atlas-rothschild.jpg">
-<meta property="og:image:width" content="1080">
-<meta property="og:image:height" content="1350">
+<meta property="og:image" content="https://seantassa.github.io/tlv-atlas/promo/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="${esc(bld.he)}">
 <meta name="twitter:description" content="${esc(desc)}">
-<meta name="twitter:image" content="https://seantassa.github.io/tlv-atlas/promo/atlas-rothschild.jpg">
+<meta name="twitter:image" content="https://seantassa.github.io/tlv-atlas/promo/og.jpg">
 <meta http-equiv="refresh" content="0;url=${dest}">
 </head>
 <body>
